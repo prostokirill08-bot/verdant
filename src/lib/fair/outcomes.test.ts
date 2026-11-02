@@ -1,0 +1,63 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { floats, takeFloats } from "@/server/games/fair";
+import { browserFloats } from "./browser";
+import * as O from "./outcomes";
+
+const rnd = (n: number) => takeFloats(randomBytes(16).toString("hex"), "test", 1, n);
+
+test("браузерный и серверный генераторы совпадают", async () => {
+  const s = randomBytes(32).toString("hex");
+  assert.deepEqual(await browserFloats(s, "abc", 7, 24), takeFloats(s, "abc", 7, 24));
+});
+
+test("числа равномерны в [0, 1)", () => {
+  const it = floats("seed", "client", 0); let sum = 0; const N = 50000;
+  for (let i = 0; i < N; i++) { const f = it.next().value as number; assert.ok(f >= 0 && f < 1); sum += f; }
+  assert.ok(Math.abs(sum / N - 0.5) < 0.01);
+});
+
+test("Dice: RTP ≈ 99%", () => {
+  const it = floats("dice", "c", 0); let ret = 0; const N = 200000;
+  const m = O.diceMultiplier(50, true, 100);
+  for (let i = 0; i < N; i++) if (O.diceWin(O.diceRoll(it.next().value as number), 50, true)) ret += m;
+  assert.ok(Math.abs(ret / N - 0.99) < 0.01, `rtp ${ret / N}`);
+});
+
+test("Limbo: шанс достичь 2× ≈ 49,5%", () => {
+  const it = floats("limbo", "c", 0); let hit = 0; const N = 200000;
+  for (let i = 0; i < N; i++) if (O.limboResult(it.next().value as number, 100) >= 2) hit++;
+  assert.ok(Math.abs(hit / N - 0.495) < 0.006, `p ${hit / N}`);
+});
+
+test("Plinko: все таблицы с RTP 97–99,5% и симметричны", () => {
+  for (const r of O.PLINKO_ROWS) for (const k of O.PLINKO_RISKS) {
+    const t = O.PLINKO_TABLE[r][k]; assert.equal(t.length, r + 1);
+    assert.deepEqual([...t].reverse(), t);
+    const rtp = O.plinkoRtp(r, k); assert.ok(rtp > 0.97 && rtp < 0.995, `${r}/${k} ${rtp}`);
+  }
+});
+
+test("Mines: расстановка без повторов, множитель как в формуле", () => {
+  for (let i = 0; i < 500; i++) {
+    const m = 1 + (i % 24); const l = O.minesLayout(rnd(24), m);
+    assert.equal(new Set(l).size, m); assert.ok(l.every((x) => x >= 0 && x < 25));
+  }
+  assert.equal(O.minesMultiplier(3, 1, 100), Math.floor((25 / 22) * 0.99 * 10000) / 10000);
+  assert.equal(O.minesMultiplier(24, 1, 100), 24.75);
+});
+
+test("Рулетка: выплаты по ставкам", () => {
+  assert.equal(O.roulettePayout({ kind: "straight", n: 17 }, 17), 36);
+  assert.equal(O.roulettePayout({ kind: "red" }, 0), 0);
+  assert.equal(O.roulettePayout({ kind: "black" }, 2), 2);
+  assert.equal(O.roulettePayout({ kind: "column", n: 1 }, 34), 3);
+  assert.equal(O.roulettePayout({ kind: "dozen", n: 3 }, 36), 3);
+  assert.equal(new Set(O.ROULETTE_WHEEL).size, 37);
+});
+
+test("Crash: кривая и обратная функция согласованы", () => {
+  assert.equal(O.crashMultiplierAt(O.crashTimeFor(2) + 1), 2);
+  assert.ok(O.crashPoint(0, 100) === 1);
+});

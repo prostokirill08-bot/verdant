@@ -1,0 +1,216 @@
+// Verdant — модель данных демонстрационной игровой платформы.
+// Все суммы хранятся целыми числами в «центах» баллов (1 балл = 100 единиц), без float.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  SUPPORT
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum LedgerType {
+  DEMO_GRANT    // стартовые и ежедневные демо-баллы
+  BET           // списание ставки
+  WIN           // начисление выигрыша
+  REFUND        // возврат ставки (отмена раунда)
+  ADMIN_ADJUST  // ручная корректировка администратором
+}
+
+enum RoundStatus {
+  ACTIVE     // раунд идёт (Mines, Crash)
+  WON
+  LOST
+  CANCELLED
+}
+
+model User {
+  id            String     @id @default(cuid())
+  publicId      String     @unique            // видимый ID игрока, например VRD-7K2Q9M
+  email         String     @unique
+  username      String     @unique
+  passwordHash  String
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
+  avatar        String     @default("orbit")  // ключ встроенного аватара
+  failedLogins  Int        @default(0)
+  lockedUntil   DateTime?
+  lastLoginAt   DateTime?
+  lastBonusAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  wallet        Wallet?
+  sessions      Session[]
+  rounds        Round[]
+  seeds         SeedPair[]
+  resets        PasswordReset[]
+  ledger        LedgerEntry[]
+}
+
+model Session {
+  id         String   @id                 // SHA-256 от токена из cookie; сам токен в БД не хранится
+  userId     String
+  csrfToken  String
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  id         String        @id @default(cuid())
+  userId     String        @unique
+  balance    BigInt        @default(0)   // в сотых долях балла
+  version    Int           @default(0)   // растёт при каждой операции (оптимистичная блокировка)
+  updatedAt  DateTime      @updatedAt
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries    LedgerEntry[]
+}
+
+// Неизменяемый журнал: баланс кошелька всегда равен сумме записей.
+model LedgerEntry {
+  id              String     @id @default(cuid())
+  walletId        String
+  userId          String
+  type            LedgerType
+  amount          BigInt                 // со знаком: ставка < 0, выигрыш > 0
+  balanceAfter    BigInt
+  idempotencyKey  String     @unique     // защита от повторного списания / начисления
+  roundId         String?
+  note            String?
+  createdAt       DateTime   @default(now())
+  wallet          Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([roundId])
+}
+
+model Game {
+  slug         String   @id                // crash, mines, dice, roulette, plinko, limbo
+  title        String
+  tagline      String
+  enabled      Boolean  @default(true)
+  minBet       BigInt   @default(10)       // 0,10 балла
+  maxBet       BigInt   @default(1000000)  // 10 000 баллов
+  houseEdgeBp  Int      @default(100)      // преимущество в базисных пунктах (100 = 1%)
+  sortOrder    Int      @default(0)
+  updatedAt    DateTime @updatedAt
+  rounds       Round[]
+}
+
+// Пара сидов provably fair: хэш серверного сида показан заранее, сам сид раскрывается при смене пары.
+model SeedPair {
+  id              String    @id @default(cuid())
+  userId          String
+  serverSeed      String
+  serverSeedHash  String
+  clientSeed      String
+  nonce           Int       @default(0)
+  active          Boolean   @default(true)
+  revealedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rounds          Round[]
+
+  @@index([userId, active])
+}
+
+model Round {
+  id          String      @id @default(cuid())
+  userId      String
+  gameSlug    String
+  seedPairId  String?
+  nonce       Int?
+  betAmount   BigInt
+  payout      BigInt      @default(0)
+  multiplier  Decimal     @default(0) @db.Decimal(14, 4)
+  status      RoundStatus @default(ACTIVE)
+  params      Json                         // настройки раунда, выбранные игроком
+  state       Json?                        // промежуточное состояние (Mines: открытые клетки)
+  result      Json?                        // итог, который видит игрок
+  createdAt   DateTime    @default(now())
+  settledAt   DateTime?
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game        Game        @relation(fields: [gameSlug], references: [slug])
+  seedPair    SeedPair?   @relation(fields: [seedPairId], references: [id])
+  crashId     String?                      // для Crash: общий раунд, в котором сделана ставка
+  crash       CrashRound? @relation(fields: [crashId], references: [id])
+
+  @@unique([crashId, userId])                // одна ставка на игрока в раунде Crash
+  @@index([userId, createdAt])
+  @@index([gameSlug, createdAt])
+  @@index([gameSlug, settledAt])             // лента «Все игроки»
+  @@index([status])
+}
+
+enum CrashStatus {
+  BETTING
+  RUNNING
+  CRASHED
+  CANCELLED
+}
+
+// Общий раунд Crash для всех игроков. Хэш сида публикуется до старта, сид — после обвала.
+model CrashRound {
+  id              String      @id @default(cuid())
+  serverSeed      String
+  serverSeedHash  String
+  edgeBp          Int
+  crashPoint      Decimal     @db.Decimal(14, 2)
+  status          CrashStatus @default(BETTING)
+  bettingEndsAt   DateTime
+  startedAt       DateTime?
+  crashedAt       DateTime?
+  createdAt       DateTime    @default(now())
+  rounds          Round[]
+
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  action      String                       // auth.login, wallet.adjust, admin.game.update …
+  targetType  String?
+  targetId    String?
+  ip          String?
+  meta        Json?
+  createdAt   DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model Setting {
+  key        String   @id
+  value      Json
+  updatedAt  DateTime @updatedAt
+}

@@ -1,0 +1,27 @@
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono, Unbounded } from "next/font/google";
+import "./globals.css";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AppShell } from "@/components/shell/AppShell";
+
+const geist = Geist({ subsets: ["latin", "cyrillic"], variable: "--font-geist", display: "swap" });
+const geistMono = Geist_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-geist-mono", display: "swap" });
+const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", weight: ["500", "700"], display: "swap" });
+
+export const metadata: Metadata = {
+  title: { default: "Verdant — мини-игры на демо-баллах", template: "%s · Verdant" },
+  description: "Демонстрационная платформа мини-игр: Crash, Mines, Dice, Plinko, Limbo, Roulette. Только виртуальные баллы.",
+};
+export const viewport: Viewport = { themeColor: "#101214", width: "device-width", initialScale: 1 };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru" className={`${geist.variable} ${geistMono.variable} ${unbounded.variable}`}>
+      <body className="min-h-dvh">
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,31 @@
+# Полный стек на своём сервере: docker compose up -d --build
+# Перед запуском задай пароли в .env рядом с этим файлом (см. .env.example).
+services:
+  app:
+    build: .
+    ports: ["${PORT:-3000}:3000"]
+    environment:
+      DATABASE_URL: postgresql://verdant:${POSTGRES_PASSWORD:?задай POSTGRES_PASSWORD}@db:5432/verdant?schema=public
+      REDIS_URL: redis://redis:6379
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@verdant.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?задай ADMIN_PASSWORD}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: verdant, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}", POSTGRES_DB: verdant }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U verdant"], interval: 5s, retries: 10 }
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1"]
+    volumes: [redisdata:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
+    restart: unless-stopped
+volumes:
+  pgdata:
+  redisdata:
