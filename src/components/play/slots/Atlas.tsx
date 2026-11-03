@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { anticipationFrom, ATLAS, type AtlasResult, type AtlasSpin } from "@/lib/fair/slots";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, BonusTotal, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
+import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
 
 const IMG: Record<string, string> = { astronaut: "astronaut", telescope: "telescope", comet: "comet", planet: "planet", book: "book" };
 const RANK: Record<string, [string, string]> = { "10": ["#ff6b6b", "#c2185b"], J: ["#60a5fa", "#1d4ed8"], Q: ["#4ade80", "#15803d"], K: ["#fbbf24", "#c2410c"], A: ["#c084fc", "#7e22ce"] };
@@ -44,7 +44,8 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   const [expand, setExpand] = useState<{ sym: string; reels: number[] } | null>(null);
   const [fs, setFs] = useState<(BonusState & { special: string }) | null>(null);
   const [banner, setBanner] = useState<React.ReactNode>(null);
-  const [big, setBig] = useState<{ mult: number; amount: string; label?: string } | null>(null);
+  const [big, setBig] = useState<{ mult: number; amount: string; label?: string; short?: boolean } | null>(null);
+  const { dry, prev, count } = useDrySpins("atlas", !!user);
   const [lastWin, setLastWin] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [info, setInfo] = useState(false);
@@ -56,7 +57,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   const [slowFrom, setSlowFrom] = useState<number | null>(null);
   // Интрига: если на первых барабанах уже 2 книги, оставшиеся крутятся дольше в ожидании третьей
   const spinTo = useCallback((g: string[][]) => new Promise<void>((res) => { stop.current = res; setHl(null); setLines([]); setExpand(null); setSlowFrom(anticipationFrom(g, "book")); setGrid(g); setSpinKey((k) => k + 1); }), []);
-  const showBig = (mult: number, amount: string, label?: string) => new Promise<void>((res) => { bigDone.current = () => { setBig(null); res(); }; setBig({ mult, amount, label }); });
+  const showBig = (mult: number, amount: string, label?: string, short = false) => new Promise<void>((res) => { bigDone.current = () => { setBig(null); res(); }; setBig({ mult, amount, label, short }); });
 
   async function showSpin(s: AtlasSpin, units: bigint, special: string | null) {
     await spinTo(s.grid);
@@ -81,6 +82,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
     setBalance((BigInt(balance) - BigInt(r.round.bet)).toString());
     const res = r.round.result as unknown as AtlasResult;
     if (res.base) await showSpin(res.base, units, null);
+    if (!res.bought) count(!!res.fs);   // счётчик спинов без бонуса
     if (res.fs) {
       const f = res.fs;
       setBanner(<Intro special={f.special} count={ATLAS.freeSpins} />); await sleep(2600); setBanner(null);
@@ -96,6 +98,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
         if (add > 0n) { total = total + add > cap ? cap : total + add; tick++; }
         setFs({ special, left, done: i + 1, total: total.toString(), add: add > 0n ? add.toString() : null, tick });
         setLastWin(total.toString());
+        if (s.mult >= 10) await showBig(s.mult, add.toString(), `Бесплатное вращение ${i + 1}`, true);   // крупный выигрыш внутри бонуса
         if (add > 0n) await sleep(turboRef.current ? 250 : 500);
         if (s.retrigger) { left += ATLAS.freeSpins; setFs({ special, left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<Retrigger />); await sleep(1500); setBanner(null); }
       }
@@ -152,8 +155,9 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
             <AnimatePresence>{banner && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center rounded-2xl bg-black/70 backdrop-blur-sm">{banner}</motion.div>
             )}</AnimatePresence>
-            <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} onDone={() => bigDone.current()} />
+            <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} short={big?.short} onDone={() => bigDone.current()} />
           </div>
+          <DryCounter dry={dry} prev={prev} avg={150} />
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={ATLAS.buyPrice}
               auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#b5122f", "#ff6b7a"]} lastWin={lastWin} />

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { points } from "@/lib/format";
@@ -140,34 +141,121 @@ function Pill({ children, onClick, active, disabled, gold }: { children: React.R
   );
 }
 
-/** Крупный выигрыш: всплывающая надпись со счётчиком. */
-export function WinOverlay({ show, mult, amount, onDone, label }: { show: boolean; mult: number; amount: string; onDone: () => void; label?: string }) {
-  const [shown, setShown] = useState(0);
+/** Уровни крупного выигрыша (в разах от ставки): надпись «растёт», пока докручивается сумма. */
+const TIERS = [
+  { at: 0, title: "ОТЛИЧНО!", c: ["#8fdcff", "#ffffff"] },
+  { at: 10, title: "БОЛЬШОЙ ВЫИГРЫШ", c: ["#ffd166", "#fff6d0"] },
+  { at: 25, title: "ОГРОМНЫЙ ВЫИГРЫШ", c: ["#ff6b8b", "#ffd166"] },
+  { at: 50, title: "МЕГА ВЫИГРЫШ", c: ["#8fdcff", "#d8a8ff"] },
+  { at: 100, title: "ЭПИЧЕСКИЙ ВЫИГРЫШ", c: ["#3ee08f", "#ffd166"] },
+] as const;
+const RAIN = ["🪙", "⭐", "❄️", "🎁", "✨", "🪙", "💰"];
+const fmt = (v: number) => v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/**
+ * Крупный выигрыш на весь экран: вращающиеся лучи, дождь из монет, снежинок и подарков,
+ * счётчик суммы, а надпись повышается по уровням (×10 → ×25 → ×50 → ×100) с тряской и вспышкой.
+ * Клик: первый — сразу досчитать, второй — закрыть. short — короткая версия (выигрыш внутри бонуса).
+ */
+export function WinOverlay({ show, mult, amount, onDone, label, short = false }: { show: boolean; mult: number; amount: string; onDone: () => void; label?: string; short?: boolean }) {
+  const [k, setK] = useState(0);
+  const skip = useRef(false);
+  const done = useRef(onDone); done.current = onDone;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const dur = short ? 1500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
   useEffect(() => {
-    if (!show) return;
-    const target = Number(amount) / 100; const t0 = performance.now(); let raf = 0;
-    const tick = (t: number) => { const k = Math.min(1, (t - t0) / 1400); setShown(target * (1 - Math.pow(1 - k, 3))); if (k < 1) raf = requestAnimationFrame(tick); };
+    if (!show) { setK(0); skip.current = false; return; }
+    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined;
+    const tick = (t: number) => {
+      const p = skip.current ? 1 : Math.min(1, (t - t0) / dur);
+      setK(p);
+      if (p < 1) raf = requestAnimationFrame(tick); else to = setTimeout(() => done.current(), short ? 1100 : 2600);
+    };
     raf = requestAnimationFrame(tick);
-    const to = setTimeout(onDone, 2600);
-    return () => { cancelAnimationFrame(raf); clearTimeout(to); };
-  }, [show, amount, onDone]);
-  const title = label ?? (mult >= 50 ? "МЕГА ВЫИГРЫШ" : mult >= 20 ? "КРУПНЫЙ ВЫИГРЫШ" : "ОТЛИЧНО!");
-  return (
+    return () => { cancelAnimationFrame(raf); if (to) clearTimeout(to); };
+  }, [show, amount, dur, short]);
+  const e = 1 - Math.pow(1 - k, 2);
+  const shownMult = mult * e;
+  const tierIdx = TIERS.reduce((best, t, i) => (shownMult >= t.at ? i : best), 0);
+  const tier = TIERS[tierIdx]!;
+  const [c1, c2] = tier.c;
+  // Вибрация телефона при каждом новом уровне
+  useEffect(() => { if (show && tierIdx > 0) try { navigator.vibrate?.(tierIdx >= 3 ? [60, 40, 90] : 50); } catch {} }, [tierIdx, show]);
+  const rain = useMemo(() => Array.from({ length: short ? 18 : 42 }, (_, i) => ({
+    ch: RAIN[i % RAIN.length]!, left: Math.random() * 100, delay: Math.random() * 2.2, dur: 2.2 + Math.random() * 2.4, size: 18 + Math.random() * 22, rot: (Math.random() - 0.5) * 720,
+  })), [show, short]); // eslint-disable-line react-hooks/exhaustive-deps
+  const click = () => { if (k < 1) skip.current = true; else done.current(); };
+  if (!mounted) return null;
+  return createPortal(
     <AnimatePresence>
       {show && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onDone} className="absolute inset-0 z-30 grid place-items-center rounded-2xl bg-black/60 backdrop-blur-[2px]">
-          <motion.div initial={{ scale: 0.4, rotate: -6 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 220, damping: 14 }} className="text-center">
-            <p className="font-display text-[clamp(22px,5vw,40px)] font-bold text-gradient drop-shadow-[0_4px_20px_rgb(251_191_36/0.6)]">{title}</p>
-            <p className="mt-1 font-mono text-[clamp(30px,7vw,60px)] font-bold text-gold tabular drop-shadow-[0_0_24px_rgb(251_191_36/0.7)]">{shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-            <p className="font-mono text-white/80">{mult.toFixed(2)}× ставки</p>
-          </motion.div>
-          {Array.from({ length: 18 }, (_, i) => (
-            <motion.span key={i} className="absolute size-2 rounded-full" style={{ background: LINE_COLORS[i % LINE_COLORS.length], left: "50%", top: "50%" }}
-              initial={{ x: 0, y: 0, opacity: 1 }} animate={{ x: Math.cos(i * 0.35) * 260, y: Math.sin(i * 0.35) * 180 - 40, opacity: 0 }} transition={{ duration: 1.4, delay: 0.1 }} />
+        <motion.div key="bigwin" data-testid="big-win" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.35 } }} onClick={click}
+          className="fixed inset-0 z-[70] grid cursor-pointer select-none place-items-center overflow-hidden"
+          style={{ background: `radial-gradient(circle at 50% 45%, ${c1}55, #070b1fe6 55%, #02040ff2)` }}>
+          {/* Вращающиеся лучи */}
+          <motion.div aria-hidden className="pointer-events-none absolute left-1/2 top-[45%] size-[220vmax] -translate-x-1/2 -translate-y-1/2 opacity-30"
+            style={{ background: `repeating-conic-gradient(from 0deg, ${c1} 0deg 7deg, transparent 7deg 18deg)`, maskImage: "radial-gradient(circle, #000 0%, transparent 38%)", WebkitMaskImage: "radial-gradient(circle, #000 0%, transparent 38%)" }}
+            animate={{ rotate: 360 }} transition={{ duration: 14, repeat: Infinity, ease: "linear" }} />
+          {/* Дождь из монет, звёзд, снежинок и подарков */}
+          {rain.map((r, i) => (
+            <motion.span key={i} aria-hidden className="pointer-events-none absolute top-0" style={{ left: `${r.left}%`, fontSize: r.size }}
+              initial={{ y: "-12vh", rotate: 0, opacity: 0 }} animate={{ y: "112vh", rotate: r.rot, opacity: [0, 1, 1, 0.8] }}
+              transition={{ duration: r.dur, delay: r.delay, repeat: Infinity, ease: "easeIn" }}>{r.ch}</motion.span>
           ))}
+          {/* Ударная волна и вспышка при каждом новом уровне */}
+          <motion.div key={`wave${tierIdx}`} aria-hidden className="pointer-events-none absolute left-1/2 top-[45%] size-40 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
+            style={{ borderColor: c1, boxShadow: `0 0 60px ${c1}` }} initial={{ scale: 0.2, opacity: 1 }} animate={{ scale: 9, opacity: 0 }} transition={{ duration: 1.1, ease: "easeOut" }} />
+          <motion.div key={`flash${tierIdx}`} aria-hidden className="pointer-events-none absolute inset-0" style={{ background: c2 }} initial={{ opacity: tierIdx ? 0.45 : 0 }} animate={{ opacity: 0 }} transition={{ duration: 0.5 }} />
+          {Array.from({ length: 22 }, (_, i) => (
+            <motion.span key={`b${tierIdx}-${i}`} aria-hidden className="pointer-events-none absolute left-1/2 top-[45%] size-2.5 rounded-full"
+              style={{ background: i % 2 ? c1 : c2, boxShadow: `0 0 12px ${c1}` }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 1.4 }} animate={{ x: Math.cos((i / 22) * Math.PI * 2) * (240 + (i % 3) * 70), y: Math.sin((i / 22) * Math.PI * 2) * (200 + (i % 4) * 50), opacity: 0, scale: 0.4 }}
+              transition={{ duration: 1.2, ease: "easeOut" }} />
+          ))}
+          {/* Надпись, сумма и множитель */}
+          <motion.div key={`shake${tierIdx}`} className="relative z-10 grid place-items-center px-4 text-center"
+            animate={tierIdx ? { x: [0, -14, 12, -9, 7, -4, 0], y: [0, 6, -8, 5, -3, 0] } : {}} transition={{ duration: 0.5 }}>
+            <motion.p key={`t${tierIdx}`} initial={{ scale: 0.3, rotate: -8, opacity: 0 }} animate={{ scale: [0.3, 1.25, 1], rotate: 0, opacity: 1 }} transition={{ duration: 0.55 }}
+              className="font-display text-[clamp(30px,8vw,84px)] font-bold leading-[1.05] tracking-wide"
+              style={{ backgroundImage: `linear-gradient(180deg, ${c2}, ${c1})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", filter: `drop-shadow(0 0 22px ${c1}) drop-shadow(0 4px 0 #0008)` }}>
+              {tierIdx === 0 && label ? "ИТОГ БОНУСА" : tier.title}
+            </motion.p>
+            <motion.p animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 0.45, repeat: Infinity }}
+              className="mt-2 font-mono text-[clamp(40px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 30px ${c1}, 0 0 60px #ffd16688` }}>
+              {fmt((Number(amount) / 100) * e)}
+            </motion.p>
+            <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×{shownMult.toFixed(2)} ставки</p>
+            {label && <p className="mt-3 text-[clamp(14px,3vw,18px)] font-semibold text-white/85">{label}</p>}
+            <p className="mt-6 text-[12px] text-white/45">{k < 1 ? "нажми, чтобы досчитать" : "нажми, чтобы продолжить"}</p>
+          </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
+  );
+}
+
+/** Сколько обычных спинов сделано с последнего выпавшего бонуса (хранится на сервере). */
+export function useDrySpins(slug: string, loggedIn: boolean) {
+  const [dry, setDry] = useState<number | null>(null);
+  const [prev, setPrev] = useState<number | null>(null);
+  useEffect(() => {
+    if (!loggedIn) { setDry(null); return; }
+    fetch(`/api/games/${slug}/dry`).then((r) => r.json()).then((x: { spins: number | null }) => setDry(x.spins)).catch(() => {});
+  }, [slug, loggedIn]);
+  /** Вызывается после обычного спина: bonus — выпал ли бонус. */
+  const count = (bonus: boolean) => setDry((d) => { const n = (d ?? 0) + 1; if (bonus) { setPrev(n); return 0; } return n; });
+  return { dry, prev, count };
+}
+
+export function DryCounter({ dry, prev, avg }: { dry: number | null; prev: number | null; avg: number }) {
+  if (dry === null) return null;
+  return (
+    <div data-testid="dry-counter" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-black/45 px-3 py-2 text-[13px] ring-1 ring-white/10 backdrop-blur-sm">
+      <span className="text-white/75">🎁 Спинов без бонуса: <motion.b key={dry} initial={{ scale: 1.35 }} animate={{ scale: 1 }} className="inline-block font-mono text-[15px] text-gold">{dry}</motion.b></span>
+      <span className="text-[12px] text-white/50">{prev !== null ? `прошлый бонус — на ${prev}-м спине · ` : ""}в среднем раз в ~{avg}</span>
+    </div>
   );
 }
 
