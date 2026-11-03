@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { points } from "@/lib/format";
+import { points, SNOW } from "@/lib/format";
 import { parsePoints, unitsToInput, type GameConfig } from "../kit";
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -32,7 +32,7 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
         const waiting = extra(reel) > 0 && !stopped.includes(reel);
         return (
           <div key={reel} className={`relative overflow-hidden rounded-xl bg-black/35 ring-1 transition-shadow ${waiting ? "ring-2 ring-gold" : "ring-white/10"}`} style={{ aspectRatio: `1 / ${rows}` }}>
-            {waiting && <motion.div aria-hidden className="pointer-events-none absolute inset-0 z-10 rounded-xl" animate={{ boxShadow: ["inset 0 0 12px rgb(251 191 36 / 0.3)", "inset 0 0 34px rgb(251 191 36 / 0.85)", "inset 0 0 12px rgb(251 191 36 / 0.3)"] }} transition={{ duration: 0.6, repeat: Infinity }} />}
+            {waiting && <div aria-hidden className="reel-wait pointer-events-none absolute inset-0 z-10 rounded-xl shadow-[inset_0_0_34px_rgb(251_191_36/0.85)]" />}
             <motion.div key={`${spinKey}-${reel}`} className="absolute inset-x-0 top-0"
               style={{ height: `${(strip.length / rows) * 100}%` }}
               initial={spinKey ? { y: `${-(fill(reel) / strip.length) * 100}%` } : false}
@@ -43,10 +43,11 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
                 const id = `${reel}:${row}`; const hot = !!highlight?.has(id) && row < rows; const dim = !!highlight && highlight.size > 0 && !hot;
                 return (
                   <div key={row} className={`relative p-[5%] ${cellClass}`} style={{ height: `${100 / strip.length}%` }}>
-                    <motion.div className="relative size-full" animate={hot ? { scale: [1, 1.12, 1] } : { scale: 1 }} transition={hot ? { duration: 0.7, repeat: Infinity } : {}}
-                      style={{ opacity: dim ? 0.35 : 1, filter: hot ? "drop-shadow(0 0 10px rgb(251 191 36 / 0.9))" : undefined }}>
+                    {/* Свечение — неподвижный градиент, пульсация — CSS transform (без filter, чтобы не грузить телефон) */}
+                    {hot && <span aria-hidden className="pointer-events-none absolute inset-0 rounded-lg bg-[radial-gradient(circle,rgb(251_191_36/0.55),transparent_70%)]" />}
+                    <div className={`relative size-full ${hot ? "cell-hot" : ""}`} style={{ opacity: dim ? 0.35 : 1 }}>
                       {render(cell, { reel, row, dim, hot })}
-                    </motion.div>
+                    </div>
                   </div>
                 );
               })}
@@ -56,12 +57,18 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
       })}
       {lines && linePatterns && lines.length > 0 && (
         <svg className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${reels * 100} ${rows * 100}`} preserveAspectRatio="none" aria-hidden>
-          {lines.map((w, k) => (
-            <motion.polyline key={w.line} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: k * 0.08 }}
-              points={linePatterns[w.line]!.map((row, reel) => `${reel * 100 + 50},${row * 100 + 50}`).join(" ")}
-              fill="none" stroke={LINE_COLORS[w.line % LINE_COLORS.length]} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} vectorEffect="non-scaling-stroke"
-              style={{ filter: "drop-shadow(0 0 4px rgb(0 0 0 / 0.6))" }} />
-          ))}
+          {lines.map((w, k) => {
+            const pts = linePatterns[w.line]!.map((row, reel) => `${reel * 100 + 50},${row * 100 + 50}`).join(" ");
+            return (
+              <g key={w.line}>
+                {/* Тёмная подложка вместо тяжёлого фильтра тени */}
+                <motion.polyline initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: k * 0.08 }} points={pts}
+                  fill="none" stroke="#000" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} vectorEffect="non-scaling-stroke" />
+                <motion.polyline initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: k * 0.08 }} points={pts}
+                  fill="none" stroke={LINE_COLORS[w.line % LINE_COLORS.length]} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} vectorEffect="non-scaling-stroke" />
+              </g>
+            );
+          })}
         </svg>
       )}
       {overlay}
@@ -96,7 +103,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
   const buyCost = units * BigInt(buyPrice);
   return (
     <div className="grid min-w-0 gap-3">
-      <div className="flex min-w-0 items-center justify-between gap-1 rounded-2xl bg-black/40 p-1.5 sm:gap-2 sm:p-2 ring-1 ring-white/10 backdrop-blur">
+      <div className="flex min-w-0 items-center justify-between gap-1 rounded-2xl bg-black/55 p-1.5 sm:gap-2 sm:p-2 ring-1 ring-white/10">
         <div className="min-w-0 px-1 sm:px-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Ставка</p>
           <p className="truncate font-mono text-[14px] font-bold tabular sm:text-[18px]">{points(units)}</p>
@@ -151,84 +158,100 @@ const TIERS = [
 ] as const;
 const RAIN = ["🪙", "⭐", "❄️", "🎁", "✨", "🪙", "💰"];
 const fmt = (v: number) => v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const tierOf = (m: number) => TIERS.reduce((best, t, i) => (m >= t.at ? i : best), 0);
 
 /**
  * Крупный выигрыш на весь экран: вращающиеся лучи, дождь из монет, снежинок и подарков,
  * счётчик суммы, а надпись повышается по уровням (×10 → ×25 → ×50 → ×100) с тряской и вспышкой.
+ * Производительность: счётчик пишет цифры прямо в DOM (без перерисовки React каждый кадр),
+ * все эффекты — CSS-анимации transform/opacity на видеокарте; на телефонах частиц меньше.
  * Клик: первый — сразу досчитать, второй — закрыть. short — короткая версия (выигрыш внутри бонуса).
  */
 export function WinOverlay({ show, mult, amount, onDone, label, short = false }: { show: boolean; mult: number; amount: string; onDone: () => void; label?: string; short?: boolean }) {
-  const [k, setK] = useState(0);
+  const [tierIdx, setTierIdx] = useState(0);
+  const [finished, setFinished] = useState(false);
   const skip = useRef(false);
   const done = useRef(onDone); done.current = onDone;
+  const amountEl = useRef<HTMLSpanElement>(null);
+  const multEl = useRef<HTMLSpanElement>(null);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const dur = short ? 1500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
+  const [lite, setLite] = useState(false);
   useEffect(() => {
-    if (!show) { setK(0); skip.current = false; return; }
-    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined;
+    setMounted(true);
+    // Слабее эффекты на телефонах и при «уменьшить движение»
+    setLite(window.matchMedia("(max-width: 640px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches);
+  }, []);
+  const dur = short ? 1500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
+  const target = Number(amount) / 100;
+
+  useEffect(() => {
+    if (!show) { setTierIdx(0); setFinished(false); skip.current = false; return; }
+    document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый снег под оверлеем
+    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0;
     const tick = (t: number) => {
       const p = skip.current ? 1 : Math.min(1, (t - t0) / dur);
-      setK(p);
-      if (p < 1) raf = requestAnimationFrame(tick); else to = setTimeout(() => done.current(), short ? 1100 : 2600);
+      const e = 1 - Math.pow(1 - p, 2);
+      // Цифры обновляем ~30 раз в секунду напрямую в DOM — без перерисовки всего оверлея
+      if (t - lastDraw > 33 || p === 1) {
+        lastDraw = t;
+        if (amountEl.current) amountEl.current.textContent = fmt(target * e);
+        if (multEl.current) multEl.current.textContent = (mult * e).toFixed(2);
+      }
+      const ti = tierOf(mult * e);
+      if (ti !== lastTier) {
+        lastTier = ti; setTierIdx(ti);
+        try { navigator.vibrate?.(ti >= 3 ? [60, 40, 90] : 50); } catch {}
+      }
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else { setFinished(true); to = setTimeout(() => done.current(), short ? 1100 : 2600); }
     };
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); if (to) clearTimeout(to); };
-  }, [show, amount, dur, short]);
-  const e = 1 - Math.pow(1 - k, 2);
-  const shownMult = mult * e;
-  const tierIdx = TIERS.reduce((best, t, i) => (shownMult >= t.at ? i : best), 0);
+    return () => { cancelAnimationFrame(raf); if (to) clearTimeout(to); document.documentElement.classList.remove("bigwin-open"); };
+  }, [show, target, mult, dur, short]);
+
   const tier = TIERS[tierIdx]!;
   const [c1, c2] = tier.c;
-  // Вибрация телефона при каждом новом уровне
-  useEffect(() => { if (show && tierIdx > 0) try { navigator.vibrate?.(tierIdx >= 3 ? [60, 40, 90] : 50); } catch {} }, [tierIdx, show]);
-  const rain = useMemo(() => Array.from({ length: short ? 18 : 42 }, (_, i) => ({
-    ch: RAIN[i % RAIN.length]!, left: Math.random() * 100, delay: Math.random() * 2.2, dur: 2.2 + Math.random() * 2.4, size: 18 + Math.random() * 22, rot: (Math.random() - 0.5) * 720,
-  })), [show, short]); // eslint-disable-line react-hooks/exhaustive-deps
-  const click = () => { if (k < 1) skip.current = true; else done.current(); };
+  const rain = useMemo(() => Array.from({ length: lite ? (short ? 8 : 14) : short ? 16 : 32 }, (_, i) => ({
+    ch: RAIN[i % RAIN.length]!, left: Math.random() * 96, delay: -Math.random() * 3, dur: 2.4 + Math.random() * 2.2, size: 18 + Math.random() * 20, rot: Math.round((Math.random() - 0.5) * 540),
+  })), [show, short, lite]); // eslint-disable-line react-hooks/exhaustive-deps
+  const burst = lite ? 10 : 18;
+  const click = () => { if (!finished) skip.current = true; else done.current(); };
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence>
       {show && (
-        <motion.div key="bigwin" data-testid="big-win" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.35 } }} onClick={click}
-          className="fixed inset-0 z-[70] grid cursor-pointer select-none place-items-center overflow-hidden"
-          style={{ background: `radial-gradient(circle at 50% 45%, ${c1}55, #070b1fe6 55%, #02040ff2)` }}>
-          {/* Вращающиеся лучи */}
-          <motion.div aria-hidden className="pointer-events-none absolute left-1/2 top-[45%] size-[220vmax] -translate-x-1/2 -translate-y-1/2 opacity-30"
-            style={{ background: `repeating-conic-gradient(from 0deg, ${c1} 0deg 7deg, transparent 7deg 18deg)`, maskImage: "radial-gradient(circle, #000 0%, transparent 38%)", WebkitMaskImage: "radial-gradient(circle, #000 0%, transparent 38%)" }}
-            animate={{ rotate: 360 }} transition={{ duration: 14, repeat: Infinity, ease: "linear" }} />
-          {/* Дождь из монет, звёзд, снежинок и подарков */}
+        <motion.div key="bigwin" data-testid="big-win" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }} onClick={click}
+          className="bigwin fixed inset-0 z-[70] grid cursor-pointer select-none place-items-center overflow-hidden"
+          style={{ background: `radial-gradient(circle at 50% 45%, ${c1}38, transparent 60%), rgb(4 7 20 / 0.94)`, contain: "strict" }}>
+          {/* Вращающиеся лучи: один слой на видеокарте, затухание к краям — отдельный неподвижный слой */}
+          <div aria-hidden className="bw-rays" style={{ background: `repeating-conic-gradient(from 0deg, ${c1}55 0deg 7deg, transparent 7deg 18deg)` }} />
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 50% 45%, transparent 0, transparent 18%, #070b1f 62%)" }} />
+          {/* Дождь из монет, звёзд, снежинок и подарков — чистый CSS */}
           {rain.map((r, i) => (
-            <motion.span key={i} aria-hidden className="pointer-events-none absolute top-0" style={{ left: `${r.left}%`, fontSize: r.size }}
-              initial={{ y: "-12vh", rotate: 0, opacity: 0 }} animate={{ y: "112vh", rotate: r.rot, opacity: [0, 1, 1, 0.8] }}
-              transition={{ duration: r.dur, delay: r.delay, repeat: Infinity, ease: "easeIn" }}>{r.ch}</motion.span>
+            <span key={i} aria-hidden className="bw-drop" style={{ left: `${r.left}%`, fontSize: r.size, animationDuration: `${r.dur}s`, animationDelay: `${r.delay}s`, ["--rot" as string]: `${r.rot}deg` }}>{r.ch}</span>
           ))}
-          {/* Ударная волна и вспышка при каждом новом уровне */}
-          <motion.div key={`wave${tierIdx}`} aria-hidden className="pointer-events-none absolute left-1/2 top-[45%] size-40 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
-            style={{ borderColor: c1, boxShadow: `0 0 60px ${c1}` }} initial={{ scale: 0.2, opacity: 1 }} animate={{ scale: 9, opacity: 0 }} transition={{ duration: 1.1, ease: "easeOut" }} />
-          <motion.div key={`flash${tierIdx}`} aria-hidden className="pointer-events-none absolute inset-0" style={{ background: c2 }} initial={{ opacity: tierIdx ? 0.45 : 0 }} animate={{ opacity: 0 }} transition={{ duration: 0.5 }} />
-          {Array.from({ length: 22 }, (_, i) => (
-            <motion.span key={`b${tierIdx}-${i}`} aria-hidden className="pointer-events-none absolute left-1/2 top-[45%] size-2.5 rounded-full"
-              style={{ background: i % 2 ? c1 : c2, boxShadow: `0 0 12px ${c1}` }}
-              initial={{ x: 0, y: 0, opacity: 1, scale: 1.4 }} animate={{ x: Math.cos((i / 22) * Math.PI * 2) * (240 + (i % 3) * 70), y: Math.sin((i / 22) * Math.PI * 2) * (200 + (i % 4) * 50), opacity: 0, scale: 0.4 }}
-              transition={{ duration: 1.2, ease: "easeOut" }} />
-          ))}
+          {/* Ударная волна, вспышка и искры при каждом новом уровне (перезапуск через key) */}
+          <div key={`fx${tierIdx}`} aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="bw-wave" style={{ borderColor: c1 }} />
+            {tierIdx > 0 && <div className="bw-flash" style={{ background: c2 }} />}
+            {Array.from({ length: burst }, (_, i) => {
+              const a = (i / burst) * Math.PI * 2; const r = 200 + (i % 3) * 60;
+              return <span key={i} className="bw-spark" style={{ background: i % 2 ? c1 : c2, ["--x" as string]: `${Math.round(Math.cos(a) * r)}px`, ["--y" as string]: `${Math.round(Math.sin(a) * r * 0.85)}px` }} />;
+            })}
+          </div>
           {/* Надпись, сумма и множитель */}
-          <motion.div key={`shake${tierIdx}`} className="relative z-10 grid place-items-center px-4 text-center"
-            animate={tierIdx ? { x: [0, -14, 12, -9, 7, -4, 0], y: [0, 6, -8, 5, -3, 0] } : {}} transition={{ duration: 0.5 }}>
-            <motion.p key={`t${tierIdx}`} initial={{ scale: 0.3, rotate: -8, opacity: 0 }} animate={{ scale: [0.3, 1.25, 1], rotate: 0, opacity: 1 }} transition={{ duration: 0.55 }}
-              className="font-display text-[clamp(30px,8vw,84px)] font-bold leading-[1.05] tracking-wide"
-              style={{ backgroundImage: `linear-gradient(180deg, ${c2}, ${c1})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", filter: `drop-shadow(0 0 22px ${c1}) drop-shadow(0 4px 0 #0008)` }}>
-              {tierIdx === 0 && label ? "ИТОГ БОНУСА" : tier.title}
-            </motion.p>
-            <motion.p animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 0.45, repeat: Infinity }}
-              className="mt-2 font-mono text-[clamp(40px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 30px ${c1}, 0 0 60px #ffd16688` }}>
-              {fmt((Number(amount) / 100) * e)} ₽
-            </motion.p>
-            <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×{shownMult.toFixed(2)} ставки</p>
+          <div key={`sh${tierIdx}`} className={`relative z-10 grid place-items-center px-4 text-center ${tierIdx ? "bw-shake" : ""}`}>
+            <p key={`t${tierIdx}`} className="bw-pop font-display text-[clamp(30px,8vw,84px)] font-bold leading-[1.05] tracking-wide"
+              style={{ backgroundImage: `linear-gradient(180deg, ${c2}, ${c1})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+              {tierIdx === 0 && label && !short ? "ИТОГ БОНУСА" : tier.title}
+            </p>
+            <p className="mt-2 font-mono text-[clamp(38px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 18px ${c1}` }}>
+              <span ref={amountEl}>0,00</span> {SNOW}
+            </p>
+            <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×<span ref={multEl}>0.00</span> ставки</p>
             {label && <p className="mt-3 text-[clamp(14px,3vw,18px)] font-semibold text-white/85">{label}</p>}
-            <p className="mt-6 text-[12px] text-white/45">{k < 1 ? "нажми, чтобы досчитать" : "нажми, чтобы продолжить"}</p>
-          </motion.div>
+            <p className="mt-6 text-[12px] text-white/45">{finished ? "нажми, чтобы продолжить" : "нажми, чтобы досчитать"}</p>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>,
@@ -252,7 +275,7 @@ export function useDrySpins(slug: string, loggedIn: boolean) {
 export function DryCounter({ dry, prev, avg }: { dry: number | null; prev: number | null; avg: number }) {
   if (dry === null) return null;
   return (
-    <div data-testid="dry-counter" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-black/45 px-3 py-2 text-[13px] ring-1 ring-white/10 backdrop-blur-sm">
+    <div data-testid="dry-counter" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-black/60 px-3 py-2 text-[13px] ring-1 ring-white/10">
       <span className="text-white/75">🎁 Спинов без бонуса: <motion.b key={dry} initial={{ scale: 1.35 }} animate={{ scale: 1 }} className="inline-block font-mono text-[15px] text-gold">{dry}</motion.b></span>
       <span className="text-[12px] text-white/50">{prev !== null ? `прошлый бонус — на ${prev}-м спине · ` : ""}в среднем раз в ~{avg}</span>
     </div>
@@ -300,13 +323,17 @@ export type BonusState = { left: number; done: number; total: string; add: strin
  * После каждого вращения сумма плавно докручивается, а сверху всплывает «+выигрыш спина».
  */
 export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | null; color?: string }) {
-  const [shown, setShown] = useState(0);
+  const el = useRef<HTMLSpanElement>(null);
   const from = useRef(0);
   const target = state ? Number(state.total) / 100 : 0;
   useEffect(() => {
-    if (!state) { from.current = 0; setShown(0); return; }
-    const a = from.current, b = target; const t0 = performance.now(); let raf = 0;
-    const tick = (t: number) => { const k = Math.min(1, (t - t0) / 700); const v = a + (b - a) * (1 - Math.pow(1 - k, 3)); from.current = v; setShown(v); if (k < 1) raf = requestAnimationFrame(tick); };
+    if (!state) { from.current = 0; return; }
+    const a = from.current, b = target; const t0 = performance.now(); let raf = 0; let last = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / 700); const v = a + (b - a) * (1 - Math.pow(1 - k, 3)); from.current = v;
+      if (el.current && (t - last > 33 || k === 1)) { last = t; el.current.textContent = v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [target, !!state]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -314,7 +341,7 @@ export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | n
     <AnimatePresence>
       {state && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} data-testid="bonus-total"
-          className="relative flex items-center justify-between gap-3 rounded-2xl bg-black/60 px-4 py-2.5 ring-2 backdrop-blur-sm" style={{ boxShadow: `0 0 30px -8px ${color}`, ["--tw-ring-color" as string]: color }}>
+          className="relative flex items-center justify-between gap-3 rounded-2xl bg-black/75 px-4 py-2.5 ring-2" style={{ boxShadow: `0 0 30px -8px ${color}`, ["--tw-ring-color" as string]: color }}>
           <div className="text-[12px] font-semibold uppercase leading-tight tracking-wider text-white/70">
             <span className="block text-[13px] text-white">🎁 Бонус</span>
             Спин {state.done} · осталось {state.left}
@@ -322,8 +349,8 @@ export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | n
           <div className="relative text-right">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш в бонусе</p>
             <motion.p key={state.tick} animate={state.add ? { scale: [1.18, 1] } : {}} transition={{ duration: 0.35 }}
-              className="font-mono text-[clamp(22px,5vw,30px)] font-bold leading-none tabular" style={{ color, textShadow: `0 0 18px ${color}` }}>
-              {shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
+              className="font-mono text-[clamp(22px,5vw,30px)] font-bold leading-none tabular" style={{ color, textShadow: `0 0 10px ${color}` }}>
+              <span ref={el}>{from.current.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> {SNOW}
             </motion.p>
             <AnimatePresence>
               {state.add && (

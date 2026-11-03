@@ -137,7 +137,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
             <Reels grid={grid} rows={4} spinKey={spinKey} turbo={turbo || !!fs} filler={randomCell} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Cell c={c} />} highlight={hl} lines={lines} linePatterns={NEON.lines} />
             <AnimatePresence>{banner && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center rounded-2xl bg-black/75 p-3 backdrop-blur-sm">{banner}</motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center rounded-2xl bg-black/75 p-3 ">{banner}</motion.div>
             )}</AnimatePresence>
             <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} short={big?.short} onDone={() => bigDone.current()} />
           </div>

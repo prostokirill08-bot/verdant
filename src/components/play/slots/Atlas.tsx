@@ -25,8 +25,11 @@ export function Sym({ s, big }: { s: string; big?: boolean }) {
   const [a, b] = RANK[s] ?? ["#fff", "#999"];
   return (
     <span className="grid size-full place-items-center rounded-lg bg-[radial-gradient(circle,rgb(255_255_255/0.06),transparent_70%)]">
-      <span className={`font-display font-bold leading-none ${big ? "text-[64px]" : "text-[clamp(24px,6vw,44px)]"}`}
-        style={{ background: `linear-gradient(180deg, #fff 0%, ${a} 45%, ${b} 100%)`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", WebkitTextStroke: "1px rgb(255 255 255 / 0.35)", filter: `drop-shadow(0 3px 0 ${b}) drop-shadow(0 0 10px ${a}88)` }}>{s}</span>
+      {/* Объём буквы — подложка из той же надписи (вместо filter: drop-shadow, который тормозит на телефонах) */}
+      <span className={`relative grid font-display font-bold leading-none ${big ? "text-[64px]" : "text-[clamp(24px,6vw,44px)]"}`}>
+        <span aria-hidden className="col-start-1 row-start-1 translate-y-[3px]" style={{ color: b, textShadow: `0 0 10px ${a}88` }}>{s}</span>
+        <span className="col-start-1 row-start-1" style={{ background: `linear-gradient(180deg, #fff 0%, ${a} 45%, ${b} 100%)`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", WebkitTextStroke: "1px rgb(255 255 255 / 0.35)" }}>{s}</span>
+      </span>
     </span>
   );
 }
@@ -153,7 +156,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
                 </div>
               )} />
             <AnimatePresence>{banner && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center rounded-2xl bg-black/70 backdrop-blur-sm">{banner}</motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center rounded-2xl bg-black/70 ">{banner}</motion.div>
             )}</AnimatePresence>
             <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} short={big?.short} onDone={() => bigDone.current()} />
           </div>
