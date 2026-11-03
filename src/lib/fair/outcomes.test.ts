@@ -101,3 +101,11 @@ test("Новые игры: колесо RTP 99%, кено без повторо�
     assert.ok(rtp > 0.95 && rtp < 0.98, `keno ${k}: ${rtp}`);
   }
 });
+
+test("Интрига: включается после второго бонус-символа", async () => {
+  const { anticipationFrom } = await import("./slots");
+  const g = (cols: string[][]) => cols;
+  assert.equal(anticipationFrom(g([["b", "x"], ["x", "x"], ["b", "x"], ["x", "x"], ["x", "x"]]), "b"), 3);
+  assert.equal(anticipationFrom(g([["b", "b"], ["x", "x"], ["x", "x"], ["x", "x"], ["x", "x"]]), "b"), 1);
+  assert.equal(anticipationFrom(g([["b", "x"], ["x", "x"], ["x", "x"], ["x", "x"], ["b", "x"]]), "b"), null);
+});

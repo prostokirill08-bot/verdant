@@ -61,7 +61,7 @@ ok("wheel", (await p.req("/api/games/wheel/bet", { amount: "1", params: { risk: 
 ok("keno", (await p.req("/api/games/keno/bet", { amount: "1", params: { picks: [1, 2, 3, 4, 5] }, key: key() })).j.round?.result.drawn.length === 10);
 ok("keno: повтор чисел → 400", (await p.req("/api/games/keno/bet", { amount: "1", params: { picks: [1, 1] }, key: key() })).s === 400);
 ok("слот «Атлас»", (await p.req("/api/games/atlas/bet", { amount: "1", params: { buy: false }, key: key() })).j.round?.result.base.grid.length === 5);
-ok("слот «Неоновый сад»: покупка бонуса", (await p.req("/api/games/neon-garden/bet", { amount: "1", params: { buy: true }, key: key() })).j.round?.bet === "2800");
+ok("слот «Неоновый сад»: покупка бонуса", (await p.req("/api/games/neon-garden/bet", { amount: "1", params: { buy: true }, key: key() })).j.round?.result.fs?.spins.length >= 10);
 r = await p.req("/api/tower/start", { amount: "1", level: "hard", key: key() });
 ok("tower: старт без раскрытия ловушек", r.s === 200 && !r.j.round.state.traps);
 r = await p.req("/api/tower/pick", { tile: 0 });

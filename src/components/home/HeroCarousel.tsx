@@ -10,7 +10,7 @@ type Slide = { img: string; kicker: string; title: React.ReactNode; text: string
 export function HeroCarousel({ loggedIn }: { loggedIn: boolean }) {
   const slides: Slide[] = [
     { img: "/img/banners/main.webp", kicker: "Демо-режим · виртуальные баллы", title: <>Играй без риска.<br /><span className="text-gradient">1 000 баллов</span> на старт</>, text: "Слоты, Crash, Mines, Plinko и другие игры. Баллы нельзя купить или вывести — только азарт и честные результаты.", cta: loggedIn ? "К играм" : "Забрать 1 000 баллов", href: loggedIn ? "/games" : "/register", tint: "#8b5cf6" },
-    { img: "/img/banners/slots.webp", kicker: "Новинки", title: <>Новые слоты:<br /><span className="text-gradient">Атлас звёзд</span> и Неоновый сад</>, text: "Бесплатные вращения с раскрывающимся символом, пять бонусов и джекпот до 1000×.", cta: "Крутить слоты", href: "/games?cat=slots", tint: "#ec4899" },
+    { img: "/img/banners/slots.webp", kicker: "Новинки", title: <>Новые слоты:<br /><span className="text-gradient">Атлас звёзд</span> и Неоновый сад</>, text: "Три символа BONUS — и бесплатные вращения: раскрывающийся символ в «Атласе» и выигрыши ×3 в «Саду».", cta: "Крутить слоты", href: "/games?cat=slots", tint: "#ec4899" },
     { img: "/img/banners/crash.webp", kicker: "Хит · реальное время", title: <>Crash: ракета летит.<br /><span className="text-gradient">Успей забрать</span></>, text: "Общий раунд для всех игроков. Множитель растёт, пока ракета не взорвётся.", cta: "Запустить ракету", href: "/games/crash", tint: "#22d3ee" },
   ];
   const [i, setI] = useState(0);

@@ -13,7 +13,7 @@ const GAMES = [
   { slug: "keno", title: "Кено", tagline: "Выбери до 10 чисел — выпадет 10 из 40", sortOrder: 3 },
   { slug: "coinflip", title: "Монетка", tagline: "Орёл или решка: серия до 10 бросков", sortOrder: 3 },
   { slug: "atlas", title: "Атлас звёзд", tagline: "Книжный слот: особый символ на весь барабан", sortOrder: 0 },
-  { slug: "neon-garden", title: "Неоновый сад", tagline: "Фрукты, джокер и пять бонусов", sortOrder: 0 },
+  { slug: "neon-garden", title: "Неоновый сад", tagline: "Фрукты, джокер и бесплатные вращения ×3", sortOrder: 0 },
   { slug: "crash", title: "Crash", tagline: "Множитель растёт — забери до обвала", sortOrder: 1 },
   { slug: "mines", title: "Mines", tagline: "Открывай клетки и обходи мины", sortOrder: 2 },
   { slug: "dice", title: "Dice", tagline: "Выбери шанс и порог броска", sortOrder: 3 },

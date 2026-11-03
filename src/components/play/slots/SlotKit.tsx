@@ -9,40 +9,50 @@ export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export type LineWin = { line: number; sym: string; count: number; mult: number };
 const LINE_COLORS = ["#fbbf24", "#35f08c", "#22d3ee", "#f472b6", "#a78bfa", "#fb923c", "#4ade80", "#38bdf8", "#e879f9", "#facc15"];
 
-/** Сетка барабанов. При смене spinKey каждый барабан «прокручивается» и останавливается с задержкой слева направо. */
-export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight, lines, linePatterns, overlay, onStopped, cellClass = "" }: {
+/**
+ * Сетка барабанов. При смене spinKey каждый барабан «прокручивается» и останавливается с задержкой слева направо.
+ * slowFrom — «интрига»: с этого барабана и правее вращение затягивается и барабаны подсвечиваются в ожидании бонуса.
+ */
+export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight, lines, linePatterns, overlay, onStopped, cellClass = "", slowFrom = null }: {
   grid: T[][]; rows: number; spinKey: number; turbo: boolean; filler: () => T; render: (cell: T, i: { reel: number; row: number; dim: boolean; hot: boolean }) => React.ReactNode;
-  highlight?: Set<string> | null; lines?: LineWin[]; linePatterns?: number[][]; overlay?: React.ReactNode; onStopped?: () => void; cellClass?: string;
+  highlight?: Set<string> | null; lines?: LineWin[]; linePatterns?: number[][]; overlay?: React.ReactNode; onStopped?: () => void; cellClass?: string; slowFrom?: number | null;
 }) {
   const reels = grid.length;
   const F = turbo ? 6 : 14;
-  const strips = useMemo(() => grid.map((col) => (spinKey ? [...col, ...Array.from({ length: F }, filler)] : col)), [spinKey, grid, F]); // eslint-disable-line react-hooks/exhaustive-deps
+  const extra = (reel: number) => (spinKey && slowFrom !== null && reel >= slowFrom ? reel - slowFrom + 1 : 0);
+  const fill = (reel: number) => F + extra(reel) * 26;
+  const strips = useMemo(() => grid.map((col, reel) => (spinKey ? [...col, ...Array.from({ length: fill(reel) }, filler)] : col)), [spinKey, grid, F, slowFrom]); // eslint-disable-line react-hooks/exhaustive-deps
   const done = useRef(0);
-  useEffect(() => { done.current = 0; }, [spinKey]);
+  const [stopped, setStopped] = useState<number[]>([]);
+  useEffect(() => { done.current = 0; setStopped([]); }, [spinKey]);
   return (
     <div className="relative grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: `repeat(${reels}, minmax(0, 1fr))` }}>
-      {strips.map((strip, reel) => (
-        <div key={reel} className="relative overflow-hidden rounded-xl bg-black/35 ring-1 ring-white/10" style={{ aspectRatio: `1 / ${rows}` }}>
-          <motion.div key={`${spinKey}-${reel}`} className="absolute inset-x-0 top-0"
-            style={{ height: `${(strip.length / rows) * 100}%` }}
-            initial={spinKey ? { y: `${-(F / strip.length) * 100}%` } : false}
-            animate={{ y: "0%" }}
-            transition={{ duration: (turbo ? 0.35 : 0.75) + reel * (turbo ? 0.08 : 0.18), ease: [0.25, 0.9, 0.35, 1.04] }}
-            onAnimationComplete={() => { if (spinKey && ++done.current === reels) onStopped?.(); }}>
-            {strip.map((cell, row) => {
-              const id = `${reel}:${row}`; const hot = !!highlight?.has(id) && row < rows; const dim = !!highlight && highlight.size > 0 && !hot;
-              return (
-                <div key={row} className={`relative p-[5%] ${cellClass}`} style={{ height: `${100 / strip.length}%` }}>
-                  <motion.div className="relative size-full" animate={hot ? { scale: [1, 1.12, 1] } : { scale: 1 }} transition={hot ? { duration: 0.7, repeat: Infinity } : {}}
-                    style={{ opacity: dim ? 0.35 : 1, filter: hot ? "drop-shadow(0 0 10px rgb(251 191 36 / 0.9))" : undefined }}>
-                    {render(cell, { reel, row, dim, hot })}
-                  </motion.div>
-                </div>
-              );
-            })}
-          </motion.div>
-        </div>
-      ))}
+      {strips.map((strip, reel) => {
+        const waiting = extra(reel) > 0 && !stopped.includes(reel);
+        return (
+          <div key={reel} className={`relative overflow-hidden rounded-xl bg-black/35 ring-1 transition-shadow ${waiting ? "ring-2 ring-gold" : "ring-white/10"}`} style={{ aspectRatio: `1 / ${rows}` }}>
+            {waiting && <motion.div aria-hidden className="pointer-events-none absolute inset-0 z-10 rounded-xl" animate={{ boxShadow: ["inset 0 0 12px rgb(251 191 36 / 0.3)", "inset 0 0 34px rgb(251 191 36 / 0.85)", "inset 0 0 12px rgb(251 191 36 / 0.3)"] }} transition={{ duration: 0.6, repeat: Infinity }} />}
+            <motion.div key={`${spinKey}-${reel}`} className="absolute inset-x-0 top-0"
+              style={{ height: `${(strip.length / rows) * 100}%` }}
+              initial={spinKey ? { y: `${-(fill(reel) / strip.length) * 100}%` } : false}
+              animate={{ y: "0%" }}
+              transition={{ duration: (turbo ? 0.35 : 0.75) + reel * (turbo ? 0.08 : 0.18) + extra(reel) * (turbo ? 0.8 : 1.4), ease: extra(reel) ? [0.3, 0.55, 0.3, 1] : [0.25, 0.9, 0.35, 1.04] }}
+              onAnimationComplete={() => { if (!spinKey) return; setStopped((s) => [...s, reel]); if (++done.current === reels) onStopped?.(); }}>
+              {strip.map((cell, row) => {
+                const id = `${reel}:${row}`; const hot = !!highlight?.has(id) && row < rows; const dim = !!highlight && highlight.size > 0 && !hot;
+                return (
+                  <div key={row} className={`relative p-[5%] ${cellClass}`} style={{ height: `${100 / strip.length}%` }}>
+                    <motion.div className="relative size-full" animate={hot ? { scale: [1, 1.12, 1] } : { scale: 1 }} transition={hot ? { duration: 0.7, repeat: Infinity } : {}}
+                      style={{ opacity: dim ? 0.35 : 1, filter: hot ? "drop-shadow(0 0 10px rgb(251 191 36 / 0.9))" : undefined }}>
+                      {render(cell, { reel, row, dim, hot })}
+                    </motion.div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </div>
+        );
+      })}
       {lines && linePatterns && lines.length > 0 && (
         <svg className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${reels * 100} ${rows * 100}`} preserveAspectRatio="none" aria-hidden>
           {lines.map((w, k) => (
@@ -97,7 +107,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
             aria-label={auto > 0 ? "Остановить автоигру" : "Крутить"}
             className="relative grid size-[74px] place-items-center rounded-full text-white shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
             style={{ background: `radial-gradient(circle at 35% 30%, ${accent[1]}, ${accent[0]})`, boxShadow: `0 0 0 4px rgb(255 255 255 / 0.12), 0 12px 34px -10px ${accent[0]}` }}>
-            {auto > 0 ? <span className="font-mono text-[18px] font-bold">{auto}</span> : (
+            {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">{auto === Infinity ? "∞" : auto}</span><span className="text-[9px] font-bold uppercase">стоп</span></span> : (
               <motion.svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" animate={busy ? { rotate: 360 } : { rotate: 0 }} transition={busy ? { repeat: Infinity, duration: 0.6, ease: "linear" } : {}}>
                 <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v4h-4" />
               </motion.svg>
@@ -115,8 +125,9 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
           <Pill onClick={() => (auto > 0 ? setAuto(0) : setAutoMenu((v) => !v))} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "Стоп" : "Авто"}</Pill>
           <AnimatePresence>
             {autoMenu && auto === 0 && (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute bottom-12 left-0 z-20 grid w-28 gap-1 rounded-xl border border-line bg-panel p-1.5 shadow-2xl">
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute bottom-12 left-0 z-20 grid w-36 gap-1 rounded-xl border border-line bg-panel p-1.5 shadow-2xl">
                 {[10, 25, 50, 100].map((n) => <button key={n} onClick={() => { setAutoMenu(false); setAuto(n); }} className="rounded-lg px-3 py-1.5 text-left text-[13px] hover:bg-raised">{n} вращений</button>)}
+                <button onClick={() => { setAutoMenu(false); setAuto(Infinity); }} className="rounded-lg px-3 py-1.5 text-left text-[13px] font-semibold text-gold hover:bg-raised">∞ Без лимита</button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -192,4 +203,11 @@ export function useSlotState(cfg: GameConfig) {
   const [turbo, setTurbo] = useState(false);
   const [auto, setAuto] = useState(0);
   return { bet, setBet, turbo, setTurbo, auto, setAuto };
+}
+
+/** Надпись BONUS поверх бонус-символа — сразу понятно, что 3 таких запускают бесплатные вращения. */
+export function BonusLabel() {
+  return (
+    <span className="pointer-events-none absolute inset-x-0 bottom-[6%] mx-auto w-fit rounded-md bg-[linear-gradient(180deg,#fde68a,#f59e0b)] px-1.5 py-px font-display text-[clamp(8px,2.2vw,13px)] font-bold tracking-wider text-[#3a2300] shadow-[0_0_12px_rgb(251_191_36/0.8)]">BONUS</span>
+  );
 }

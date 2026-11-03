@@ -3,9 +3,9 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { ATLAS, type AtlasResult, type AtlasSpin } from "@/lib/fair/slots";
+import { anticipationFrom, ATLAS, type AtlasResult, type AtlasSpin } from "@/lib/fair/slots";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, type LineWin } from "./SlotKit";
+import { BonusLabel, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, type LineWin } from "./SlotKit";
 
 const IMG: Record<string, string> = { astronaut: "astronaut", telescope: "telescope", comet: "comet", planet: "planet", book: "book" };
 const RANK: Record<string, [string, string]> = { "10": ["#ff6b6b", "#c2185b"], J: ["#60a5fa", "#1d4ed8"], Q: ["#4ade80", "#15803d"], K: ["#fbbf24", "#c2410c"], A: ["#c084fc", "#7e22ce"] };
@@ -16,7 +16,12 @@ const randomSym = () => (Math.random() < 0.06 ? "book" : SYMS[Math.floor(Math.ra
 const START: string[][] = [["A", "astronaut", "10"], ["K", "book", "Q"], ["telescope", "J", "A"], ["Q", "book", "comet"], ["planet", "K", "J"]];
 
 export function Sym({ s, big }: { s: string; big?: boolean }) {
-  if (IMG[s]) return <Image src={`/img/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />;
+  if (IMG[s]) return (
+    <>
+      <Image src={`/img/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      {s === "book" && !big && <BonusLabel />}
+    </>
+  );
   const [a, b] = RANK[s] ?? ["#fff", "#999"];
   return (
     <span className="grid size-full place-items-center rounded-lg bg-[radial-gradient(circle,rgb(255_255_255/0.06),transparent_70%)]">
@@ -48,7 +53,9 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   const bigDone = useRef<() => void>(() => {});
   const turboRef = useRef(turbo); turboRef.current = turbo;
 
-  const spinTo = useCallback((g: string[][]) => new Promise<void>((res) => { stop.current = res; setHl(null); setLines([]); setExpand(null); setGrid(g); setSpinKey((k) => k + 1); }), []);
+  const [slowFrom, setSlowFrom] = useState<number | null>(null);
+  // Интрига: если на первых барабанах уже 2 книги, оставшиеся крутятся дольше в ожидании третьей
+  const spinTo = useCallback((g: string[][]) => new Promise<void>((res) => { stop.current = res; setHl(null); setLines([]); setExpand(null); setSlowFrom(anticipationFrom(g, "book")); setGrid(g); setSpinKey((k) => k + 1); }), []);
   const showBig = (mult: number, amount: string, label?: string) => new Promise<void>((res) => { bigDone.current = () => { setBig(null); res(); }; setBig({ mult, amount, label }); });
 
   async function showSpin(s: AtlasSpin, units: bigint, special: string | null) {
@@ -92,7 +99,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
     } else if (res.totalMult >= 10) await showBig(res.totalMult, r.round.payout);
     setLastWin(r.round.payout);
     setBalance(r.balance); setVersion((v) => v + 1); setPlaying(false);
-    return !res.fs;
+    return true; // автоигра продолжается и после бонуса
   }
 
   // Автоигра: следующий спин, пока есть баллы; бонус её останавливает
@@ -120,7 +127,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
             )}</AnimatePresence>
           </div>
           <div className="relative rounded-2xl bg-[linear-gradient(180deg,#2a1f6b,#140f38)] p-2 shadow-[inset_0_0_0_2px_rgb(251_191_36/0.45),0_20px_50px_-20px_#000] sm:p-3">
-            <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()}
+            <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Sym s={c} />} highlight={hl} lines={lines} linePatterns={ATLAS.lines}
               overlay={expand && (
                 <div className="pointer-events-none absolute inset-0 grid grid-cols-5 gap-1.5 sm:gap-2">
@@ -160,8 +167,9 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><Sym s="book" /></span>
-          <p><b className="text-gold">Атлас</b> — дикий символ и скаттер одновременно. 3, 4 или 5 атласов в любом месте платят 2×, 20× или 200× общей ставки и дают <b>10 бесплатных вращений</b>. Перед бонусом выбирается особый символ: во время бесплатных вращений он раскрывается на весь барабан и платит по всем 10 линиям, даже на несмежных барабанах.</p>
+          <p><b className="text-gold">Атлас</b> — дикий символ и скаттер одновременно. 3, 4 или 5 атласов с надписью BONUS в любом месте платят 2×, 20× или 200× общей ставки и дают <b>10 бесплатных вращений</b>. Перед бонусом выбирается особый символ: во время бесплатных вращений он раскрывается на весь барабан и платит по всем 10 линиям, даже на несмежных барабанах.</p>
         </div>
+        <p>Если на первых барабанах уже лежат 2 атласа, оставшиеся барабаны подсвечиваются и крутятся дольше — в ожидании третьего. Автоигру можно включить без лимита: она крутит, пока не нажмёшь «Стоп».</p>
         <p>«Купить бонус» сразу запускает бесплатные вращения за {ATLAS.buyPrice}× ставки. Максимальный выигрыш — {ATLAS.maxWin.toLocaleString("ru-RU")}× ставки. Расчётный RTP ≈ 95,5%. Результат каждого раунда проверяется на странице «Честность».</p>
       </InfoModal>
     </div>

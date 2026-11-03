@@ -109,8 +109,7 @@ function Verifier() {
     if (slot) {
       const r = (game === "atlas" ? playAtlas : playNeon)(rngFromArray(fs), { buy: p.buy === "true" });
       const lines: [string, string][] = [["Итоговый множитель", `${r.totalMult}×`]];
-      if ("fs" in r && r.fs) lines.push(["Бонус", `${r.fs.spins.length} бесплатных вращений, особый символ: ${r.fs.special}`]);
-      if ("feature" in r && r.feature) lines.push(["Бонус", r.feature.type]);
+      if (r.fs) lines.push(["Бонус", `${r.fs.spins.length} бесплатных вращений${"special" in r.fs ? `, особый символ: ${r.fs.special}` : `, выигрыши ×${r.fs.x}`}`]);
       if (r.base) lines.push(["Выигрыш обычного вращения", `${r.base.mult}×`]);
       setOut({ hashOk: await sha256Hex(s.trim()), lines }); return;
     }
