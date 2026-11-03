@@ -36,7 +36,7 @@ export async function loadGame(tx: Tx, slug: string, amount: bigint) {
   const game = await tx.game.findUnique({ where: { slug } });
   if (!game) throw new HttpError(404, "Игра не найдена", "not_found");
   if (!game.enabled) throw new HttpError(403, "Игра временно отключена", "game_disabled");
-  if (amount < game.minBet || amount > game.maxBet) throw new HttpError(400, `Ставка от ${Number(game.minBet) / 100} до ${Number(game.maxBet) / 100} баллов`, "bet_limits");
+  if (amount < game.minBet || amount > game.maxBet) throw new HttpError(400, `Ставка от ${Number(game.minBet) / 100} до ${Number(game.maxBet) / 100} снежинок`, "bet_limits");
   const settings = await tx.setting.findUnique({ where: { key: "platform" } });
   if ((settings?.value as { maintenance?: boolean } | null)?.maintenance) throw new HttpError(503, "Технические работы, игры временно недоступны", "maintenance");
   return game;

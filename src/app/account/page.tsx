@@ -24,7 +24,7 @@ export default function AccountPage() {
 
   async function bonus() {
     setBusy(true); setMsg("");
-    try { const r = await api<{ balance: string }>("/api/account/bonus", { method: "POST" }); setBalance(r.balance); setMsg(`Начислено ${points(s!.bonus.amount)} баллов`); await load(); }
+    try { const r = await api<{ balance: string }>("/api/account/bonus", { method: "POST" }); setBalance(r.balance); setMsg(`Начислено ${points(s!.bonus.amount)}`); await load(); }
     catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   }
   async function verify() { try { setCheck(await api("/api/account/verify")); } catch (e) { setMsg((e as Error).message); } }
@@ -45,7 +45,7 @@ export default function AccountPage() {
         <p className="relative mt-1 font-mono text-[40px] font-semibold leading-none tabular">{points(s.balance)}</p>
         <div className="relative mt-6 flex flex-wrap items-center gap-3">
           <Button onClick={bonus} loading={busy} disabled={!!s.bonus.availableAt}>
-            {s.bonus.availableAt ? `Бонус после ${new Date(s.bonus.availableAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}` : `Забрать ${points(s.bonus.amount)} баллов`}
+            {s.bonus.availableAt ? `Бонус после ${new Date(s.bonus.availableAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}` : `Забрать ${points(s.bonus.amount)}`}
           </Button>
           <Link href="/games"><Button variant="secondary">К играм</Button></Link>
           <Button variant="ghost" onClick={verify}>Сверить баланс</Button>

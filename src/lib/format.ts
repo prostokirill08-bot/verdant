@@ -1,9 +1,12 @@
-// Клиентское форматирование баллов (суммы приходят строками в сотых).
+// Клиентское форматирование снежинок (суммы приходят строками в сотых).
+/** Значок игровой валюты — снежинки (виртуальные, денежной ценности не имеют). */
+export const SNOW = "❄️";
+const CUR = "\u00a0" + SNOW;
 export function points(units: string | number | bigint | null | undefined): string {
-  if (units === null || units === undefined) return "0,00";
+  if (units === null || units === undefined) return "0,00" + CUR;
   const v = BigInt(units); const neg = v < 0n; const a = neg ? -v : v;
   const i = (a / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return (neg ? "−" : "") + i + "," + (a % 100n).toString().padStart(2, "0");
+  return (neg ? "−" : "") + i + "," + (a % 100n).toString().padStart(2, "0") + CUR;
 }
 export const mult = (m: number | string) => Number(m).toFixed(2) + "×";
 export function timeAgo(d: string | Date): string {

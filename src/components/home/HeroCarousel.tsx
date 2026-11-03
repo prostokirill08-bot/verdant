@@ -10,7 +10,7 @@ type Slide = { img: string; kicker: string; title: React.ReactNode; text: string
 
 export function HeroCarousel({ loggedIn }: { loggedIn: boolean }) {
   const slides: Slide[] = [
-    { img: "/img/ny/banners/main.webp", kicker: "🎄 Новогодний сезон · демо-баллы", title: <>С наступающим!<br /><span className="text-gradient">1 000 баллов</span> под ёлкой</>, text: "13 новогодних игр: слоты, Crash с Сантой, Mines с подарками и другие. Баллы нельзя купить или вывести — только праздник и честные результаты.", cta: loggedIn ? "К играм" : "Забрать подарок", href: loggedIn ? "/games" : "/register", tint: "#5b8cff" },
+    { img: "/img/ny/banners/main.webp", kicker: "🎄 Новогодний сезон · демо-снежинки", title: <>С наступающим!<br /><span className="text-gradient">1 000 снежинок</span> под ёлкой</>, text: "13 новогодних игр: слоты, Crash с Сантой, Mines с подарками и другие. Снежинки нельзя купить или вывести — только праздник и честные результаты.", cta: loggedIn ? "К играм" : "Забрать подарок", href: loggedIn ? "/games" : "/register", tint: "#5b8cff" },
     { img: "/img/ny/banners/slots.webp", kicker: "🎁 Слоты", title: <>Три подарка BONUS —<br /><span className="text-gradient">бесплатные вращения</span></>, text: "Три символа BONUS — и бесплатные вращения: раскрывающийся символ в «Атласе звёзд» и выигрыши ×3 в «Зимнем саду».", cta: "Крутить слоты", href: "/games?cat=slots", tint: "#e8263f" },
     { img: "/img/ny/banners/crash.webp", kicker: "🛷 Хит · реальное время", title: <>Санта взлетает.<br /><span className="text-gradient">Успей забрать</span></>, text: "Общий раунд для всех игроков. Множитель растёт, пока сани Санты летят вверх.", cta: "Полететь с Сантой", href: "/games/crash", tint: "#ff5f3d" },
   ];

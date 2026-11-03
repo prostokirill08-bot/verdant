@@ -21,7 +21,7 @@ export type RoundView = {
 /** Уникальный ключ запроса: повтор с тем же ключом сервер не спишет второй раз. */
 export const newKey = () => crypto.randomUUID().replace(/-/g, "");
 
-/** Строка баллов «12,50» → сотые (bigint) или null. */
+/** Строка снежинок «12,50» → сотые (bigint) или null. */
 export function parsePoints(s: string): bigint | null {
   const t = s.trim().replace(",", ".");
   if (!/^\d+(\.\d{1,2})?$/.test(t)) return null;
@@ -75,13 +75,14 @@ export function BetAmount({ value, onChange, cfg, disabled }: { value: string; o
   const units = parsePoints(value);
   const min = BigInt(cfg.minBet), max = BigInt(cfg.maxBet);
   const cap = (u: bigint) => { const lim = user ? (BigInt(balance) < max ? BigInt(balance) : max) : max; return u < min ? min : u > lim ? (lim < min ? min : lim) : u; };
-  const err = units === null ? "Неверная сумма" : units < min ? `Минимум ${points(min)}` : units > max ? `Максимум ${points(max)}` : user && units > BigInt(balance) ? "Недостаточно баллов" : "";
+  const err = units === null ? "Неверная сумма" : units < min ? `Минимум ${points(min)}` : units > max ? `Максимум ${points(max)}` : user && units > BigInt(balance) ? "Недостаточно снежинок" : "";
   return (
     <div>
       <Label aside={<span className="font-mono text-soft">{units !== null ? points(units) : "—"}</span>}>Ставка</Label>
       <div className={`flex items-center gap-1 rounded-xl border bg-ink p-1 focus-within:border-accent ${err ? "border-danger/70" : "border-line"}`}>
+        <span className="pl-2 text-[15px]" aria-hidden>❄️</span>
         <input value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.,]/g, "").slice(0, 12))} disabled={disabled} inputMode="decimal" aria-label="Сумма ставки" aria-invalid={!!err}
-          className="h-9 w-0 min-w-0 flex-1 bg-transparent px-2.5 font-mono text-[15px] tabular outline-none disabled:opacity-60" />
+          className="h-9 w-0 min-w-0 flex-1 bg-transparent px-1.5 font-mono text-[15px] tabular outline-none disabled:opacity-60" />
         {([["½", (u: bigint) => u / 2n], ["2×", (u: bigint) => u * 2n], ["Макс", () => max * 1000n]] as const).map(([t, f]) => (
           <button key={t} type="button" disabled={disabled} onClick={() => onChange(unitsToInput(cap(f(units ?? min))))}
             className="h-9 rounded-lg bg-raised px-2.5 text-[12.5px] font-semibold text-soft hover:text-white disabled:opacity-50">{t}</button>
@@ -95,7 +96,7 @@ export function betError(value: string, cfg: GameConfig, balance: string): strin
   const u = parsePoints(value);
   if (u === null) return "Неверная сумма";
   if (u < BigInt(cfg.minBet) || u > BigInt(cfg.maxBet)) return "Сумма вне лимитов";
-  if (u > BigInt(balance)) return "Недостаточно баллов";
+  if (u > BigInt(balance)) return "Недостаточно снежинок";
   return "";
 }
 

@@ -7,7 +7,7 @@ import { toUnits } from "@/lib/money";
 import { ATLAS, NEON, playAtlas, playNeon, type Rng } from "@/lib/fair/slots";
 import { COIN_MAX_FLIPS, coinMultiplier, coinSides, KENO_PAYS, kenoDraw, WHEEL, wheelSegment, type WheelRisk } from "@/lib/fair/extra";
 
-/** Сумма ставки приходит строкой баллов («12.5»), на сервере переводится в сотые. */
+/** Сумма ставки приходит строкой снежинок («12.5»), на сервере переводится в сотые. */
 export const amountSchema = z.string().max(16).regex(/^\d+([.,]\d{1,2})?$/, "Неверная сумма ставки").transform((s) => toUnits(s));
 const twoDp = (x: number) => Math.round(x * 100) / 100;
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { DAILY_BONUS, START_GRANT } from "./wallet/constants";
 
-/** Настройки платформы (таблица Setting, ключ "platform"). Суммы — в сотых долях балла. */
+/** Настройки платформы (таблица Setting, ключ "platform"). Суммы — в сотых долях снежинки. */
 export const platformSchema = z.object({
   maintenance: z.boolean(),                 // технические работы: ставки закрыты
   registrationOpen: z.boolean(),            // приём новых регистраций

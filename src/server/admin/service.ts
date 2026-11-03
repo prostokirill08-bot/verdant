@@ -108,7 +108,7 @@ export async function setUserRole(actor: SessionUser, id: string, role: Role, ip
 
 export const adjustInput = z.object({
   direction: z.enum(["credit", "debit"]), amount: amountSchema, reason: z.string().trim().min(3, "Укажи причину").max(200), key: requestKey,
-}).refine((x) => x.amount > 0n && x.amount <= 100_000_000n, "Сумма от 0,01 до 1 000 000 баллов");
+}).refine((x) => x.amount > 0n && x.amount <= 100_000_000n, "Сумма от 0,01 до 1 000 000 снежинок");
 export async function adjustBalance(actor: SessionUser, id: string, p: z.infer<typeof adjustInput>, ip: string) {
   await target(actor, id);
   const amount = p.direction === "credit" ? p.amount : -p.amount;

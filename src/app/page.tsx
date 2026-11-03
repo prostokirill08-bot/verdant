@@ -68,7 +68,7 @@ export default async function Home() {
       <section className="snow-cap relative overflow-hidden rounded-[28px] border border-line bg-[linear-gradient(120deg,#16245e,#0f1633_55%,#4a0f22)] p-6 sm:p-8">
         <div className="relative z-10 max-w-md">
           <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-gold">🎁 Подарок дня</p>
-          <h2 className="mt-2 font-display text-[24px] font-bold leading-tight sm:text-[30px]">{points(platform.dailyBonus)} баллов от Котонавта</h2>
+          <h2 className="mt-2 font-display text-[24px] font-bold leading-tight sm:text-[30px]">{points(platform.dailyBonus)} от Котонавта</h2>
           <p className="mt-2 text-[15px] text-white/75">Котонавт в шапке Деда Мороза каждый день оставляет подарок под ёлкой. Заходи раз в сутки и забирай.</p>
           <Link href={user ? "/account" : "/register"} className="mt-5 inline-block"><Button size="lg" className="btn-shine">{user ? "Открыть подарок" : "Начать играть"}</Button></Link>
         </div>
@@ -78,8 +78,8 @@ export default async function Home() {
       <section className="grid gap-3 md:grid-cols-3">
         {[
           ["❄️", "Проверяемая честность", "Перед раундом виден хэш серверного сида, после смены пары — сам сид. Любой результат можно пересчитать.", "/fair"],
-          ["🔔", "Баланс только на сервере", "Каждое движение баллов — запись в журнале с уникальным ключом. Подделать баланс через браузер нельзя.", "/account/history"],
-          ["🎅", "Никаких реальных денег", "Баллы не покупаются и не выводятся. Это демо-платформа для игры и портфолио.", "/games"],
+          ["🔔", "Баланс только на сервере", "Каждое движение снежинок — запись в журнале с уникальным ключом. Подделать баланс через браузер нельзя.", "/account/history"],
+          ["🎅", "Никаких реальных денег", "Снежинки не покупаются и не выводятся. Это демо-платформа для игры и портфолио.", "/games"],
         ].map(([e, t, d, h]) => (
           <Link key={t} href={h!} className="group rounded-2xl border border-line bg-panel p-5 transition-colors hover:border-brand/60">
             <span className="text-[26px]" aria-hidden>{e}</span>

@@ -95,17 +95,17 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
   const enough = !user || units <= BigInt(balance);
   const buyCost = units * BigInt(buyPrice);
   return (
-    <div className="grid gap-3">
-      <div className="flex items-center justify-between gap-2 rounded-2xl bg-black/40 p-2 ring-1 ring-white/10 backdrop-blur">
-        <div className="min-w-0 px-2">
+    <div className="grid min-w-0 gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-1 rounded-2xl bg-black/40 p-1.5 sm:gap-2 sm:p-2 ring-1 ring-white/10 backdrop-blur">
+        <div className="min-w-0 px-1 sm:px-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Ставка</p>
-          <p className="font-mono text-[18px] font-bold tabular">{points(units)}</p>
+          <p className="truncate font-mono text-[14px] font-bold tabular sm:text-[18px]">{points(units)}</p>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <RoundBtn label="Уменьшить ставку" onClick={() => step(-1)} disabled={busy || auto > 0}>−</RoundBtn>
           <motion.button type="button" onClick={auto > 0 ? () => setAuto(0) : onSpin} disabled={(busy && auto === 0) || !cfg.enabled || (!enough && auto === 0)} whileTap={{ scale: 0.92 }}
             aria-label={auto > 0 ? "Остановить автоигру" : "Крутить"}
-            className="relative grid size-[74px] place-items-center rounded-full text-white shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
+            className="relative grid size-[58px] shrink-0 place-items-center rounded-full sm:size-[74px] text-white shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
             style={{ background: `radial-gradient(circle at 35% 30%, ${accent[1]}, ${accent[0]})`, boxShadow: `0 0 0 4px rgb(255 255 255 / 0.12), 0 12px 34px -10px ${accent[0]}` }}>
             {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">∞</span><span className="text-[9px] font-bold uppercase">стоп</span></span> : (
               <motion.svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" animate={busy ? { rotate: 360 } : { rotate: 0 }} transition={busy ? { repeat: Infinity, duration: 0.6, ease: "linear" } : {}}>
@@ -115,29 +115,29 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
           </motion.button>
           <RoundBtn label="Увеличить ставку" onClick={() => step(1)} disabled={busy || auto > 0}>+</RoundBtn>
         </div>
-        <div className="min-w-0 px-2 text-right">
+        <div className="min-w-0 px-1 text-right sm:px-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш</p>
-          <p className={`font-mono text-[18px] font-bold tabular ${lastWin && BigInt(lastWin) > 0n ? "text-gold" : "text-white/50"}`}>{lastWin ? points(lastWin) : "—"}</p>
+          <p className={`truncate font-mono text-[14px] font-bold tabular sm:text-[18px] ${lastWin && BigInt(lastWin) > 0n ? "text-gold" : "text-white/50"}`}>{lastWin ? points(lastWin) : "—"}</p>
         </div>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает баллов) */}
+        {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает снежинок) */}
         <Pill onClick={() => setAuto(auto > 0 ? 0 : Infinity)} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "■ Стоп" : "∞ Авто"}</Pill>
         <Pill onClick={() => setTurbo(!turbo)} active={turbo}>⚡ Турбо</Pill>
         <Pill onClick={onInfo}>Выплаты</Pill>
-        <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold>Бонус {points(buyCost)}</Pill>
+        <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold><span className="block leading-tight">Бонус</span><span className="block truncate text-[10.5px] font-semibold leading-tight">{points(buyCost)}</span></Pill>
       </div>
-      {!enough && user && <p className="text-center text-[12.5px] text-danger">Недостаточно баллов — уменьши ставку или забери бонус в кабинете.</p>}
+      {!enough && user && <p className="text-center text-[12.5px] text-danger">Недостаточно снежинок — уменьши ставку или забери бонус в кабинете.</p>}
     </div>
   );
 }
 function RoundBtn({ children, onClick, disabled, label }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; label: string }) {
-  return <button type="button" onClick={onClick} disabled={disabled} aria-label={label} className="grid size-10 place-items-center rounded-full bg-white/10 text-[22px] font-bold hover:bg-white/20 disabled:opacity-40">{children}</button>;
+  return <button type="button" onClick={onClick} disabled={disabled} aria-label={label} className="grid size-9 place-items-center rounded-full bg-white/10 text-[20px] sm:size-10 sm:text-[22px] font-bold hover:bg-white/20 disabled:opacity-40">{children}</button>;
 }
 function Pill({ children, onClick, active, disabled, gold }: { children: React.ReactNode; onClick: () => void; active?: boolean; disabled?: boolean; gold?: boolean }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
-      className={`h-10 w-full truncate rounded-xl px-2 text-[12.5px] font-bold transition-colors disabled:opacity-40 ${gold ? "bg-[linear-gradient(180deg,#fde68a,#f59e0b)] text-[#3a2300]" : active ? "bg-white text-ink" : "bg-black/40 text-white ring-1 ring-white/10 hover:bg-black/60"}`}>{children}</button>
+      className={`h-11 w-full min-w-0 truncate rounded-xl px-1 text-[12px] font-bold sm:px-2 sm:text-[12.5px] transition-colors disabled:opacity-40 ${gold ? "bg-[linear-gradient(180deg,#fde68a,#f59e0b)] text-[#3a2300]" : active ? "bg-white text-ink" : "bg-black/40 text-white ring-1 ring-white/10 hover:bg-black/60"}`}>{children}</button>
   );
 }
 
@@ -223,7 +223,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
             </motion.p>
             <motion.p animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 0.45, repeat: Infinity }}
               className="mt-2 font-mono text-[clamp(40px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 30px ${c1}, 0 0 60px #ffd16688` }}>
-              {fmt((Number(amount) / 100) * e)}
+              {fmt((Number(amount) / 100) * e)} ❄️
             </motion.p>
             <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×{shownMult.toFixed(2)} ставки</p>
             {label && <p className="mt-3 text-[clamp(14px,3vw,18px)] font-semibold text-white/85">{label}</p>}
@@ -275,7 +275,7 @@ export function InfoModal({ open, onClose, title, children }: { open: boolean; o
   );
 }
 
-/** Общий хук слота: ставка, турбо, автоигра (останавливается на бонусе или при нехватке баллов). */
+/** Общий хук слота: ставка, турбо, автоигра (останавливается на бонусе или при нехватке снежинок). */
 export function useSlotState(cfg: GameConfig) {
   const [bet, setBet] = useState(unitsToInput(BigInt(cfg.minBet) > 100n ? BigInt(cfg.minBet) : 100n));
   const [turbo, setTurbo] = useState(false);
@@ -290,7 +290,7 @@ export function BonusLabel() {
   );
 }
 
-/** Выигрыш = ставка × множитель (в единицах баллов). */
+/** Выигрыш = ставка × множитель (в единицах снежинок). */
 export const winUnits = (units: bigint, mult: number) => (units * BigInt(Math.round(mult * 10000))) / 10000n;
 
 export type BonusState = { left: number; done: number; total: string; add: string | null; tick: number };
@@ -323,7 +323,7 @@ export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | n
             <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш в бонусе</p>
             <motion.p key={state.tick} animate={state.add ? { scale: [1.18, 1] } : {}} transition={{ duration: 0.35 }}
               className="font-mono text-[clamp(22px,5vw,30px)] font-bold leading-none tabular" style={{ color, textShadow: `0 0 18px ${color}` }}>
-              {shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ❄️
             </motion.p>
             <AnimatePresence>
               {state.add && (

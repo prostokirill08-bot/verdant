@@ -7,7 +7,7 @@ import { points } from "@/lib/format";
 import { ErrorLine, GameLayout, Label, newKey, PlayButton, RoundsPanel, Stat, unitsToInput, useGameRequest, type GameConfig, type RoundView } from "./kit";
 
 type Res = { round: RoundView; balance: string };
-const CHIPS = [100n, 500n, 1000n, 5000n, 10000n, 50000n]; // 1, 5, 10, 50, 100, 500 баллов
+const CHIPS = [100n, 500n, 1000n, 5000n, 10000n, 50000n]; // 1, 5, 10, 50, 100, 500 снежинок
 const CHIP_COLOR: Record<string, string> = { "100": "#c3cbd0", "500": "#22b8cf", "1000": "#00c47a", "5000": "#f5b84a", "10000": "#ff8a3d", "50000": "#6e7bff" };
 const keyOf = (b: RouletteBetKind) => ("n" in b ? `${b.kind}:${b.n}` : b.kind);
 const fromKey = (k: string): RouletteBetKind => { const [kind, n] = k.split(":"); return (n !== undefined ? { kind, n: Number(n) } : { kind }) as RouletteBetKind; };
@@ -91,7 +91,7 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
         <Stat label="Сумма ставок" value={points(total)} />
         <Stat label="Последний выигрыш" value={result ? points(result.payout) : "—"} tone={result && result.payout > 0n ? "accent" : undefined} />
       </div>
-      <ErrorLine text={error || limitErr || (overBalance ? "Недостаточно баллов" : "")} />
+      <ErrorLine text={error || limitErr || (overBalance ? "Недостаточно снежинок" : "")} />
       <PlayButton onClick={spin} loading={busy || spinning} disabled={!cfg.enabled || !total || overBalance || !!limitErr || total < BigInt(cfg.minBet)}>{cfg.enabled ? (total ? "Крутить" : "Поставь фишки на поле") : "Игра отключена"}</PlayButton>
     </>
   );
