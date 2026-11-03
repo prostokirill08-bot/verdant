@@ -7,19 +7,19 @@ import { hashSeed, newServerSeed } from "../src/server/games/fair";
 const db = new PrismaClient();
 
 const GAMES = [
-  { slug: "tower", title: "Башня", tagline: "Поднимайся по этажам, обходя ловушки", sortOrder: 3 },
-  { slug: "hilo", title: "Hi-Lo", tagline: "Угадай: следующая карта выше или ниже", sortOrder: 3 },
-  { slug: "wheel", title: "Колесо фортуны", tagline: "20 секторов, три уровня риска", sortOrder: 3 },
-  { slug: "keno", title: "Кено", tagline: "Выбери до 10 чисел — выпадет 10 из 40", sortOrder: 3 },
-  { slug: "coinflip", title: "Монетка", tagline: "Орёл или решка: серия до 10 бросков", sortOrder: 3 },
-  { slug: "atlas", title: "Атлас звёзд", tagline: "Книжный слот: особый символ на весь барабан", sortOrder: 0 },
-  { slug: "neon-garden", title: "Неоновый сад", tagline: "Фрукты, джокер и бесплатные вращения ×3", sortOrder: 0 },
-  { slug: "crash", title: "Crash", tagline: "Множитель растёт — забери до обвала", sortOrder: 1 },
-  { slug: "mines", title: "Mines", tagline: "Открывай клетки и обходи мины", sortOrder: 2 },
-  { slug: "dice", title: "Dice", tagline: "Выбери шанс и порог броска", sortOrder: 3 },
-  { slug: "plinko", title: "Plinko", tagline: "Шарик падает через ряды штырьков", sortOrder: 4 },
-  { slug: "limbo", title: "Limbo", tagline: "Задай цель — множитель решит", sortOrder: 5 },
-  { slug: "roulette", title: "Roulette", tagline: "Европейская рулетка на 37 секторов", sortOrder: 6 },
+  { slug: "tower", title: "Башня", tagline: "Ледяная башня: поднимись к подарку на вершине", sortOrder: 3 },
+  { slug: "hilo", title: "Hi-Lo", tagline: "Новогодние карты: следующая выше или ниже?", sortOrder: 3 },
+  { slug: "wheel", title: "Колесо фортуны", tagline: "Колесо-леденец: 20 секторов, три уровня риска", sortOrder: 3 },
+  { slug: "keno", title: "Кено", tagline: "Ёлочные шары: выбери до 10 чисел из 40", sortOrder: 3 },
+  { slug: "coinflip", title: "Монетка", tagline: "Звезда или снежинка: серия до 10 бросков", sortOrder: 3 },
+  { slug: "atlas", title: "Атлас звёзд", tagline: "Звёздная книга Деда Мороза: символ раскрывается на весь барабан", sortOrder: 0 },
+  { slug: "neon-garden", title: "Зимний сад", tagline: "Морозные фрукты, эльф и подарки BONUS", sortOrder: 0 },
+  { slug: "crash", title: "Crash", tagline: "Санта взлетает на санях — забери, пока он не упал в сугроб", sortOrder: 1 },
+  { slug: "mines", title: "Mines", tagline: "Собирай подарки и обходи бомбы в сугробах", sortOrder: 2 },
+  { slug: "dice", title: "Dice", tagline: "Ледяные кости: выбери шанс и порог броска", sortOrder: 3 },
+  { slug: "plinko", title: "Plinko", tagline: "Ёлочная игрушка скачет по гирлянде", sortOrder: 4 },
+  { slug: "limbo", title: "Limbo", tagline: "Рождественская звезда: как высоко она взлетит?", sortOrder: 5 },
+  { slug: "roulette", title: "Roulette", tagline: "Праздничная европейская рулетка на 37 секторов", sortOrder: 6 },
 ];
 
 async function main() {

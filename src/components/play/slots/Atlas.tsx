@@ -9,7 +9,7 @@ import { BonusLabel, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOve
 
 const IMG: Record<string, string> = { astronaut: "astronaut", telescope: "telescope", comet: "comet", planet: "planet", book: "book" };
 const RANK: Record<string, [string, string]> = { "10": ["#ff6b6b", "#c2185b"], J: ["#60a5fa", "#1d4ed8"], Q: ["#4ade80", "#15803d"], K: ["#fbbf24", "#c2410c"], A: ["#c084fc", "#7e22ce"] };
-const NAMES: Record<string, string> = { astronaut: "Астронавт", telescope: "Телескоп", comet: "Комета", planet: "Планета", book: "Атлас", A: "A", K: "K", Q: "Q", J: "J", "10": "10" };
+const NAMES: Record<string, string> = { astronaut: "Космо-Санта", telescope: "Телескоп с гирляндой", comet: "Рождественская звезда", planet: "Ёлочный шар", book: "Атлас Деда Мороза", A: "A", K: "K", Q: "Q", J: "J", "10": "10" };
 const SYMS = ATLAS.symbols.filter((s) => s !== "book");
 const randomSym = () => (Math.random() < 0.06 ? "book" : SYMS[Math.floor(Math.random() * SYMS.length)]!);
 // Стартовая раскладка фиксированная — одинаковая на сервере и в браузере (без ошибки гидратации)
@@ -18,7 +18,7 @@ const START: string[][] = [["A", "astronaut", "10"], ["K", "book", "Q"], ["teles
 export function Sym({ s, big }: { s: string; big?: boolean }) {
   if (IMG[s]) return (
     <>
-      <Image src={`/img/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      <Image src={`/img/ny/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
       {s === "book" && !big && <BonusLabel />}
     </>
   );
@@ -113,12 +113,12 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   const busy = playing || reqBusy;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #7c5cff" }}>
-        <Image src="/img/bg/atlas.webp" alt="" fill priority sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0c0a1d]/40 via-[#0c0a1d]/30 to-[#0c0a1d]/90" />
+      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #5b8cff" }}>
+        <Image src="/img/ny/bg/atlas.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/40 via-[#070b1f]/30 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_12px_rgb(124_92_255/0.9)]">АТЛАС ЗВЁЗД</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_12px_rgb(124_92_255/0.9)]">🎄 АТЛАС ЗВЁЗД</h2>
             <AnimatePresence>{fs && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 rounded-xl bg-black/50 px-3 py-1.5 ring-1 ring-gold/50">
                 <span className="relative size-8 overflow-hidden rounded-md"><Sym s={fs.special} /></span>
@@ -126,7 +126,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
               </motion.div>
             )}</AnimatePresence>
           </div>
-          <div className="relative rounded-2xl bg-[linear-gradient(180deg,#2a1f6b,#140f38)] p-2 shadow-[inset_0_0_0_2px_rgb(251_191_36/0.45),0_20px_50px_-20px_#000] sm:p-3">
+          <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#1b2a6b,#0b1238)] p-2 shadow-[inset_0_0_0_2px_rgb(255_209_102/0.55),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Sym s={c} />} highlight={hl} lines={lines} linePatterns={ATLAS.lines}
               overlay={expand && (
@@ -149,7 +149,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
           </div>
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={ATLAS.buyPrice}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#6d28d9", "#a78bfa"]} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#b5122f", "#ff6b7a"]} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>

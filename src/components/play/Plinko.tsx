@@ -12,9 +12,10 @@ const describe = (r: RoundView) => { const p = r.params as { rows: number; risk:
 const RISK: Record<PlinkoRisk, string> = { low: "низкий", medium: "средний", high: "высокий" };
 
 const W = 1000;
+const GARLAND = ["#ff4d5e", "#ffd166", "#3ee08f", "#8fdcff"];
 const label = (m: number, rows: number) => `${m}${rows < 16 ? "×" : ""}`;
 const labelSize = (m: number, rows: number, s: number) => Math.min(26, s * 0.3, (s * 0.84) / (label(m, rows).length * 0.62));
-const tone = (m: number) => (m >= 10 ? "#ff5a5f" : m >= 2 ? "#f5b84a" : m >= 1 ? "#00c47a" : "#3a4549");
+const tone = (m: number) => (m >= 10 ? "#e8263f" : m >= 2 ? "#ffd166" : m >= 1 ? "#3ee08f" : "#2a3870");
 
 export function PlinkoGame({ cfg }: { cfg: GameConfig }) {
   const { balance, setBalance } = useAuth();
@@ -76,16 +77,17 @@ export function PlinkoGame({ cfg }: { cfg: GameConfig }) {
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block w-full max-w-[640px]" role="img" aria-label="Доска Plinko">
         <defs>
-          <radialGradient id="ball" cx="35%" cy="30%"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#00c47a" /></radialGradient>
+          <radialGradient id="ball" cx="35%" cy="30%"><stop offset="0" stopColor="#fff" /><stop offset=".35" stopColor="#ff6b7a" /><stop offset="1" stopColor="#9e0f2a" /></radialGradient>
         </defs>
-        {pegs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={s * 0.09} fill="#c3cbd0" opacity={0.85} />)}
+        {/* Штырьки — лампочки гирлянды */}
+        {pegs.map((p, i) => <g key={i}><circle cx={p.x} cy={p.y} r={s * 0.2} fill={GARLAND[i % GARLAND.length]} opacity={0.18} /><circle cx={p.x} cy={p.y} r={s * 0.095} fill={GARLAND[i % GARLAND.length]} /></g>)}
         {table.map((m, b) => {
           const cx = W / 2 + (b - rows / 2) * s; const y = top + rows * s - s * 0.25;
           const active = hit?.bucket === b;
           return (
             <motion.g key={`${rows}-${risk}-${b}-${active ? hit!.n : 0}`} initial={active ? { y: 0 } : false} animate={active ? { y: [0, s * 0.18, 0] } : {}} transition={{ duration: 0.3 }}>
               <rect x={cx - s * 0.46} y={y} width={s * 0.92} height={s * 0.62} rx={s * 0.12} fill={tone(m)} opacity={active ? 1 : 0.88} />
-              <text x={cx} y={y + s * 0.4} textAnchor="middle" fontSize={labelSize(m, rows, s)} fontWeight={700} fill={m < 1 ? "#c3cbd0" : "#04150d"} style={{ fontFamily: "var(--font-geist-mono)" }}>{label(m, rows)}</text>
+              <text x={cx} y={y + s * 0.4} textAnchor="middle" fontSize={labelSize(m, rows, s)} fontWeight={700} fill={m < 1 ? "#c3cbd0" : m >= 10 ? "#fff" : "#04150d"} style={{ fontFamily: "var(--font-geist-mono)" }}>{label(m, rows)}</text>
             </motion.g>
           );
         })}

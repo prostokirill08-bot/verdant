@@ -8,7 +8,7 @@ import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest
 import { BonusLabel, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, type LineWin } from "./SlotKit";
 
 const SYMS = ["cherry", "lemon", "plum", "watermelon", "strawberry", "seven", "joker"];
-const NAMES: Record<string, string> = { cherry: "Вишня", lemon: "Лимон", plum: "Слива", watermelon: "Арбуз", strawberry: "Клубника", seven: "Семёрка", joker: "Джокер", bonus: "Бонус" };
+const NAMES: Record<string, string> = { cherry: "Вишня", lemon: "Лимон", plum: "Слива", watermelon: "Арбуз", strawberry: "Клубника", seven: "Семёрка", joker: "Эльф", bonus: "Подарок" };
 const randomCell = (): NeonCell => ({ sym: Math.random() < 0.05 ? "bonus" : SYMS[Math.floor(Math.random() * SYMS.length)]! });
 // Стартовая раскладка фиксированная — одинаковая на сервере и в браузере
 const START: NeonCell[][] = [
@@ -18,11 +18,11 @@ const START: NeonCell[][] = [
 ];
 
 function Cell({ c }: { c: NeonCell }) {
-  // Бонус-символ — кристалл с надписью BONUS
-  const img = c.sym === "bonus" ? "crystal" : c.sym;
+  // Бонус-символ — подарок с надписью BONUS
+  const img = c.sym;
   return (
     <span className="relative block size-full">
-      <Image src={`/img/slots/neon/${img}.webp`} alt={NAMES[c.sym] ?? c.sym} fill sizes="110px" className={`rounded-lg object-cover ${c.sym === "bonus" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      <Image src={`/img/ny/slots/neon/${img}.webp`} alt={NAMES[c.sym] ?? c.sym} fill sizes="110px" className={`rounded-lg object-cover ${c.sym === "bonus" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
       {c.sym === "bonus" && <BonusLabel />}
     </span>
   );
@@ -110,19 +110,19 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
   const busy = playing || reqBusy;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #ff3ea5" }}>
-        <Image src="/img/bg/neon-garden.webp" alt="" fill priority sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0c0a1d]/50 via-[#0c0a1d]/30 to-[#0c0a1d]/90" />
+      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #5bb8ff" }}>
+        <Image src="/img/ny/bg/neon-garden.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/50 via-[#070b1f]/30 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-3 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(22px,4.6vw,34px)] font-bold tracking-wide text-[#ff7ac6] drop-shadow-[0_0_14px_#ff3ea5]">НЕОНОВЫЙ САД</h2>
+            <h2 className="font-display text-[clamp(22px,4.6vw,34px)] font-bold tracking-wide text-[#bfe6ff] drop-shadow-[0_0_14px_#5bb8ff]">❄️ ЗИМНИЙ САД</h2>
             <AnimatePresence>{fs && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl bg-black/55 px-3 py-1.5 text-[12px] leading-tight ring-1 ring-gold/50">
                 <b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">×{NEON.fsMultiplier} · бонус {fs.total.toFixed(2)}×</span>
               </motion.div>
             )}</AnimatePresence>
           </div>
-          <div className="relative rounded-2xl bg-[linear-gradient(180deg,#26103d,#0f0820)] p-2 shadow-[inset_0_0_0_2px_rgb(255_62_165/0.5),0_20px_50px_-20px_#000] sm:p-3">
+          <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#10234a,#070d22)] p-2 shadow-[inset_0_0_0_2px_rgb(143_220_255/0.55),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={4} spinKey={spinKey} turbo={turbo || !!fs} filler={randomCell} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Cell c={c} />} highlight={hl} lines={lines} linePatterns={NEON.lines} />
             <AnimatePresence>{banner && (
@@ -132,13 +132,13 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
           </div>
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={NEON.buyPrice}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#be185d", "#ff7ac6"]} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#0e7490", "#7dd3fc"]} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>
       </div>
       <RoundsPanel slug="neon-garden" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Неоновый сад — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Зимний сад — выплаты">
         <p>25 фиксированных линий, ставка делится на 25. Выплата — за 3–5 одинаковых символов слева направо (числа — во сколько раз больше ставки на линию).</p>
         <div className="grid grid-cols-2 gap-2">
           {(["seven", "strawberry", "watermelon", "plum", "lemon", "cherry"] as const).map((s) => (
@@ -148,10 +148,10 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
             </div>
           ))}
         </div>
-        <div className="flex items-start gap-3 rounded-xl bg-ink p-3"><span className="relative size-12 shrink-0"><Cell c={{ sym: "joker" }} /></span><p><b>Джокер</b> появляется на барабанах 2–4 и заменяет любой фрукт и семёрку.</p></div>
+        <div className="flex items-start gap-3 rounded-xl bg-ink p-3"><span className="relative size-12 shrink-0"><Cell c={{ sym: "joker" }} /></span><p><b>Эльф</b> — дикий символ: появляется на барабанах 2–4 и заменяет любой фрукт и семёрку.</p></div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><Cell c={{ sym: "bonus" }} /></span>
-          <p><b className="text-gold">BONUS</b> — 3, 4 или 5 в любом месте платят 2×, 10× или 50× ставки и дают <b>{NEON.freeSpins} бесплатных вращений</b>, где все выигрыши умножаются на ×{NEON.fsMultiplier}. Новые 3 BONUS во время бонуса добавляют ещё {NEON.freeSpins} вращений.</p>
+          <p><b className="text-gold">Подарок BONUS</b> — 3, 4 или 5 в любом месте платят 2×, 10× или 50× ставки и дают <b>{NEON.freeSpins} бесплатных вращений</b>, где все выигрыши умножаются на ×{NEON.fsMultiplier}. Новые 3 BONUS во время бонуса добавляют ещё {NEON.freeSpins} вращений.</p>
         </div>
         <p>Если на первых барабанах уже лежат 2 BONUS, остальные барабаны подсвечиваются и крутятся дольше — в ожидании третьего. Автоигру можно включить без лимита.</p>
         <p>«Купить бонус» сразу запускает бесплатные вращения за {NEON.buyPrice}× ставки. Максимальный выигрыш — {NEON.maxWin.toLocaleString("ru-RU")}× ставки. Расчётный RTP ≈ 95,8%.</p>

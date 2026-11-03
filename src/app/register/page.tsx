@@ -27,7 +27,7 @@ export default function RegisterPage() {
         <Field id="new-password" label="Пароль" type="password" value={f.password} onChange={set("password")} autoComplete="new-password"
           hint={f.password ? (pwOk ? "Надёжный пароль" : "От 8 символов, буквы и цифры") : "От 8 символов, буквы и цифры"} required />
         <label className="flex items-start gap-3 text-[13.5px] text-soft">
-          <input id="adult" type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 size-4 accent-[#00c47a]" />
+          <input id="adult" type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 size-4 accent-[#e8263f]" />
           Мне есть 18 лет. Понимаю, что баллы виртуальные и не имеют денежной стоимости.
         </label>
         <FormError msg={err} />

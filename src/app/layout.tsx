@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: { default: "Verdant — мини-игры на демо-баллах", template: "%s · Verdant" },
   description: "Игровая демо-платформа: слоты, Crash, Mines, Plinko и другие игры на виртуальных баллах.",
 };
-export const viewport: Viewport = { themeColor: "#0c0a1d", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#070b1f", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

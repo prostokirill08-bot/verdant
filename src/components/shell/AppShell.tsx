@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <NavLink key={s} href={`/games/${s}`} active={path === `/games/${s}`}>
               <Image src={GAMES[s].cover} alt="" width={22} height={28} className="h-7 w-[22px] rounded-md object-cover ring-1 ring-white/10" />
               <span className="truncate">{GAMES[s].name}</span>
-              {GAMES[s].badge === "Новинка" && <span className="ml-auto rounded-md bg-pink/20 px-1.5 text-[10px] font-bold uppercase text-pink">new</span>}
+              {GAMES[s].badge === "Новинка" && <span className="ml-auto rounded-md bg-brand/20 px-1.5 text-[10px] font-bold uppercase text-gold">new</span>}
             </NavLink>
           ))}
         </div>
@@ -69,12 +69,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {user.role !== "USER" && <NavLink href="/admin" active={path.startsWith("/admin")}>Админ-панель</NavLink>}
           </div>
         )}
-        <p className="mt-auto px-3 text-[11.5px] leading-relaxed text-muted/70">Демо-платформа. Только виртуальные баллы — их нельзя купить или вывести.</p>
+        <p className="mt-auto px-3 text-[11.5px] leading-relaxed text-muted/70">🎄 С наступающим! Демо-платформа: только виртуальные баллы — их нельзя купить или вывести.</p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Верхняя панель */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
+          <div className="garland absolute inset-x-0 -bottom-[14px]" aria-hidden />
           <div className="lg:hidden"><Logo /></div>
           <div className="ml-auto flex items-center gap-2">
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
@@ -82,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/account" className="flex h-10 items-center gap-2 rounded-xl border border-line bg-panel pl-3 pr-1.5 hover:border-accent/50" title="Демо-баланс">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Баллы</span>
                   <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
-                  <span className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#5dffa6,#22d97a)] text-accent-ink" aria-hidden>
+                  <span className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white" aria-hidden>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="M12 5v14M5 12h14" /></svg>
                   </span>
                 </Link>

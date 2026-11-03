@@ -96,7 +96,7 @@ export function MinesGame({ cfg }: { cfg: GameConfig }) {
             <motion.button key={`${round?.id ?? "x"}-${i}`} type="button" onClick={() => reveal(i)} disabled={!active || revealed.has(i)}
               whileHover={active && !revealed.has(i) ? { y: -3 } : {}} whileTap={active ? { scale: 0.94 } : {}}
               aria-label={`Клетка ${i + 1}`}
-              className={`relative aspect-square rounded-xl transition-colors ${open ? (isMine || hitTile === i ? (hitTile === i ? "bg-danger/25 ring-2 ring-danger" : "bg-ink") : "bg-ink ring-1 ring-accent/40") : finished ? "bg-raised/40" : "bg-raised shadow-[inset_0_-4px_0_rgb(0_0_0/0.25)] hover:bg-[#2f373c]"} ${pending === i ? "animate-pulse" : ""}`}>
+              className={`relative aspect-square rounded-xl transition-colors ${open ? (isMine || hitTile === i ? (hitTile === i ? "bg-danger/25 ring-2 ring-danger" : "bg-ink") : "bg-ink ring-1 ring-accent/40") : finished ? "bg-raised/40" : "bg-[linear-gradient(180deg,#e9f3ff_0_14%,#2a3870_15%,#1d2756)] shadow-[inset_0_-4px_0_rgb(0_0_0/0.3)] hover:brightness-125"} ${pending === i ? "animate-pulse" : ""}`}>
               {open && (
                 <motion.span initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 16 }} className="absolute inset-0 grid place-items-center">
                   {gem ? <Gem /> : <Mine dim={hitTile !== i} />}
@@ -111,7 +111,7 @@ export function MinesGame({ cfg }: { cfg: GameConfig }) {
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="pointer-events-none absolute inset-x-0 top-1/2 mx-auto w-fit -translate-y-1/2 rounded-2xl border border-line bg-panel/95 px-6 py-4 text-center shadow-2xl backdrop-blur">
           {round!.status === "WON"
             ? <><p className="font-display text-[28px] font-bold text-accent">{round!.multiplier.toFixed(2)}×</p><p className="font-mono text-soft">+{points(round!.payout)}</p></>
-            : <><p className="font-display text-[22px] font-bold text-danger">Мина!</p><p className="text-[13px] text-muted">Ставка сгорела</p></>}
+            : <><p className="font-display text-[22px] font-bold text-danger">Бомба! 💥</p><p className="text-[13px] text-muted">Ставка сгорела</p></>}
         </motion.div>
       )}
     </div>
@@ -120,13 +120,17 @@ export function MinesGame({ cfg }: { cfg: GameConfig }) {
   return <GameLayout slug="mines" controls={controls} stage={stage} footer={<RoundsPanel slug="mines" version={version} describe={describe} />} />;
 }
 
+// Новогодние фишки: подарок вместо кристалла, бомба с остролистом вместо мины
 const Gem = () => (
-  <svg viewBox="0 0 24 24" className="size-[58%]" aria-hidden>
-    <path d="M7 3h10l4 6-9 12L3 9z" fill="#00c47a" /><path d="M7 3l5 6 5-6M3 9h18M12 9v12" stroke="#04150d" strokeOpacity=".35" strokeWidth="1.2" fill="none" />
+  <svg viewBox="0 0 24 24" className="size-[62%] drop-shadow-[0_0_8px_rgb(255_209_102/0.6)]" aria-hidden>
+    <rect x="3.5" y="9" width="17" height="12" rx="1.5" fill="#e8263f" /><rect x="2.5" y="6.5" width="19" height="4" rx="1.2" fill="#ff4d5e" />
+    <rect x="10.6" y="6.5" width="2.8" height="14.5" fill="#ffd166" /><path d="M12 6.5C9 2 6 3.5 7.5 6.5M12 6.5c3-4.5 6-3 4.5 0" stroke="#ffd166" strokeWidth="1.8" fill="none" strokeLinecap="round" />
   </svg>
 );
 const Mine = ({ dim }: { dim?: boolean }) => (
-  <svg viewBox="0 0 24 24" className={`size-[58%] ${dim ? "opacity-60" : ""}`} aria-hidden>
-    <circle cx="12" cy="13" r="7" fill="#ff5a5f" /><path d="M12 2v4M12 20v2M2 13h3M19 13h3M5 6l2 2M19 6l-2 2" stroke="#ff5a5f" strokeWidth="2" strokeLinecap="round" /><circle cx="9.5" cy="10.5" r="1.8" fill="#fff" fillOpacity=".7" />
+  <svg viewBox="0 0 24 24" className={`size-[62%] ${dim ? "opacity-60" : ""}`} aria-hidden>
+    <circle cx="11" cy="14" r="7" fill="#1d1f2e" stroke="#4b5070" /><circle cx="8.5" cy="11.5" r="1.8" fill="#fff" fillOpacity=".45" />
+    <path d="M15 8.5 17.5 6" stroke="#8a6a3a" strokeWidth="1.8" strokeLinecap="round" /><circle cx="18.6" cy="4.9" r="1.6" fill="#ffd166" />
+    <path d="M6 7.5c1.5-.3 2.6.6 2.4 2-1.4.3-2.6-.5-2.4-2zM9.7 6c.6 1.4 0 2.6-1.4 2.9-.6-1.4 0-2.6 1.4-2.9z" fill="#2fa865" /><circle cx="8.6" cy="8.9" r="1" fill="#e8263f" />
   </svg>
 );

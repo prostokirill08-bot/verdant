@@ -4,7 +4,7 @@ import { GameCard } from "./GameCard";
 import { CATEGORY_NAMES, GAMES, type GameCategory, type GameSlug } from "@/lib/games";
 
 type Item = { slug: GameSlug; title: string; tagline: string; enabled: boolean };
-const TABS: [GameCategory | "all", string, string][] = [["all", "Все игры", "✨"], ["slots", CATEGORY_NAMES.slots, "🎰"], ["originals", CATEGORY_NAMES.originals, "🚀"]];
+const TABS: [GameCategory | "all", string, string][] = [["all", "Все игры", "❄️"], ["slots", CATEGORY_NAMES.slots, "🎁"], ["originals", CATEGORY_NAMES.originals, "🎄"]];
 
 export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: string }) {
   const [q, setQ] = useState("");
@@ -14,7 +14,7 @@ export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: str
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center gap-2">
         {TABS.map(([k, t, e]) => (
-          <button key={k} onClick={() => setCat(k)} className={`flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold transition-colors ${cat === k ? "bg-brand-gradient text-white shadow-[0_8px_24px_-10px_#a855f7]" : "bg-panel text-soft ring-1 ring-line hover:text-white"}`}>
+          <button key={k} onClick={() => setCat(k)} className={`flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold transition-colors ${cat === k ? "bg-brand-gradient text-white shadow-[0_8px_24px_-10px_#e8263f]" : "bg-panel text-soft ring-1 ring-line hover:text-white"}`}>
             <span aria-hidden>{e}</span>{t}
           </button>
         ))}

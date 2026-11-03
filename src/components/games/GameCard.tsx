@@ -8,7 +8,7 @@ import { GAMES, type GameSlug } from "@/lib/games";
 export function GameCard({ slug, title, enabled = true, index = 0, size = "md" }: { slug: GameSlug; title?: string; enabled?: boolean; index?: number; size?: "md" | "lg" }) {
   const g = GAMES[slug];
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 0.4) }}>
+    <motion.div className="snow-cap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 0.4) }}>
       <Link href={`/games/${slug}`} className="group relative block overflow-hidden rounded-2xl bg-panel ring-1 ring-white/5 transition-transform duration-200 hover:-translate-y-1.5 focus-visible:outline-2 focus-visible:outline-accent"
         style={{ boxShadow: `0 18px 40px -22px ${g.theme[0]}` }}>
         <div className={`relative ${size === "lg" ? "aspect-[4/5]" : "aspect-[3/4]"}`}>

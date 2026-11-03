@@ -65,7 +65,9 @@ export function LimboGame({ cfg }: { cfg: GameConfig }) {
   const color = last ? (last.win ? "text-accent" : "text-danger") : rolling ? "text-white" : "text-raised";
   const stage = (
     <div className="relative flex min-h-[360px] flex-col justify-between gap-6 overflow-hidden p-5 sm:p-8">
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent_0_47px,rgb(255_255_255/0.025)_47px_48px),repeating-linear-gradient(0deg,transparent_0_47px,rgb(255_255_255/0.025)_47px_48px)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgb(31_157_85/0.25),transparent_55%)]" />
+      {/* Ёлка внизу и звезда, которая взлетает к множителю */}
+      <svg aria-hidden className="pointer-events-none absolute bottom-0 left-1/2 h-[46%] -translate-x-1/2 opacity-60" viewBox="0 0 100 120"><path d="M50 8 20 50h14L12 82h20L6 112h88L68 82h20L66 50h14z" fill="#1f9d55" /><rect x="44" y="110" width="12" height="10" fill="#7a4a1f" />{[[40, 44, "#e8263f"], [60, 62, "#ffd166"], [35, 78, "#8fdcff"], [66, 92, "#e8263f"], [46, 98, "#ffd166"]].map(([x, y, c], i) => <circle key={i} cx={x as number} cy={y as number} r="4" fill={c as string} />)}</svg>
       <div className="relative flex min-h-8 flex-wrap justify-end gap-1.5">
         <AnimatePresence initial={false}>
           {recent.map((r) => (

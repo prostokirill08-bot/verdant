@@ -11,7 +11,7 @@ type Res = { round: RoundView; balance: string };
 const NAME: Record<Side, string> = { heads: "Орёл", tails: "Решка" };
 const describe = (r: RoundView) => { const x = r.result as { sides: Side[]; side: Side; win: boolean } | null; return x ? `${NAME[x.side]} ×${x.sides.length}: ${x.sides.map((s) => (s === "heads" ? "О" : "Р")).join("")}` : "—"; };
 
-/** Монета: золотая сторона — орёл (звезда), серебряная — решка (знак V). */
+/** Монета: золотая сторона — орёл (звезда), серебряная — решка (снежинка). */
 export function Coin({ side, size = 160 }: { side: Side; size?: number }) {
   const gold = side === "heads";
   return (
@@ -23,7 +23,9 @@ export function Coin({ side, size = 160 }: { side: Side; size?: number }) {
       <circle cx="50" cy="50" r="40" fill="none" stroke={gold ? "#92400e" : "#4b4f6b"} strokeWidth="2" strokeDasharray="3 3" opacity=".6" />
       {gold
         ? <path d="m50 24 7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z" fill="#92400e" opacity=".85" />
-        : <path d="M33 30 50 72 67 30" fill="none" stroke="#3b3f5c" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" opacity=".85" />}
+        : <g stroke="#3b3f5c" strokeWidth="4" strokeLinecap="round" opacity=".85">{/* Снежинка */}
+            {[0, 60, 120].map((a) => <g key={a} transform={`rotate(${a} 50 50)`}><path d="M50 24v52M50 32l-7-6M50 32l7-6M50 68l-7 6M50 68l7 6" fill="none" /></g>)}
+          </g>}
     </svg>
   );
 }
@@ -62,7 +64,7 @@ export function CoinflipGame({ cfg }: { cfg: GameConfig }) {
   const controls = (
     <>
       <BetAmount value={amount} onChange={setAmount} cfg={cfg} disabled={playing} />
-      <div><Label>Сторона</Label><Segmented value={side} onChange={setSide} disabled={playing} options={[["heads", "🌟 Орёл"], ["tails", "✌️ Решка"]]} /></div>
+      <div><Label>Сторона</Label><Segmented value={side} onChange={setSide} disabled={playing} options={[["heads", "⭐ Орёл"], ["tails", "❄️ Решка"]]} /></div>
       <div>
         <Label aside={<span className="font-mono text-soft">{flips}</span>}>Бросков подряд</Label>
         <input type="range" min={1} max={10} value={flips} onChange={(e) => setFlips(Number(e.target.value))} disabled={playing} className="w-full accent-[#fbbf24]" aria-label="Количество бросков" />

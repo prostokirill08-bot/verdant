@@ -1,4 +1,5 @@
 "use client";
+import NextImage from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -87,6 +88,17 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
   // Таймер для обратного отсчёта и надписи на кнопке
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 100); return () => clearInterval(t); }, []);
 
+  // Спрайт саней Санты (PNG с прозрачностью)
+  const sleigh = useRef<HTMLImageElement | null>(null);
+  useEffect(() => { const img = new Image(); img.src = "/img/ny/sprites/sleigh.png"; sleigh.current = img; }, []);
+  const drawSleigh = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, crashed: boolean, w: number) => {
+    const img = sleigh.current!; const sw = Math.min(150, Math.max(90, w * 0.16)); const sh = (sw * img.naturalHeight) / img.naturalWidth;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.max(-1.1, Math.min(ang, 1.4)));
+    if (crashed) ctx.globalAlpha = 0.85;
+    ctx.drawImage(img, -sw * 0.88, -sh * 0.78, sw, sh); // нос оленей — на конце кривой
+    ctx.restore(); ctx.globalAlpha = 1;
+  }, []);
+
   // Отрисовка графика: множитель e^(k·t) от момента старта по серверным часам
   useEffect(() => {
     let raf = 0;
@@ -104,24 +116,38 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
       const X = (t: number) => pad.l + (t / tMax) * (w - pad.l - pad.r);
       const Y = (v: number) => h - pad.b - ((v - 1) / (mMax - 1)) * (h - pad.b - pad.t);
       // сетка
-      ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.fillStyle = "#8b959c"; ctx.font = "11px var(--font-geist-mono), monospace"; ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.fillStyle = "#aab6e0"; ctx.font = "11px var(--font-geist-mono), monospace"; ctx.lineWidth = 1;
       const step = mMax > 20 ? 10 : mMax > 6 ? 2 : mMax > 3 ? 0.5 : 0.25;
       for (let v = 1; v <= mMax; v += step) { ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(w - pad.r, Y(v)); ctx.stroke(); ctx.fillText(`${v.toFixed(v < 10 ? 1 : 0)}×`, 6, Y(v) + 4); }
       for (let s = 0; s <= tMax / 1000; s += tMax > 30000 ? 10 : 2) ctx.fillText(`${s}с`, X(s * 1000) - 6, h - 8);
-      if (!elapsed) return;
-      const crashed = round?.status === "CRASHED"; const col = crashed ? "#ff5a5f" : "#00c47a";
+      if (!elapsed) { if (sleigh.current?.complete) drawSleigh(ctx, X(0) + 10, Y(1) - 18, -0.15, false, w); return; }
+      const crashed = round?.status === "CRASHED"; const col = crashed ? "#ff4d6d" : "#ffd166";
+      // Золотой шлейф саней
       ctx.beginPath(); ctx.moveTo(X(0), Y(1));
       for (let i = 1; i <= 80; i++) { const t = (elapsed * i) / 80; ctx.lineTo(X(t), Y(Math.exp(CRASH_GROWTH * t))); }
-      ctx.lineWidth = 4; ctx.strokeStyle = col; ctx.lineCap = "round"; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = col; ctx.lineCap = "round"; ctx.shadowColor = col; ctx.shadowBlur = 14; ctx.stroke(); ctx.shadowBlur = 0;
       ctx.lineTo(X(elapsed), Y(1)); ctx.closePath();
-      const g = ctx.createLinearGradient(0, pad.t, 0, h); g.addColorStop(0, crashed ? "rgba(255,90,95,.28)" : "rgba(0,196,122,.3)"); g.addColorStop(1, "rgba(0,0,0,0)");
+      const g = ctx.createLinearGradient(0, pad.t, 0, h); g.addColorStop(0, crashed ? "rgba(255,77,109,.25)" : "rgba(255,209,102,.22)"); g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g; ctx.fill();
-      ctx.beginPath(); ctx.arc(X(elapsed), Y(m), 7, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+      // Искры за санями
+      const nowMs = performance.now();
+      for (let i = 0; i < 14; i++) {
+        const t = elapsed * (1 - (i + 1) * 0.018); if (t <= 0) break;
+        const px = X(t) + Math.sin(nowMs / 120 + i) * 3, py = Y(Math.exp(CRASH_GROWTH * t)) + Math.cos(nowMs / 150 + i * 2) * 3;
+        ctx.globalAlpha = crashed ? 0.25 : 1 - i / 14; ctx.fillStyle = i % 3 ? "#fff6d0" : "#ffd166";
+        ctx.beginPath(); ctx.arc(px, py, 2.4 - i * 0.12, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // Сани Санты на конце кривой, наклонены по касательной
+      const tx = X(elapsed), ty = Y(m);
+      const dt = Math.max(elapsed * 0.02, 50); const ang = Math.atan2(Y(Math.exp(CRASH_GROWTH * elapsed)) - Y(Math.exp(CRASH_GROWTH * (elapsed - dt))), X(elapsed) - X(elapsed - dt));
+      if (sleigh.current?.complete) drawSleigh(ctx, tx, ty, crashed ? ang + 0.9 : ang, crashed, w);
+      else { ctx.beginPath(); ctx.arc(tx, ty, 7, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); }
       if (label.current) label.current.textContent = `${m.toFixed(2)}×`;
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [round, now]);
+  }, [round, now, drawSleigh]);
 
   async function placeBet() {
     const r = await run<{ roundId: string; balance: string }>("/api/crash/bet", { amount, autoCashout: autoOn ? Math.round(autoNum * 100) / 100 : null, key: newKey() });
@@ -148,7 +174,7 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
     <>
       <BetAmount value={amount} onChange={setAmount} cfg={cfg} disabled={!!mine && status !== "CRASHED"} />
       <div>
-        <Label aside={<label className="flex cursor-pointer items-center gap-2 text-soft"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} className="accent-[#00c47a]" />вкл.</label>}>Автовывод, ×</Label>
+        <Label aside={<label className="flex cursor-pointer items-center gap-2 text-soft"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} className="accent-[#e8263f]" />вкл.</label>}>Автовывод, ×</Label>
         <input value={auto} onChange={(e) => setAuto(e.target.value.replace(/[^\d.,]/g, "").slice(0, 8))} disabled={!autoOn} inputMode="decimal" aria-label="Автовывод"
           className={`h-11 w-full rounded-xl border bg-ink px-3 font-mono tabular outline-none focus:border-accent disabled:opacity-50 ${autoOk ? "border-line" : "border-danger/70"}`} />
       </div>
@@ -164,20 +190,23 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
         {history.length === 0 && <span className="text-[12px] text-muted">Здесь появятся прошлые раунды</span>}
         {history.map((h) => <span key={h.id} title={`Сид: ${h.serverSeed}`} className={`shrink-0 rounded-md bg-ink px-2 py-1 font-mono text-[12px] font-semibold ${cpTone(h.crashPoint)}`}>{h.crashPoint.toFixed(2)}×</span>)}
       </div>
-      <div className="relative h-[300px] sm:h-[380px]">
+      <div className="relative h-[300px] overflow-hidden sm:h-[380px]">
+        {/* Ночное небо над заснеженной деревней */}
+        <NextImage src="/img/ny/bg/crash.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/10 to-ink/70" />
         <canvas ref={canvas} className="absolute inset-0 size-full" aria-hidden />
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <AnimatePresence mode="wait">
             {status === "BETTING" ? (
               <motion.div key="bet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid w-56 gap-2 text-center">
-                <p className="text-[13px] uppercase tracking-wider text-muted">Приём ставок</p>
+                <p className="text-[13px] uppercase tracking-wider text-soft">🛷 Санта готовится к взлёту</p>
                 <p className="font-display text-[40px] font-bold tabular">{(left / 1000).toFixed(1)}с</p>
-                <div className="h-1.5 overflow-hidden rounded-full bg-raised"><div className="h-full bg-accent" style={{ width: `${(left / 7000) * 100}%` }} /></div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-raised"><div className="h-full bg-[linear-gradient(90deg,#e8263f,#ffd166)]" style={{ width: `${(left / 7000) * 100}%` }} /></div>
               </motion.div>
             ) : status === "RUNNING" || status === "CRASHED" ? (
               <motion.div key={`run-${round?.id}`} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
                 <span ref={label} className={`font-display text-[56px] font-bold tabular sm:text-[76px] ${status === "CRASHED" ? "text-danger" : "text-white"}`}>{(status === "CRASHED" ? round!.crashPoint! : liveMult).toFixed(2)}×</span>
-                {status === "CRASHED" && <p className="font-semibold text-danger">Обвал</p>}
+                {status === "CRASHED" && <p className="font-semibold text-danger">Сани упали в сугроб! ❄️</p>}
               </motion.div>
             ) : (
               <p key="wait" className="text-muted">{status === "DISABLED" ? "Игра временно отключена" : "Подключение…"}</p>

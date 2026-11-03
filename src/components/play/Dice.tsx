@@ -7,6 +7,9 @@ import { points } from "@/lib/format";
 import { BetAmount, betError, ErrorLine, GameLayout, Label, newKey, parsePoints, PlayButton, RoundsPanel, Segmented, Stat, useGameRequest, type GameConfig, type RoundView } from "./kit";
 
 type Res = { round: RoundView; balance: string };
+// Зона проигрыша — леденец, зона выигрыша — ёлочная хвоя
+const CANE = "repeating-linear-gradient(-45deg, #e8263f 0 8px, #fff 8px 14px)";
+const PINE = "linear-gradient(90deg, #1f9d55, #3ee08f)";
 const describe = (r: RoundView) => { const x = r.result as { roll: number; target: number; over: boolean } | null; return x ? `Бросок ${x.roll.toFixed(2)} · ${x.over ? "больше" : "меньше"} ${x.target.toFixed(2)}` : "—"; };
 
 export function DiceGame({ cfg }: { cfg: GameConfig }) {
@@ -49,7 +52,7 @@ export function DiceGame({ cfg }: { cfg: GameConfig }) {
   );
 
   const stage = (
-    <div className="relative flex min-h-[360px] flex-col justify-between gap-8 bg-[radial-gradient(ellipse_at_top,rgb(0_196_122/0.08),transparent_60%)] p-5 sm:p-8">
+    <div className="relative flex min-h-[360px] flex-col justify-between gap-8 bg-[radial-gradient(ellipse_at_top,rgb(143_220_255/0.12),transparent_60%)] p-5 sm:p-8">
       <div className="flex min-h-8 flex-wrap justify-end gap-1.5">
         <AnimatePresence initial={false}>
           {recent.map((r) => (
@@ -68,8 +71,8 @@ export function DiceGame({ cfg }: { cfg: GameConfig }) {
       </div>
       <div className="pb-2">
         <div className="relative h-3 rounded-full bg-ink ring-1 ring-line">
-          <div className="absolute inset-y-0 left-0 rounded-l-full" style={{ width: `${target}%`, background: over ? "var(--color-danger)" : "var(--color-accent)", opacity: 0.85 }} />
-          <div className="absolute inset-y-0 right-0 rounded-r-full" style={{ width: `${100 - target}%`, background: over ? "var(--color-accent)" : "var(--color-danger)", opacity: 0.85 }} />
+          <div className="absolute inset-y-0 left-0 rounded-l-full" style={{ width: `${target}%`, background: over ? CANE : PINE, opacity: 0.9 }} />
+          <div className="absolute inset-y-0 right-0 rounded-r-full" style={{ width: `${100 - target}%`, background: over ? PINE : CANE, opacity: 0.9 }} />
           {last && (
             <motion.div key={last.id} initial={{ left: "50%", opacity: 0 }} animate={{ left: `${last.roll}%`, opacity: 1 }} transition={{ type: "spring", stiffness: 140, damping: 18 }}
               className="absolute -top-9 -translate-x-1/2">

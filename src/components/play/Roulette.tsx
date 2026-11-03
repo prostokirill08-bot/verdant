@@ -13,7 +13,8 @@ const keyOf = (b: RouletteBetKind) => ("n" in b ? `${b.kind}:${b.n}` : b.kind);
 const fromKey = (k: string): RouletteBetKind => { const [kind, n] = k.split(":"); return (n !== undefined ? { kind, n: Number(n) } : { kind }) as RouletteBetKind; };
 const describe = (r: RoundView) => { const x = r.result as { number: number; color: string } | null; return x ? `Выпало ${x.number} (${x.color === "red" ? "красное" : x.color === "black" ? "чёрное" : "зеро"})` : "—"; };
 const SECTOR = 360 / 37;
-const fill = (n: number) => (n === 0 ? "#00a868" : RED_NUMBERS.has(n) ? "#d9434a" : "#1c2226");
+// Праздничные цвета: зеро — ёлочный зелёный, красные — рождественский красный, чёрные — ночное небо
+const fill = (n: number) => (n === 0 ? "#1f9d55" : RED_NUMBERS.has(n) ? "#d81b3c" : "#121a3d");
 
 export function RouletteGame({ cfg }: { cfg: GameConfig }) {
   const { balance, setBalance } = useAuth();
@@ -101,7 +102,7 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
         <div className="relative size-[220px] sm:size-[250px]">
           <svg viewBox="-110 -110 220 220" className="absolute inset-0" aria-hidden><path d="M-7 -108 L7 -108 L0 -94Z" fill="#fff" /></svg>
           <motion.svg viewBox="-100 -100 200 200" className="size-full drop-shadow-[0_10px_30px_rgb(0_0_0/0.5)]" animate={{ rotate: angle }} transition={{ duration: spinning ? 4 : 0, ease: [0.15, 0.6, 0.15, 1] }} role="img" aria-label="Колесо рулетки">
-            <circle r="98" fill="#2c3338" />
+            <circle r="98" fill="#ffd166" />
             {ROULETTE_WHEEL.map((n, i) => {
               const a0 = ((i - 0.5) * SECTOR - 90) * (Math.PI / 180), a1 = ((i + 0.5) * SECTOR - 90) * (Math.PI / 180);
               const R = 94, r = 62;
@@ -114,8 +115,8 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
                 </g>
               );
             })}
-            <circle r="60" fill="#191d20" stroke="#2c3338" strokeWidth="2" />
-            <circle r="22" fill="#252b2f" /><circle r="6" fill="#00c47a" />
+            <circle r="60" fill="#0f1633" stroke="#ffd166" strokeWidth="2" />
+            <circle r="22" fill="#1a2349" stroke="#ffd166" strokeWidth="1.5" /><circle r="6" fill="#e8263f" />
             {[0, 60, 120, 180, 240, 300].map((a) => <rect key={a} x="-2" y="-58" width="4" height="34" rx="2" fill="#2c3338" transform={`rotate(${a})`} />)}
           </motion.svg>
         </div>
@@ -132,15 +133,15 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
 
       <div className="overflow-x-auto pb-1">
         <div className="grid min-w-[620px] grid-cols-[44px_repeat(12,minmax(0,1fr))_48px] grid-rows-[repeat(3,40px)_36px_36px] gap-1">
-          <div className="row-span-3">{cell({ kind: "straight", n: 0 }, "0", "size-full bg-[#00a868]", wn === 0)}</div>
+          <div className="row-span-3">{cell({ kind: "straight", n: 0 }, "0", "size-full bg-[#1f9d55]", wn === 0)}</div>
           {[3, 2, 1].map((rowTop, ri) => (
             <div key={rowTop} className="contents">
-              {Array.from({ length: 12 }, (_, c) => { const n = c * 3 + rowTop; return <div key={n} style={{ gridRow: ri + 1, gridColumn: c + 2 }}>{cell({ kind: "straight", n }, n, `size-full ${rouletteColor(n) === "red" ? "bg-[#d9434a]" : "bg-[#1c2226] ring-1 ring-line"}`, wn === n)}</div>; })}
+              {Array.from({ length: 12 }, (_, c) => { const n = c * 3 + rowTop; return <div key={n} style={{ gridRow: ri + 1, gridColumn: c + 2 }}>{cell({ kind: "straight", n }, n, `size-full ${rouletteColor(n) === "red" ? "bg-[#d81b3c]" : "bg-[#121a3d] ring-1 ring-line"}`, wn === n)}</div>; })}
               <div style={{ gridRow: ri + 1, gridColumn: 14 }}>{cell({ kind: "column", n: (3 - ri) as 1 | 2 | 3 }, "2:1", "size-full bg-raised text-soft")}</div>
             </div>
           ))}
           {[1, 2, 3].map((d) => <div key={d} style={{ gridRow: 4, gridColumn: `${(d - 1) * 4 + 2} / span 4` }}>{cell({ kind: "dozen", n: d as 1 | 2 | 3 }, `${(d - 1) * 12 + 1}–${d * 12}`, "size-full bg-raised text-soft")}</div>)}
-          {([[{ kind: "low" }, "1–18", "bg-raised text-soft"], [{ kind: "even" }, "Чёт", "bg-raised text-soft"], [{ kind: "red" }, "Красное", "bg-[#d9434a]"], [{ kind: "black" }, "Чёрное", "bg-[#1c2226] ring-1 ring-line"], [{ kind: "odd" }, "Нечёт", "bg-raised text-soft"], [{ kind: "high" }, "19–36", "bg-raised text-soft"]] as [RouletteBetKind, string, string][]).map(([b, t, c], i) => (
+          {([[{ kind: "low" }, "1–18", "bg-raised text-soft"], [{ kind: "even" }, "Чёт", "bg-raised text-soft"], [{ kind: "red" }, "Красное", "bg-[#d81b3c]"], [{ kind: "black" }, "Чёрное", "bg-[#121a3d] ring-1 ring-line"], [{ kind: "odd" }, "Нечёт", "bg-raised text-soft"], [{ kind: "high" }, "19–36", "bg-raised text-soft"]] as [RouletteBetKind, string, string][]).map(([b, t, c], i) => (
             <div key={t} style={{ gridRow: 5, gridColumn: `${i * 2 + 2} / span 2` }}>{cell(b, t, `size-full ${c}`)}</div>
           ))}
         </div>

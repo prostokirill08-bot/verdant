@@ -76,8 +76,8 @@ export function TowerGame({ cfg }: { cfg: GameConfig }) {
                 return (
                   <motion.button key={tile} type="button" onClick={() => pick(tile)} disabled={!isNow || busy}
                     whileHover={isNow ? { y: -2 } : {}} whileTap={isNow ? { scale: 0.95 } : {}}
-                    className={`grid h-10 place-items-center rounded-xl text-[18px] transition-colors sm:h-11 ${boom ? "bg-danger/40 ring-2 ring-danger" : chosen ? "bg-accent/25 ring-1 ring-accent/60" : reveal && trap ? "bg-danger/15" : isNow ? "bg-[linear-gradient(180deg,#3b2f75,#2a2155)] ring-1 ring-gold/40 hover:brightness-125" : "bg-black/35 ring-1 ring-white/5"}`}>
-                    {boom ? "💥" : chosen ? "💎" : reveal && trap ? <span className="opacity-60">💀</span> : reveal ? <span className="opacity-30">💎</span> : ""}
+                    className={`grid h-10 place-items-center rounded-xl text-[18px] transition-colors sm:h-11 ${boom ? "bg-danger/40 ring-2 ring-danger" : chosen ? "bg-accent/25 ring-1 ring-accent/60" : reveal && trap ? "bg-danger/15" : isNow ? "bg-[linear-gradient(180deg,#f3f8ff_0_16%,#7fb6e6_17%,#3c6fa8)] ring-1 ring-gold/60 hover:brightness-110" : "bg-[linear-gradient(180deg,rgb(255_255_255/0.5)_0_10%,rgb(143_220_255/0.12)_11%,rgb(143_220_255/0.06))] ring-1 ring-white/5"}`}>
+                    {boom ? "💥" : chosen ? "🎁" : reveal && trap ? <span className="opacity-70">☃️</span> : reveal ? <span className="opacity-30">🎁</span> : ""}
                   </motion.button>
                 );
               })}
@@ -87,7 +87,7 @@ export function TowerGame({ cfg }: { cfg: GameConfig }) {
       })}
       {round && !active && (
         <p className={`mt-2 text-center font-display text-[20px] font-bold ${round.status === "WON" ? "text-gold" : "text-danger"}`}>
-          {round.status === "WON" ? `${round.multiplier.toFixed(2)}× · +${points(round.payout)}` : "Ловушка! Ставка сгорела"}
+          {round.status === "WON" ? `${round.multiplier.toFixed(2)}× · +${points(round.payout)}` : "Снежная ловушка! Ставка сгорела"}
         </p>
       )}
     </div>

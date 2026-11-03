@@ -93,7 +93,6 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
   };
   const enough = !user || units <= BigInt(balance);
   const buyCost = units * BigInt(buyPrice);
-  const [autoMenu, setAutoMenu] = useState(false);
   return (
     <div className="grid gap-3">
       <div className="flex items-center justify-between gap-2 rounded-2xl bg-black/40 p-2 ring-1 ring-white/10 backdrop-blur">
@@ -107,7 +106,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
             aria-label={auto > 0 ? "Остановить автоигру" : "Крутить"}
             className="relative grid size-[74px] place-items-center rounded-full text-white shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
             style={{ background: `radial-gradient(circle at 35% 30%, ${accent[1]}, ${accent[0]})`, boxShadow: `0 0 0 4px rgb(255 255 255 / 0.12), 0 12px 34px -10px ${accent[0]}` }}>
-            {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">{auto === Infinity ? "∞" : auto}</span><span className="text-[9px] font-bold uppercase">стоп</span></span> : (
+            {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">∞</span><span className="text-[9px] font-bold uppercase">стоп</span></span> : (
               <motion.svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" animate={busy ? { rotate: 360 } : { rotate: 0 }} transition={busy ? { repeat: Infinity, duration: 0.6, ease: "linear" } : {}}>
                 <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v4h-4" />
               </motion.svg>
@@ -121,17 +120,8 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
         </div>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        <div className="relative">
-          <Pill onClick={() => (auto > 0 ? setAuto(0) : setAutoMenu((v) => !v))} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "Стоп" : "Авто"}</Pill>
-          <AnimatePresence>
-            {autoMenu && auto === 0 && (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute bottom-12 left-0 z-20 grid w-36 gap-1 rounded-xl border border-line bg-panel p-1.5 shadow-2xl">
-                {[10, 25, 50, 100].map((n) => <button key={n} onClick={() => { setAutoMenu(false); setAuto(n); }} className="rounded-lg px-3 py-1.5 text-left text-[13px] hover:bg-raised">{n} вращений</button>)}
-                <button onClick={() => { setAutoMenu(false); setAuto(Infinity); }} className="rounded-lg px-3 py-1.5 text-left text-[13px] font-semibold text-gold hover:bg-raised">∞ Без лимита</button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает баллов) */}
+        <Pill onClick={() => setAuto(auto > 0 ? 0 : Infinity)} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "■ Стоп" : "∞ Авто"}</Pill>
         <Pill onClick={() => setTurbo(!turbo)} active={turbo}>⚡ Турбо</Pill>
         <Pill onClick={onInfo}>Выплаты</Pill>
         <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold>Бонус {points(buyCost)}</Pill>

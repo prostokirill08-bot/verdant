@@ -1,4 +1,4 @@
-// Каталог игр: категория, обложка, цвет темы. Настройки (лимиты, вкл/выкл) — в БД.
+// Каталог игр: категория, новогодняя обложка, цвет темы. Настройки (лимиты, вкл/выкл) — в БД.
 export const GAME_SLUGS = ["atlas", "neon-garden", "crash", "mines", "tower", "hilo", "wheel", "keno", "coinflip", "dice", "plinko", "limbo", "roulette"] as const;
 export type GameSlug = (typeof GAME_SLUGS)[number];
 export type GameCategory = "slots" | "originals";
@@ -10,19 +10,19 @@ export type GameMeta = {
 };
 
 export const GAMES: Record<GameSlug, GameMeta> = {
-  atlas: { name: "Атлас звёзд", category: "slots", cover: "/img/covers/atlas.webp", bg: "/img/bg/atlas.webp", theme: ["#7c5cff", "#2fb8ff"], badge: "Новинка", blurb: "Книжный слот 5×3: особый символ раскрывается на весь барабан" },
-  "neon-garden": { name: "Неоновый сад", category: "slots", cover: "/img/covers/neon-garden.webp", bg: "/img/bg/neon-garden.webp", theme: ["#ff3ea5", "#3ef08e"], badge: "Новинка", blurb: "Фруктовый слот 5×4: бесплатные вращения с ×3" },
-  crash: { name: "Crash", category: "originals", cover: "/img/covers/crash.webp", theme: ["#ff8a3d", "#22d3ee"], badge: "Хит", blurb: "Ракета летит — забери до взрыва" },
-  mines: { name: "Mines", category: "originals", cover: "/img/covers/mines.webp", theme: ["#22c55e", "#ff4d6d"], blurb: "Ищи кристаллы, обходи бомбы" },
-  dice: { name: "Dice", category: "originals", cover: "/img/covers/dice.webp", theme: ["#a855f7", "#22d3ee"], blurb: "Выбери шанс и брось кости" },
-  plinko: { name: "Plinko", category: "originals", cover: "/img/covers/plinko.webp", theme: ["#ec4899", "#8b5cf6"], blurb: "Шарик скачет по штырькам" },
-  limbo: { name: "Limbo", category: "originals", cover: "/img/covers/limbo.webp", theme: ["#fbbf24", "#8b5cf6"], blurb: "Задай цель — множитель решит" },
-  tower: { name: "Башня", category: "originals", cover: "/img/covers/tower.webp", theme: ["#f59e0b", "#7c3aed"], badge: "Новинка", blurb: "Поднимайся по этажам, обходя ловушки" },
-  hilo: { name: "Hi-Lo", category: "originals", cover: "/img/covers/hilo.webp", theme: ["#ef4444", "#fbbf24"], badge: "Новинка", blurb: "Следующая карта выше или ниже?" },
-  wheel: { name: "Колесо фортуны", category: "originals", cover: "/img/covers/wheel.webp", theme: ["#ec4899", "#fbbf24"], badge: "Новинка", blurb: "Крути колесо — до 19,8×" },
-  keno: { name: "Кено", category: "originals", cover: "/img/covers/keno.webp", theme: ["#22d3ee", "#ec4899"], badge: "Новинка", blurb: "Выбери до 10 чисел из 40" },
-  coinflip: { name: "Монетка", category: "originals", cover: "/img/covers/coinflip.webp", theme: ["#fbbf24", "#8b5cf6"], badge: "Новинка", blurb: "Орёл или решка — серия до 10 бросков" },
-  roulette: { name: "Roulette", category: "originals", cover: "/img/covers/roulette.webp", theme: ["#ef4444", "#16a34a"], blurb: "Европейская рулетка на 37 секторов" },
+  atlas: { name: "Атлас звёзд", category: "slots", cover: "/img/ny/covers/atlas.webp", bg: "/img/ny/bg/atlas.webp", theme: ["#5b8cff", "#ffd166"], badge: "Новинка", blurb: "Звёздная книга Деда Мороза: символ раскрывается на весь барабан" },
+  "neon-garden": { name: "Зимний сад", category: "slots", cover: "/img/ny/covers/neon-garden.webp", bg: "/img/ny/bg/neon-garden.webp", theme: ["#ff4d6d", "#3ee08f"], badge: "Новинка", blurb: "Зимний сад: 3 подарка BONUS — фриспины с ×3" },
+  crash: { name: "Crash", category: "originals", cover: "/img/ny/covers/crash.webp", theme: ["#ff5f3d", "#ffd166"], badge: "Хит", blurb: "Санта летит на санях — забери до падения" },
+  mines: { name: "Mines", category: "originals", cover: "/img/ny/covers/mines.webp", theme: ["#22c55e", "#ff4d6d"], blurb: "Собирай подарки, обходи бомбы" },
+  dice: { name: "Dice", category: "originals", cover: "/img/ny/covers/dice.webp", theme: ["#8fdcff", "#e8263f"], blurb: "Ледяные кости: выбери шанс и брось" },
+  plinko: { name: "Plinko", category: "originals", cover: "/img/ny/covers/plinko.webp", theme: ["#e8263f", "#ffd166"], blurb: "Ёлочная игрушка скачет по гирлянде" },
+  limbo: { name: "Limbo", category: "originals", cover: "/img/ny/covers/limbo.webp", theme: ["#ffd166", "#3ee08f"], blurb: "Рождественская звезда — как высоко взлетит?" },
+  tower: { name: "Башня", category: "originals", cover: "/img/ny/covers/tower.webp", theme: ["#8fdcff", "#ffd166"], badge: "Новинка", blurb: "Ледяная башня с подарком на вершине" },
+  hilo: { name: "Hi-Lo", category: "originals", cover: "/img/ny/covers/hilo.webp", theme: ["#ef4444", "#fbbf24"], badge: "Новинка", blurb: "Новогодние карты: выше или ниже?" },
+  wheel: { name: "Колесо фортуны", category: "originals", cover: "/img/ny/covers/wheel.webp", theme: ["#e8263f", "#ffffff"], badge: "Новинка", blurb: "Колесо-леденец — до 19,8×" },
+  keno: { name: "Кено", category: "originals", cover: "/img/ny/covers/keno.webp", theme: ["#8fdcff", "#e8263f"], badge: "Новинка", blurb: "Ёлочные шары с номерами — выбери до 10" },
+  coinflip: { name: "Монетка", category: "originals", cover: "/img/ny/covers/coinflip.webp", theme: ["#ffd166", "#3ee08f"], badge: "Новинка", blurb: "Золотая монета со снежинкой" },
+  roulette: { name: "Roulette", category: "originals", cover: "/img/ny/covers/roulette.webp", theme: ["#ef4444", "#16a34a"], blurb: "Праздничная рулетка на 37 секторов" },
 };
 export const GAME_NAMES = Object.fromEntries(GAME_SLUGS.map((s) => [s, GAMES[s].name])) as Record<GameSlug, string>;
 export const CATEGORY_NAMES: Record<GameCategory, string> = { slots: "Слоты", originals: "Оригинальные игры" };
