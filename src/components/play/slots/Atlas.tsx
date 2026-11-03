@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { anticipationFrom, ATLAS, type AtlasResult, type AtlasSpin } from "@/lib/fair/slots";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, type LineWin } from "./SlotKit";
+import { BonusLabel, BonusTotal, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
 
 const IMG: Record<string, string> = { astronaut: "astronaut", telescope: "telescope", comet: "comet", planet: "planet", book: "book" };
 const RANK: Record<string, [string, string]> = { "10": ["#ff6b6b", "#c2185b"], J: ["#60a5fa", "#1d4ed8"], Q: ["#4ade80", "#15803d"], K: ["#fbbf24", "#c2410c"], A: ["#c084fc", "#7e22ce"] };
@@ -42,7 +42,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   const [lines, setLines] = useState<LineWin[]>([]);
   const [hl, setHl] = useState<Set<string> | null>(null);
   const [expand, setExpand] = useState<{ sym: string; reels: number[] } | null>(null);
-  const [fs, setFs] = useState<{ special: string; left: number; total: number; done: number } | null>(null);
+  const [fs, setFs] = useState<(BonusState & { special: string }) | null>(null);
   const [banner, setBanner] = useState<React.ReactNode>(null);
   const [big, setBig] = useState<{ mult: number; amount: string; label?: string } | null>(null);
   const [lastWin, setLastWin] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
       setExpand({ sym: special, reels: s.expand.reels });
       await sleep(turboRef.current ? 600 : 1200);
     }
-    if (s.mult > 0) setLastWin(((units * BigInt(Math.round(s.mult * 10000))) / 10000n).toString());
+    if (s.mult > 0 && !special) setLastWin(winUnits(units, s.mult).toString());   // в бонусе показываем общую сумму
     await sleep(s.mult > 0 ? (turboRef.current ? 450 : 1000) : turboRef.current ? 120 : 250);
   }
 
@@ -84,16 +84,22 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
     if (res.fs) {
       const f = res.fs;
       setBanner(<Intro special={f.special} count={ATLAS.freeSpins} />); await sleep(2600); setBanner(null);
-      let total = 0; let left = ATLAS.freeSpins;
-      setFs({ special: f.special, left, total: 0, done: 0 });
+      // Сумма бонуса считается сразу: выигрыш запускающего спина + каждый бесплатный спин
+      const cap = winUnits(units, ATLAS.maxWin); const special = f.special;
+      let total = res.base ? winUnits(units, res.base.mult) : 0n; let left = ATLAS.freeSpins; let tick = 0;
+      setFs({ special, left, done: 0, total: total.toString(), add: null, tick });
       for (let i = 0; i < f.spins.length; i++) {
         const s = f.spins[i]!; left--;
-        setFs({ special: f.special, left, total, done: i + 1 });
-        await showSpin(s, units, f.special);
-        total += s.mult;
-        if (s.retrigger) { left += ATLAS.freeSpins; setBanner(<Retrigger />); await sleep(1500); setBanner(null); }
-        setFs({ special: f.special, left, total, done: i + 1 });
+        setFs({ special, left, done: i + 1, total: total.toString(), add: null, tick });
+        await showSpin(s, units, special);
+        const add = winUnits(units, s.mult);
+        if (add > 0n) { total = total + add > cap ? cap : total + add; tick++; }
+        setFs({ special, left, done: i + 1, total: total.toString(), add: add > 0n ? add.toString() : null, tick });
+        setLastWin(total.toString());
+        if (add > 0n) await sleep(turboRef.current ? 250 : 500);
+        if (s.retrigger) { left += ATLAS.freeSpins; setFs({ special, left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<Retrigger />); await sleep(1500); setBanner(null); }
       }
+      setFs({ special, left: 0, done: f.spins.length, total: r.round.payout, add: null, tick });
       await showBig(res.totalMult, r.round.payout, `Бонус: ${f.spins.length} вращений`);
       setFs(null);
     } else if (res.totalMult >= 10) await showBig(res.totalMult, r.round.payout);
@@ -122,10 +128,11 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
             <AnimatePresence>{fs && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 rounded-xl bg-black/50 px-3 py-1.5 ring-1 ring-gold/50">
                 <span className="relative size-8 overflow-hidden rounded-md"><Sym s={fs.special} /></span>
-                <span className="text-[12px] leading-tight"><b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">Бонус: {fs.total.toFixed(2)}×</span></span>
+                <span className="text-[12px] leading-tight"><b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">особый символ</span></span>
               </motion.div>
             )}</AnimatePresence>
           </div>
+          <BonusTotal state={fs} />
           <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#1b2a6b,#0b1238)] p-2 shadow-[inset_0_0_0_2px_rgb(255_209_102/0.55),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Sym s={c} />} highlight={hl} lines={lines} linePatterns={ATLAS.lines}

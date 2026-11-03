@@ -201,3 +201,51 @@ export function BonusLabel() {
     <span className="pointer-events-none absolute inset-x-0 bottom-[6%] mx-auto w-fit rounded-md bg-[linear-gradient(180deg,#fde68a,#f59e0b)] px-1.5 py-px font-display text-[clamp(8px,2.2vw,13px)] font-bold tracking-wider text-[#3a2300] shadow-[0_0_12px_rgb(251_191_36/0.8)]">BONUS</span>
   );
 }
+
+/** Выигрыш = ставка × множитель (в единицах баллов). */
+export const winUnits = (units: bigint, mult: number) => (units * BigInt(Math.round(mult * 10000))) / 10000n;
+
+export type BonusState = { left: number; done: number; total: string; add: string | null; tick: number };
+
+/**
+ * Счётчик бонуса: общая сумма выигрыша за все бесплатные вращения.
+ * После каждого вращения сумма плавно докручивается, а сверху всплывает «+выигрыш спина».
+ */
+export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | null; color?: string }) {
+  const [shown, setShown] = useState(0);
+  const from = useRef(0);
+  const target = state ? Number(state.total) / 100 : 0;
+  useEffect(() => {
+    if (!state) { from.current = 0; setShown(0); return; }
+    const a = from.current, b = target; const t0 = performance.now(); let raf = 0;
+    const tick = (t: number) => { const k = Math.min(1, (t - t0) / 700); const v = a + (b - a) * (1 - Math.pow(1 - k, 3)); from.current = v; setShown(v); if (k < 1) raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, !!state]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <AnimatePresence>
+      {state && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} data-testid="bonus-total"
+          className="relative flex items-center justify-between gap-3 rounded-2xl bg-black/60 px-4 py-2.5 ring-2 backdrop-blur-sm" style={{ boxShadow: `0 0 30px -8px ${color}`, ["--tw-ring-color" as string]: color }}>
+          <div className="text-[12px] font-semibold uppercase leading-tight tracking-wider text-white/70">
+            <span className="block text-[13px] text-white">🎁 Бонус</span>
+            Спин {state.done} · осталось {state.left}
+          </div>
+          <div className="relative text-right">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш в бонусе</p>
+            <motion.p key={state.tick} animate={state.add ? { scale: [1.18, 1] } : {}} transition={{ duration: 0.35 }}
+              className="font-mono text-[clamp(22px,5vw,30px)] font-bold leading-none tabular" style={{ color, textShadow: `0 0 18px ${color}` }}>
+              {shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </motion.p>
+            <AnimatePresence>
+              {state.add && (
+                <motion.span key={state.tick} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: -4 }} exit={{ opacity: 0, y: -18 }} transition={{ duration: 0.4 }}
+                  className="absolute -top-5 right-0 rounded-md bg-accent/90 px-1.5 font-mono text-[12px] font-bold text-ink">+{points(state.add)}</motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { anticipationFrom, NEON, type NeonCell, type NeonResult, type NeonSpin } from "@/lib/fair/slots";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, type LineWin } from "./SlotKit";
+import { BonusLabel, BonusTotal, InfoModal, Reels, SlotControls, sleep, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
 
 const SYMS = ["cherry", "lemon", "plum", "watermelon", "strawberry", "seven", "joker"];
 const NAMES: Record<string, string> = { cherry: "Вишня", lemon: "Лимон", plum: "Слива", watermelon: "Арбуз", strawberry: "Клубника", seven: "Семёрка", joker: "Эльф", bonus: "Подарок" };
@@ -44,7 +44,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
   const [slowFrom, setSlowFrom] = useState<number | null>(null);
   const [lines, setLines] = useState<LineWin[]>([]);
   const [hl, setHl] = useState<Set<string> | null>(null);
-  const [fs, setFs] = useState<{ left: number; total: number } | null>(null);
+  const [fs, setFs] = useState<BonusState | null>(null);
   const [banner, setBanner] = useState<React.ReactNode>(null);
   const [big, setBig] = useState<{ mult: number; amount: string; label?: string } | null>(null);
   const [lastWin, setLastWin] = useState<string | null>(null);
@@ -63,12 +63,12 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
   }), []);
   const showBig = (mult: number, amount: string, label?: string) => new Promise<void>((res) => { bigDone.current = () => { setBig(null); res(); }; setBig({ mult, amount, label }); });
 
-  async function showSpin(s: NeonSpin, units: bigint) {
+  async function showSpin(s: NeonSpin, units: bigint, inBonus = false) {
     await spinTo(s.grid);
     const cells = winCells(s.wins, NEON.lines);
     if (s.scatter.count >= 3) s.grid.forEach((col, reel) => col.forEach((x, row) => x.sym === "bonus" && cells.add(`${reel}:${row}`)));
     setLines(s.wins); setHl(cells.size ? cells : null);
-    if (s.mult > 0) setLastWin(((units * BigInt(Math.round(s.mult * 10000))) / 10000n).toString());
+    if (s.mult > 0 && !inBonus) setLastWin(winUnits(units, s.mult).toString());   // в бонусе показываем общую сумму
     await t(s.mult > 0 || s.retrigger ? 1000 : 250);
   }
 
@@ -83,15 +83,22 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
     if (res.fs) {
       const f = res.fs;
       setBanner(<Intro count={NEON.freeSpins} x={f.x} />); await sleep(2600); setBanner(null);
-      let total = 0; let left = NEON.freeSpins;
-      setFs({ left, total });
-      for (const s of f.spins) {
-        left--; setFs({ left, total });
-        await showSpin(s, units);
-        total += s.mult;
-        if (s.retrigger) { left += NEON.freeSpins; setBanner(<p className="font-display text-[28px] font-bold text-gold">+{NEON.freeSpins} ВРАЩЕНИЙ!</p>); await sleep(1500); setBanner(null); }
-        setFs({ left, total });
+      // Сумма бонуса считается сразу: выигрыш запускающего спина + каждый бесплатный спин
+      const cap = winUnits(units, NEON.maxWin);
+      let total = res.base ? winUnits(units, res.base.mult) : 0n; let left = NEON.freeSpins; let tick = 0;
+      setFs({ left, done: 0, total: total.toString(), add: null, tick });
+      for (let i = 0; i < f.spins.length; i++) {
+        const s = f.spins[i]!; left--;
+        setFs({ left, done: i + 1, total: total.toString(), add: null, tick });
+        await showSpin(s, units, true);
+        const add = winUnits(units, s.mult);
+        if (add > 0n) { total = total + add > cap ? cap : total + add; tick++; }
+        setFs({ left, done: i + 1, total: total.toString(), add: add > 0n ? add.toString() : null, tick });
+        setLastWin(total.toString());
+        if (add > 0n) await t(500);
+        if (s.retrigger) { left += NEON.freeSpins; setFs({ left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<p className="font-display text-[28px] font-bold text-gold">+{NEON.freeSpins} ВРАЩЕНИЙ!</p>); await sleep(1500); setBanner(null); }
       }
+      setFs({ left: 0, done: f.spins.length, total: r.round.payout, add: null, tick });
       await showBig(res.totalMult, r.round.payout, `Бонус: ${f.spins.length} вращений`);
       setFs(null);
     } else if (res.totalMult >= 10) await showBig(res.totalMult, r.round.payout);
@@ -118,10 +125,11 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
             <h2 className="font-display text-[clamp(22px,4.6vw,34px)] font-bold tracking-wide text-[#bfe6ff] drop-shadow-[0_0_14px_#5bb8ff]">❄️ ЗИМНИЙ САД</h2>
             <AnimatePresence>{fs && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl bg-black/55 px-3 py-1.5 text-[12px] leading-tight ring-1 ring-gold/50">
-                <b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">×{NEON.fsMultiplier} · бонус {fs.total.toFixed(2)}×</span>
+                <b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">все выигрыши ×{NEON.fsMultiplier}</span>
               </motion.div>
             )}</AnimatePresence>
           </div>
+          <BonusTotal state={fs} color="#8fdcff" />
           <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#10234a,#070d22)] p-2 shadow-[inset_0_0_0_2px_rgb(143_220_255/0.55),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={4} spinKey={spinKey} turbo={turbo || !!fs} filler={randomCell} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Cell c={c} />} highlight={hl} lines={lines} linePatterns={NEON.lines} />
