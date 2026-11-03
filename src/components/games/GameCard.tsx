@@ -3,13 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { GAMES, type GameSlug } from "@/lib/games";
+import { useGameModal } from "./GameModal";
 
 /** Плитка игры: обложка, название, бейдж; при наведении — подъём и свечение в цвете темы игры. */
 export function GameCard({ slug, title, enabled = true, index = 0, size = "md" }: { slug: GameSlug; title?: string; enabled?: boolean; index?: number; size?: "md" | "lg" }) {
-  const g = GAMES[slug];
+  const g = GAMES[slug]; const { open } = useGameModal();
   return (
     <motion.div className="snow-cap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 0.4) }}>
-      <Link href={`/games/${slug}`} className="group relative block overflow-hidden rounded-2xl bg-panel ring-1 ring-white/5 transition-transform duration-200 hover:-translate-y-1.5 focus-visible:outline-2 focus-visible:outline-accent"
+      <Link href={`/games/${slug}`} onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); open(slug); }} className="group relative block overflow-hidden rounded-2xl bg-panel ring-1 ring-white/5 transition-transform duration-200 hover:-translate-y-1.5 focus-visible:outline-2 focus-visible:outline-accent"
         style={{ boxShadow: `0 18px 40px -22px ${g.theme[0]}` }}>
         <div className={`relative ${size === "lg" ? "aspect-[4/5]" : "aspect-[3/4]"}`}>
           <Image src={g.cover} alt="" fill sizes="(max-width: 640px) 50vw, 240px" className={`object-cover transition-transform duration-500 group-hover:scale-110 ${enabled ? "" : "grayscale"}`} priority={index < 4} />

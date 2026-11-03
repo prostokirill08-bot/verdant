@@ -11,11 +11,13 @@ import { GAMES, GAME_SLUGS } from "@/lib/games";
 import { points } from "@/lib/format";
 import { api } from "@/lib/api";
 import { OnlineBadge } from "./OnlineBadge";
+import { useGameModal } from "@/components/games/GameModal";
+import { isGuestEmail } from "@/lib/guest";
 import { Logo } from "./Logo";
 
-function NavLink({ href, children, active }: { href: string; children: React.ReactNode; active: boolean }) {
+function NavLink({ href, children, active, onClick }: { href: string; children: React.ReactNode; active: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <Link href={href} className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-colors ${active ? "bg-raised text-white" : "text-muted hover:bg-raised/60 hover:text-white"}`}>
+    <Link href={href} onClick={onClick} className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-colors ${active ? "bg-raised text-white" : "text-muted hover:bg-raised/60 hover:text-white"}`}>
       {children}
     </Link>
   );
@@ -26,6 +28,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, balance, loading, refresh } = useAuth();
   const [menu, setMenu] = useState(false);
+  const { open: openGame } = useGameModal();
+  const guest = isGuestEmail(user?.email);
   const [platform, setPlatform] = useState<{ announcement: string; maintenance: boolean } | null>(null);
   useEffect(() => { api<{ announcement: string; maintenance: boolean }>("/api/platform").then(setPlatform).catch(() => {}); }, [path]);
 
@@ -54,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="grid gap-1">
           <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/70">Игры</p>
           {GAME_SLUGS.map((s) => (
-            <NavLink key={s} href={`/games/${s}`} active={path === `/games/${s}`}>
+            <NavLink key={s} href={`/games/${s}`} active={path === `/games/${s}`} onClick={(e) => { if (e.metaKey || e.ctrlKey || path === `/games/${s}`) return; e.preventDefault(); openGame(s); }}>
               <Image src={GAMES[s].cover} alt="" width={22} height={28} className="h-7 w-[22px] rounded-md object-cover ring-1 ring-white/10" />
               <span className="truncate">{GAMES[s].name}</span>
               {GAMES[s].badge === "Новинка" && <span className="ml-auto rounded-md bg-brand/20 px-1.5 text-[10px] font-bold uppercase text-gold">new</span>}
@@ -117,6 +121,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {platform?.maintenance && <p className="border-b border-warn/30 bg-warn/10 px-4 py-2 text-center text-[13.5px] text-warn" role="status">Идут технические работы — ставки временно недоступны.</p>}
+        {guest && (
+          <p className="border-b border-gold/25 bg-gold/10 px-4 py-2 text-center text-[13px] text-gold" data-testid="guest-bar">
+            🎅 Демо-гость: баланс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
+          </p>
+        )}
         {platform?.announcement && <p className="border-b border-accent/20 bg-accent/10 px-4 py-2 text-center text-[13.5px] text-accent" role="status">{platform.announcement}</p>}
         <main className="mx-auto w-full min-w-0 max-w-[1240px] flex-1 px-4 pb-28 pt-6 sm:px-6 lg:pb-12">{children}</main>
       </div>

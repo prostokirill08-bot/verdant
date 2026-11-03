@@ -27,4 +27,9 @@ export const GAMES: Record<GameSlug, GameMeta> = {
 };
 export const GAME_NAMES = Object.fromEntries(GAME_SLUGS.map((s) => [s, GAMES[s].name])) as Record<GameSlug, string>;
 export const CATEGORY_NAMES: Record<GameCategory, string> = { slots: "Слоты", originals: "Оригинальные игры" };
+/** RTP для карточки игры: у слотов и кено — по таблицам, у остальных — 100% минус преимущество. */
+export function rtpLabel(slug: GameSlug, edgeBp: number): string {
+  const fixed: Partial<Record<GameSlug, string>> = { workshop: "95,5%", atlas: "95,5%", "neon-garden": "95,8%", keno: "96–97,5%", plinko: "97–99,5%", wheel: "99%", roulette: "97,3%" };
+  return fixed[slug] ?? `${(100 - edgeBp / 100).toFixed(2).replace(".", ",")}%`;
+}
 export const isGameSlug = (s: string): s is GameSlug => (GAME_SLUGS as readonly string[]).includes(s);

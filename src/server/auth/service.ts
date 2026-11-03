@@ -8,6 +8,7 @@ import { applyEntry, withTx } from "../wallet/ledger";
 import { getPlatform } from "../settings";
 import { createSeedPair } from "../games/fair";
 import { appUrl } from "../config";
+import { GUEST_DOMAIN } from "@/lib/guest";
 
 const MAX_FAILS = 5, LOCK_MS = 15 * 60 * 1000;
 
@@ -31,6 +32,19 @@ export async function registerUser(p: { email: string; username: string; passwor
     }
     throw e;
   }
+}
+
+/** Демо-гость: аккаунт без почты и пароля, чтобы сразу попробовать игры. Стартовые демо-рубли — как при регистрации. */
+export async function createGuest(ip: string) {
+  for (let i = 0; i < 3; i++) {
+    const id = randomToken(4).replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase().padEnd(6, "0");
+    try {
+      const user = await registerUser({ email: `guest_${id}@${GUEST_DOMAIN}`, username: `guest_${id}`, password: randomToken(24) }, ip);
+      await audit("auth.guest", { actorId: user.id, ip });
+      return user;
+    } catch (e) { if (!(e instanceof HttpError && e.code === "taken")) throw e; }
+  }
+  throw new HttpError(503, "Не удалось создать демо-аккаунт, попробуй ещё раз", "guest_failed");
 }
 
 export async function checkLogin(login: string, password: string, ip: string) {

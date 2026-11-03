@@ -2,14 +2,17 @@
 import { useMemo, useState } from "react";
 import { GameCard } from "./GameCard";
 import { CATEGORY_NAMES, GAMES, type GameCategory, type GameSlug } from "@/lib/games";
+import { useGameModal } from "./GameModal";
 
 type Item = { slug: GameSlug; title: string; tagline: string; enabled: boolean };
-const TABS: [GameCategory | "all", string, string][] = [["all", "Все игры", "❄️"], ["slots", CATEGORY_NAMES.slots, "🎁"], ["originals", CATEGORY_NAMES.originals, "🎄"]];
+type Tab = GameCategory | "all" | "fav";
+const TABS: [Tab, string, string][] = [["all", "Все игры", "❄️"], ["slots", CATEGORY_NAMES.slots, "🎁"], ["originals", CATEGORY_NAMES.originals, "🎄"], ["fav", "Избранное", "❤️"]];
 
 export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: string }) {
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState<GameCategory | "all">(initialCat === "slots" || initialCat === "originals" ? initialCat : "all");
-  const list = useMemo(() => games.filter((g) => (cat === "all" || GAMES[g.slug].category === cat) && (g.title + " " + g.tagline + " " + GAMES[g.slug].blurb).toLowerCase().includes(q.trim().toLowerCase())), [games, q, cat]);
+  const [cat, setCat] = useState<Tab>(initialCat === "slots" || initialCat === "originals" || initialCat === "fav" ? initialCat : "all");
+  const { favs } = useGameModal();
+  const list = useMemo(() => games.filter((g) => (cat === "all" || (cat === "fav" ? favs.includes(g.slug) : GAMES[g.slug].category === cat)) && (g.title + " " + g.tagline + " " + GAMES[g.slug].blurb).toLowerCase().includes(q.trim().toLowerCase())), [games, q, cat, favs]);
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center gap-2">
@@ -27,7 +30,7 @@ export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: str
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
           {list.map((g, i) => <GameCard key={g.slug} slug={g.slug} title={g.title} enabled={g.enabled} index={i} />)}
         </div>
-      ) : <p className="text-muted">Ничего не нашлось{q ? ` по запросу «${q}»` : ""}.</p>}
+      ) : <p className="text-muted">{cat === "fav" && !q ? "Пока пусто — нажми ❤️ в карточке игры, чтобы добавить её сюда." : `Ничего не нашлось${q ? ` по запросу «${q}»` : ""}.`}</p>}
     </div>
   );
 }

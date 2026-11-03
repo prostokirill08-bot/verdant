@@ -16,7 +16,10 @@ export default function RegisterPage() {
   const pwOk = f.password.length >= 8 && /\d/.test(f.password) && /[a-zA-Zа-яА-Я]/.test(f.password);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setErr(""); setBusy(true);
-    try { await api("/api/auth/register", { body: { ...f, adult } }); await refresh(); router.push("/account"); router.refresh(); }
+    try { await api("/api/auth/register", { body: { ...f, adult } }); await refresh();
+      // Пришёл из карточки игры — возвращаем прямо в игру
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/account"); router.refresh(); }
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
   return (

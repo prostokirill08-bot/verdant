@@ -37,6 +37,12 @@ async function newPlayer() {
 console.log("— Аутентификация");
 const p = await newPlayer();
 ok("регистрация и стартовый баланс", (await p.balance()) > 0n);
+{ // «Демо» без регистрации: гость с демо-рублями, у кого уже есть сессия — новый гость не создаётся
+  const g = new Client(); const r1 = await g.req("/api/auth/guest", {});
+  const me = (await g.req("/api/auth/me")).j;
+  const r2 = await g.req("/api/auth/guest", {});
+  ok("демо-гость: вход без регистрации", r1.s === 200 && me.user?.email.endsWith("@guest.local") && BigInt(me.balance) > 0n && r2.j.existing === true);
+}
 ok("повторный email → 409", (await new Client().req("/api/auth/register", { email: p.email, username: p.username + "x", password: "Passw0rd1", adult: true })).s === 409);
 ok("слабый пароль → 400", (await new Client().req("/api/auth/register", { email: "w" + p.email, username: "w" + p.username, password: "short", adult: true })).s === 400);
 ok("без CSRF → 403", (await fetch(B + "/api/account/bonus", { method: "POST", headers: { cookie: `vd_session=${p.jar.vd_session}`, origin: B } })).status === 403);

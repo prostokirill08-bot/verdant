@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { points } from "@/lib/format";
 import { GAMES, isGameSlug } from "@/lib/games";
+import { useGameModal } from "@/components/games/GameModal";
 
 type Win = { id: string; game: string; payout: string; multiplier: number; user: string };
 
 /** Бегущая лента последних выигрышей (обновляется раз в 15 секунд). */
 export function WinsTicker() {
   const [wins, setWins] = useState<Win[]>([]);
+  const { open: openGame } = useGameModal();
   useEffect(() => {
     const load = () => api<{ wins: Win[] }>("/api/feed/wins").then((r) => setWins(r.wins.filter((w) => isGameSlug(w.game)))).catch(() => {});
     load(); const t = setInterval(load, 15000); return () => clearInterval(t);
@@ -26,7 +28,7 @@ export function WinsTicker() {
         {row.map((w, i) => {
           const g = GAMES[w.game as keyof typeof GAMES];
           return (
-            <Link key={w.id + i} href={`/games/${w.game}`} className="flex shrink-0 items-center gap-2 rounded-xl bg-raised/60 py-1 pl-1 pr-3 hover:bg-raised">
+            <Link key={w.id + i} href={`/games/${w.game}`} onClick={(e) => { if (!isGameSlug(w.game) || e.metaKey || e.ctrlKey) return; e.preventDefault(); openGame(w.game); }} className="flex shrink-0 items-center gap-2 rounded-xl bg-raised/60 py-1 pl-1 pr-3 hover:bg-raised">
               <Image src={g.cover} alt="" width={28} height={36} className="h-9 w-7 rounded-md object-cover" />
               <span className="text-[13px] leading-tight"><span className="block text-soft">{w.user}</span><span className="font-mono font-semibold text-accent">+{points(w.payout)}</span> <span className="font-mono text-[11px] text-muted">{w.multiplier.toFixed(2)}×</span></span>
             </Link>
