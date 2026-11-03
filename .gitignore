@@ -5,3 +5,5 @@ node_modules
 next-env.d.ts
 dump.rdb
 *.rdb
+/*.png
+verdant.zip
