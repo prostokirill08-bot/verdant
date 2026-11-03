@@ -1,6 +1,7 @@
 import { Prisma, type LedgerType } from "@prisma/client";
 import { db } from "../db";
 import { HttpError } from "../http";
+import { onBet } from "../promo/keys";
 
 type Tx = Prisma.TransactionClient;
 
@@ -22,6 +23,8 @@ export async function applyEntry(tx: Tx, p: { userId: string; type: LedgerType; 
   if (updated.count === 0) throw new HttpError(400, "Недостаточно средств", "insufficient");
   const w = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id } });
   const entry = await tx.ledgerEntry.create({ data: { walletId: w.id, userId: p.userId, type: p.type, amount: p.amount, balanceAfter: w.balance, idempotencyKey: p.idempotencyKey, roundId: p.roundId, note: p.note } });
+  // Акция «Снежные ключи»: шанс ключа и пополнение джекпота с каждой ставки
+  if (p.type === "BET") await onBet(tx, p.userId, -p.amount);
   return { entry, duplicate: false };
 }
 

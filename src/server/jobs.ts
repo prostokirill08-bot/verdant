@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { GUEST_DOMAIN } from "@/lib/guest";
+import { payTournament } from "./promo/service";
 
 /** Фоновая уборка: просроченные сессии, ссылки восстановления пароля и старые демо-гости. Безопасно запускать на любом экземпляре. */
 export async function cleanup() {
@@ -14,7 +15,11 @@ export async function cleanup() {
 }
 
 export function startJobs() {
-  const run = () => cleanup().catch((e) => console.error("[jobs]", e.message));
+  const run = () => {
+    cleanup().catch((e) => console.error("[jobs]", e.message));
+    // Турнир недели: призы за прошедшую неделю (повторный запуск безопасен)
+    payTournament().then((n) => n && console.log(`[jobs] турнир: выплачено призов ${n}`)).catch((e) => console.error("[jobs] турнир", e.message));
+  };
   void run();
-  return setInterval(run, 60 * 60 * 1000).unref();
+  return setInterval(run, 15 * 60 * 1000).unref();
 }

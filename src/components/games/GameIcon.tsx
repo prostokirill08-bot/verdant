@@ -16,6 +16,10 @@ export function GameIcon({ slug, size = 22, className = "" }: { slug: GameSlug; 
     case "wheel": return <svg {...p}><circle cx="12" cy="13" r="8" /><path d="M12 5v16M4 13h16M6.3 7.3l11.4 11.4M17.7 7.3 6.3 18.7" /><path d="M10 2h4l-2 3z" /></svg>;
     case "keno": return <svg {...p}><circle cx="8" cy="8" r="3" /><circle cx="16" cy="8" r="3" /><circle cx="8" cy="16" r="3" /><circle cx="16" cy="16" r="3" /></svg>;
     case "coinflip": return <svg {...p}><ellipse cx="12" cy="12" rx="8" ry="8" /><path d="m12 8 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z" /></svg>;
+    case "blackjack": return <svg {...p}><rect x="3" y="5" width="11" height="15" rx="2" /><path d="M10 4.5 11 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" /><path d="M8.5 9.5 7 14h3" /></svg>;
+    case "videopoker": return <svg {...p}><rect x="2" y="6" width="5" height="8" rx="1" /><rect x="9.5" y="6" width="5" height="8" rx="1" /><rect x="17" y="6" width="5" height="8" rx="1" /><path d="M4 18h16" /></svg>;
+    case "baccarat": return <svg {...p}><rect x="3" y="4" width="8" height="12" rx="1.5" /><rect x="13" y="8" width="8" height="12" rx="1.5" /><path d="M7 8v4M17 12v4" /></svg>;
+    case "sledrace": return <svg {...p}><path d="M3 15h15a3 3 0 0 0 3-3" /><path d="M6 15v-3h9v3M8 12V9h5v3" /><path d="M3 19h17" /></svg>;
     case "roulette": return <svg {...p}><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 4v5M12 15v5M4 12h5M15 12h5" /></svg>;
   }
 }

@@ -8,6 +8,9 @@ import { GAMES, isGameSlug } from "@/lib/games";
 import { useGameModal } from "@/components/games/GameModal";
 
 type Win = { id: string; game: string; payout: string; multiplier: number; user: string };
+/** Уровень выигрыша по множителю — подпись и цвет в ленте. */
+const TIERS: [number, string, string][] = [[100, "Легендарный", "#ff5cf0"], [50, "Мега", "#ff5c7a"], [25, "Огромный", "#ff8a3d"], [10, "Большой", "#ffd166"], [3, "Отличный", "#3ee08f"], [0, "Выигрыш", "#8fdcff"]];
+const tier = (m: number) => TIERS.find(([x]) => m >= x)!;
 
 /** Бегущая лента последних выигрышей (обновляется раз в 15 секунд). */
 export function WinsTicker() {
@@ -28,9 +31,11 @@ export function WinsTicker() {
         {row.map((w, i) => {
           const g = GAMES[w.game as keyof typeof GAMES];
           return (
-            <Link key={w.id + i} href={`/games/${w.game}`} onClick={(e) => { if (!isGameSlug(w.game) || e.metaKey || e.ctrlKey) return; e.preventDefault(); openGame(w.game); }} className="flex shrink-0 items-center gap-2 rounded-xl bg-raised/60 py-1 pl-1 pr-3 hover:bg-raised">
-              <Image src={g.cover} alt="" width={28} height={36} className="h-9 w-7 rounded-md object-cover" />
-              <span className="text-[13px] leading-tight"><span className="block text-soft">{w.user}</span><span className="font-mono font-semibold text-accent">+{points(w.payout)}</span> <span className="font-mono text-[11px] text-muted">{w.multiplier.toFixed(2)}×</span></span>
+            <Link key={w.id + i} href={`/games/${w.game}`} onClick={(e) => { if (!isGameSlug(w.game) || e.metaKey || e.ctrlKey) return; e.preventDefault(); openGame(w.game); }} className="flex w-[124px] shrink-0 flex-col items-center gap-1 rounded-xl bg-raised/60 px-2 pb-2 pt-1.5 text-center hover:bg-raised">
+              <Image src={g.cover} alt="" width={40} height={52} className="h-[52px] w-10 rounded-lg object-cover ring-1 ring-white/10" />
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: tier(w.multiplier)[2] }}>{tier(w.multiplier)[1]}</span>
+              <span className="font-mono text-[13.5px] font-bold leading-none text-white">{points(w.payout)}</span>
+              <span className="w-full truncate text-[10.5px] text-muted">{w.user} · {w.multiplier.toFixed(2)}×</span>
             </Link>
           );
         })}

@@ -96,12 +96,54 @@ ok("mines: старт", r.s === 200 && !r.j.round.state.mines);
 ok("mines: смена сидов во время раунда запрещена", (await p.req("/api/fair", {})).s === 409);
 r = await p.req("/api/mines/reveal", { tile: 0 });
 ok("mines: клетка открыта", r.s === 200 && ["ACTIVE", "LOST", "WON"].includes(r.j.round.status));
-if (r.j.round.status === "ACTIVE") await p.req("/api/mines/cashout", {});
+if (r.j.round.status === "ACTIVE") { const c = await p.req("/api/mines/cashout", {}); if (c.s !== 200) console.log("  mines cashout:", c.s, JSON.stringify(c.j)); }
 r = await p.req("/api/fair"); const hash = r.j.current.serverSeedHash;
 r = await p.req("/api/fair", { clientSeed: "e2e-seed" });
 ok("смена пары раскрывает сид с верным хэшем", createHash("sha256").update(r.j.revealed[0].serverSeed).digest("hex") === hash);
 const last = (await p.req("/api/games/dice/rounds?scope=mine")).j.rounds[0];
 ok("раунд dice пересчитывается по раскрытому сиду", Math.floor(floatAt(last.fair.serverSeed, `${last.fair.clientSeed}:${last.nonce}:0`) * 10001) / 100 === last.result.roll);
+
+console.log("— Карточные игры и гонка");
+{ // Блэкджек: раздача, ходы до конца; скрытая карта дилера не видна, пока раунд идёт
+  let bj = await p.req("/api/blackjack/start", { amount: "2", key: key() });
+  ok("блэкджек: раздача", bj.s === 200 && bj.j.round.table.hands[0].cards.length === 2);
+  if (bj.j.round.status === "ACTIVE") ok("блэкджек: карта дилера скрыта", bj.j.round.table.dealer.length === 1 && bj.j.round.table.hidden === true);
+  ok("блэкджек: вторая раздача во время раунда → 409", bj.j.round.status !== "ACTIVE" || (await p.req("/api/blackjack/start", { amount: "2", key: key() })).s === 409);
+  let guard = 0;
+  while (bj.j.round?.status === "ACTIVE" && guard++ < 12) {
+    const t = bj.j.round.table; const a = t.allowed.double && guard === 1 ? "double" : t.hands[t.active].total.total < 15 ? "hit" : "stand";
+    bj = await p.req("/api/blackjack/move", { action: a });
+  }
+  const fin = bj.j.round;
+  ok("блэкджек: раунд завершён, дилер раскрыт", ["WON", "LOST"].includes(fin.status) && fin.table.outcomes?.length >= 1 && fin.table.hidden === false);
+  ok("блэкджек: недоступный ход → 404/400", [400, 404].includes((await p.req("/api/blackjack/move", { action: "split" })).s));
+}
+{ // Видеопокер: раздача → замена; запасные карты не отдаются до замены
+  const s1 = await p.req("/api/videopoker/start", { amount: "1", key: key() });
+  ok("видеопокер: раздача 5 карт, колода скрыта", s1.s === 200 && s1.j.round.hand.length === 5 && !s1.j.round.state.deck);
+  const s2 = await p.req("/api/videopoker/draw", { held: [true, false, true, false, false] });
+  ok("видеопокер: замена и итог", s2.s === 200 && ["WON", "LOST"].includes(s2.j.round.status) && s2.j.round.result.held === "10100");
+  ok("видеопокер: замена дважды → 404", (await p.req("/api/videopoker/draw", { held: [true, true, true, true, true] })).s === 404);
+}
+{ // Баккара: сумма ставки = сумма фишек
+  const b0 = await p.balance();
+  const r1 = await p.req("/api/games/baccarat/bet", { params: { player: "1", banker: "2", tie: "0" }, key: key() });
+  const w = r1.j.round?.result?.winner; const pay = BigInt(r1.j.round?.payout ?? -1);
+  const want = w === "player" ? 200n : w === "banker" ? 390n : 300n;
+  ok("баккара: выплата по правилам", r1.s === 200 && pay === want && (await p.balance()) === b0 - 300n + pay, `${w} ${pay}`);
+  ok("баккара: пустая ставка → 400", (await p.req("/api/games/baccarat/bet", { params: {}, key: key() })).s === 400);
+}
+{ // Гонка на санях
+  const r1 = await p.req("/api/games/sledrace/bet", { amount: "1", params: { pick: 4 }, key: key() });
+  ok("гонка: результат и порядок финиша", r1.s === 200 && r1.j.round.result.order.length === 5 && r1.j.round.result.order[0] === r1.j.round.result.winner);
+  ok("гонка: неверный саночник → 400", (await p.req("/api/games/sledrace/bet", { amount: "1", params: { pick: 7 }, key: key() })).s === 400);
+}
+{ // Акции: ключи, джекпот, турнир
+  const pr = await p.req("/api/promo");
+  ok("акции: сводка", pr.s === 200 && BigInt(pr.j.jackpot.pool) >= 2500000n && pr.j.keys.need === 4 && Array.isArray(pr.j.tournament.top));
+  ok("акции: открыть сундук без ключей → 400", (await p.req("/api/promo/chest", {})).s === 400);
+  ok("акции: гость видит сводку без входа", (await new Client().req("/api/promo")).s === 200);
+}
 
 if (!SKIP_CRASH) {
   console.log("— Crash (до 2 минут)");

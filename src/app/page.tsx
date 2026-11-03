@@ -3,23 +3,15 @@ import Link from "next/link";
 import { db } from "@/server/db";
 import { getSession } from "@/server/auth/session";
 import { getPlatform } from "@/server/settings";
-import { GameCard } from "@/components/games/GameCard";
+import { GameRow } from "@/components/games/GameRow";
+import { PromoStrip } from "@/components/promo/PromoStrip";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { WinsTicker } from "@/components/home/WinsTicker";
 import { Button } from "@/components/ui/Button";
-import { GAMES, isGameSlug, type GameSlug } from "@/lib/games";
+import { GAMES, isGameSlug, POPULAR, type GameSlug } from "@/lib/games";
 import { points } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-function SectionHead({ title, href, emoji }: { title: string; href: string; emoji: string }) {
-  return (
-    <div className="mb-4 flex items-end justify-between gap-3">
-      <h2 className="flex items-center gap-2 font-display text-[21px] font-bold sm:text-[24px]"><span aria-hidden>{emoji}</span>{title}</h2>
-      <Link href={href} className="rounded-xl bg-raised px-3 py-1.5 text-[13px] font-semibold text-soft hover:text-white">Все →</Link>
-    </div>
-  );
-}
 
 export default async function Home() {
   const since = new Date(Date.now() - 24 * 3600 * 1000);
@@ -32,8 +24,8 @@ export default async function Home() {
     getPlatform(),
   ]);
   const list = games.filter((g) => isGameSlug(g.slug)).map((g) => ({ slug: g.slug as GameSlug, title: g.title, enabled: g.enabled }));
-  const slots = list.filter((g) => GAMES[g.slug].category === "slots");
-  const originals = list.filter((g) => GAMES[g.slug].category === "originals");
+  const by = (f: (s: GameSlug) => boolean) => list.filter((g) => f(g.slug));
+  const popular = POPULAR.map((s) => list.find((g) => g.slug === s)).filter((g): g is (typeof list)[number] => !!g);
 
   return (
     <div className="grid gap-8 sm:gap-10">
@@ -49,21 +41,12 @@ export default async function Home() {
         ))}
       </dl>
 
-      {slots.length > 0 && (
-        <section>
-          <SectionHead title="Новогодние слоты" href="/games?cat=slots" emoji="🎁" />
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {slots.map((g, i) => <GameCard key={g.slug} {...g} index={i} size="lg" />)}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <SectionHead title="Оригинальные игры" href="/games?cat=originals" emoji="🎄" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-          {originals.map((g, i) => <GameCard key={g.slug} {...g} index={i} />)}
-        </div>
-      </section>
+      <GameRow title="Популярные" emoji="🔥" games={popular} href="/games" />
+      <PromoStrip />
+      <GameRow title="Новинки" emoji="✨" games={by((s) => GAMES[s].badge === "Новинка")} href="/games?cat=new" />
+      <GameRow title="Новогодние слоты" emoji="🎁" games={by((s) => GAMES[s].category === "slots")} href="/games?cat=slots" />
+      <GameRow title="Карточные игры" emoji="🃏" games={by((s) => GAMES[s].category === "table")} href="/games?cat=table" />
+      <GameRow title="Быстрые игры" emoji="⚡" games={by((s) => GAMES[s].category === "originals")} href="/games?cat=originals" />
 
       <section className="snow-cap relative overflow-hidden rounded-[28px] border border-line bg-[linear-gradient(120deg,#16245e,#0f1633_55%,#4a0f22)] p-6 sm:p-8">
         <div className="relative z-10 max-w-md">

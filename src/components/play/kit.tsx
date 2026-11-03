@@ -121,6 +121,15 @@ export function Stat({ label, value, tone }: { label: string; value: React.React
   );
 }
 
+/** На телефоне сцена стоит над кнопками: после старта раунда прокручиваем к ней, чтобы анимация была видна. */
+export function scrollToStage() {
+  if (typeof window === "undefined" || window.innerWidth >= 1024) return;
+  const el = document.getElementById("game-stage"); if (!el) return;
+  const top = el.getBoundingClientRect().top;
+  // 72 px — под липкой шапкой
+  if (top < 64 || top > window.innerHeight * 0.35) window.scrollTo({ top: window.scrollY + top - 72, behavior: "smooth" });
+}
+
 /** Макет страницы игры: панель управления слева (снизу на телефоне), сцена справа, ниже — история. */
 export function GameLayout({ controls, stage, footer, slug }: { controls: React.ReactNode; stage: React.ReactNode; footer?: React.ReactNode; slug?: GameSlug }) {
   const meta = slug ? GAMES[slug] : null;
@@ -136,7 +145,7 @@ export function GameLayout({ controls, stage, footer, slug }: { controls: React.
               <div className="absolute inset-0" style={{ background: `radial-gradient(70% 60% at 50% 0%, ${meta.theme[0]}33, transparent 70%), linear-gradient(180deg, transparent, var(--color-panel) 95%)` }} />
             </div>
           )}
-          <div className="relative">{stage}</div>
+          <div id="game-stage" className="relative">{stage}</div>
         </div>
       </Panel>
       {footer}
@@ -210,6 +219,8 @@ export function verifyHref(r: RoundView) {
   if (!r.fair) return "/fair";
   const q = new URLSearchParams({ game: r.game, s: r.fair.serverSeed ?? "", c: r.fair.clientSeed, n: String(r.fair.nonce ?? 0) });
   for (const [k, v] of Object.entries(r.params)) if (typeof v !== "object") q.set(`p_${k}`, String(v));
+  // Пошаговые карточные игры: ходы игрока нужны, чтобы пересчитать раздачу
+  for (const k of ["actions", "held"]) { const v = (r.result as Record<string, unknown> | null)?.[k]; if (typeof v === "string") q.set(`p_${k}`, v); }
   return `/fair?${q}`;
 }
 

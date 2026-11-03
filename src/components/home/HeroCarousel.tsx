@@ -5,12 +5,16 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Countdown } from "./Countdown";
+import { weekBounds } from "@/lib/week";
 
-type Slide = { img: string; kicker: string; title: React.ReactNode; text: string; cta: string; href: string; tint: string };
+type Slide = { img: string; kicker: string; title: React.ReactNode; text: string; cta: string; href: string; tint: string; countdown?: { to?: number; label: string } };
 
 export function HeroCarousel({ loggedIn }: { loggedIn: boolean }) {
+  const weekEnd = weekBounds().end.getTime();
   const slides: Slide[] = [
-    { img: "/img/ny/banners/main.webp", kicker: "🎄 Новогодний сезон · демо-рубли", title: <>С наступающим!<br /><span className="text-gradient">1 000 ₽</span> под ёлкой</>, text: "13 новогодних игр: слоты, Crash с Сантой, Mines с подарками и другие. Демо-рубли нельзя пополнить или вывести — только праздник и честные результаты.", cta: loggedIn ? "К играм" : "Забрать подарок", href: loggedIn ? "/games" : "/register", tint: "#5b8cff" },
+    { img: "/img/ny/banners/main.webp", kicker: "🎄 Новогодний сезон · демо-рубли", title: <>С наступающим!<br /><span className="text-gradient">1 000 ₽</span> под ёлкой</>, text: "18 новогодних игр: слоты, блэкджек, видеопокер, Crash с Сантой, Mines с подарками и другие. Демо-рубли нельзя пополнить или вывести — только праздник и честные результаты.", cta: loggedIn ? "К играм" : "Забрать подарок", href: loggedIn ? "/games" : "/register", tint: "#5b8cff" },
+    { img: "/img/ny/banners/tournament.webp", kicker: "🏆 Турнир недели", title: <>Ледяная гонка:<br /><span className="text-gradient">50 000 ₽</span> за первое место</>, text: "Самый крупный множитель недели забирает главный приз. Десять призовых мест, начисление — автоматически в понедельник.", cta: "Таблица лидеров", href: "/bonuses#tournament", tint: "#ffd166", countdown: { to: weekEnd, label: "До конца турнира" } },
+    { img: "/img/ny/banners/chest.webp", kicker: "🔑 Снежные ключи", title: <>Собери 4 ключа —<br /><span className="text-gradient">открой сундук</span></>, text: "Ключи выпадают за ставки в любой игре. В сундуке — призы до 2 500 ₽ или весь накопленный джекпот.", cta: "К сундуку", href: "/bonuses#chest", tint: "#8fdcff" },
     { img: "/img/ny/banners/slots.webp", kicker: "🎁 Слоты", title: <>Три подарка BONUS —<br /><span className="text-gradient">бесплатные вращения</span></>, text: "Три символа BONUS — и бесплатные вращения: раскрывающийся символ в «Атласе звёзд» и выигрыши ×3 в «Зимнем саду».", cta: "Крутить слоты", href: "/games?cat=slots", tint: "#e8263f" },
     { img: "/img/ny/banners/crash.webp", kicker: "🛷 Хит · реальное время", title: <>Санта взлетает.<br /><span className="text-gradient">Успей забрать</span></>, text: "Общий раунд для всех игроков. Множитель растёт, пока сани Санты летят вверх.", cta: "Полететь с Сантой", href: "/games/crash", tint: "#ff5f3d" },
   ];
@@ -33,7 +37,7 @@ export function HeroCarousel({ loggedIn }: { loggedIn: boolean }) {
             <h1 className="font-display text-[clamp(26px,4.4vw,46px)] font-bold leading-[1.05] tracking-tight [text-wrap:balance]">{s.title}</h1>
             <p className="max-w-md text-[15px] leading-relaxed text-white/80">{s.text}</p>
             <Link href={s.href} className="w-fit"><Button size="lg" className="btn-shine px-7">{s.cta}</Button></Link>
-            <div className="mt-1"><p className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white/70">До Нового года</p><Countdown /></div>
+            <div className="mt-1"><p className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white/70">{s.countdown?.label ?? "До Нового года"}</p><Countdown to={s.countdown?.to} label={s.countdown?.label} /></div>
           </motion.div>
         </AnimatePresence>
       </div>

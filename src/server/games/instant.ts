@@ -6,6 +6,7 @@ import {
 import { toUnits } from "@/lib/money";
 import { ATLAS, NEON, playAtlas, playNeon, type Rng } from "@/lib/fair/slots";
 import { decodeMeters, encodeMeters, playWorkshop } from "@/lib/fair/workshop";
+import { BAC_FLOATS, baccarat as playBaccarat, baccaratPayout, SLED_FLOATS, SLEDS, sledMult, sledRace } from "@/lib/fair/cards";
 import { COIN_MAX_FLIPS, coinMultiplier, coinSides, KENO_PAYS, kenoDraw, WHEEL, wheelSegment, type WheelRisk } from "@/lib/fair/extra";
 
 /** Сумма ставки приходит строкой рублей («12.5»), на сервере переводится в сотые. */
@@ -106,6 +107,30 @@ const keno: InstantGame<{ picks: number[] }> = {
   },
 };
 
+/** Баккара: фишки на Игрока, Банкира и Ничью; сумма ставки — сумма фишек. */
+type BacParams = { player: bigint; banker: bigint; tie: bigint };
+const zeroable = z.string().max(16).regex(/^\d+([.,]\d{1,2})?$/, "Неверная сумма ставки").transform((s) => toUnits(s));
+const baccarat: InstantGame<BacParams> = {
+  params: z.object({ player: zeroable.default("0"), banker: zeroable.default("0"), tie: zeroable.default("0") })
+    .refine((p) => p.player + p.banker + p.tie > 0n, "Поставь фишку хотя бы на одно поле"),
+  floats: BAC_FLOATS,
+  total: (p) => p.player + p.banker + p.tie,
+  resolve(p, fs, bet) {
+    const r = playBaccarat(fs); const payout = baccaratPayout(p, r.winner);
+    return { payout, multiplier: Number((payout * 10000n) / bet) / 10000, result: r };
+  },
+};
+
+/** Гонка на санях: ставка на одного из пяти саночников. */
+const sledrace: InstantGame<{ pick: number }> = {
+  params: z.object({ pick: z.number().int().min(0).max(SLEDS.length - 1) }),
+  floats: SLED_FLOATS,
+  resolve(p, fs, bet, edgeBp) {
+    const r = sledRace(fs); const m = sledMult(p.pick, edgeBp); const win = r.winner === p.pick;
+    return { payout: win ? byMult(bet, m) : 0n, multiplier: win ? m : 0, result: { ...r, pick: p.pick, payoutMultiplier: m } };
+  },
+};
+
 /** Слоты: множитель считается от базовой ставки; при покупке бонуса списывается ставка × цена бонуса. */
 function slot(price: number, play: (rng: Rng, o: { buy?: boolean }) => { totalMult: number }): InstantGame<{ buy: boolean }> {
   return {
@@ -132,6 +157,6 @@ const workshop: InstantGame<Record<string, never>> = {
   },
 };
 
-export const INSTANT_GAMES = { workshop, dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno } as Record<string, InstantGame<unknown>>;
-export type InstantSlug = "workshop" | "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno";
+export const INSTANT_GAMES = { workshop, dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno, baccarat, sledrace } as Record<string, InstantGame<unknown>>;
+export type InstantSlug = "workshop" | "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno" | "baccarat" | "sledrace";
 export const isInstant = (s: string): s is InstantSlug => s in INSTANT_GAMES;

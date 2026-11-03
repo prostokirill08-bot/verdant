@@ -11,6 +11,7 @@ import { GAMES, GAME_SLUGS } from "@/lib/games";
 import { points } from "@/lib/format";
 import { api } from "@/lib/api";
 import { OnlineBadge } from "./OnlineBadge";
+import { KeysBadge } from "./KeysBadge";
 import { useGameModal } from "@/components/games/GameModal";
 import { isGuestEmail } from "@/lib/guest";
 import { Logo } from "./Logo";
@@ -51,6 +52,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLink href="/games" active={path === "/games"}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></svg>Все игры
           </NavLink>
+          <NavLink href="/bonuses" active={path === "/bonuses"}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><rect x="3" y="9" width="18" height="12" rx="2" /><path d="M12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z" /></svg>Бонусы и турнир
+          </NavLink>
           <NavLink href="/fair" active={path === "/fair"}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z" /><path d="m9 12 2 2 4-4" /></svg>Честность
           </NavLink>
@@ -83,7 +87,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="garland absolute inset-x-0 -bottom-[14px]" aria-hidden />
           <div className="lg:hidden"><Logo /></div>
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
-            <OnlineBadge />
+            <span className={user ? "hidden sm:block" : ""}><OnlineBadge /></span>
+            <KeysBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
                 <Link href="/account" className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3" title="Баланс">
@@ -131,8 +136,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Нижняя навигация (телефон) */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Навигация">
-        {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/account/history" : "/register", user ? "История" : "Регистрация", "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Навигация">
+        {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], ["/bonuses", "Бонусы", "M3 9h18v12H3zM12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/account/history" : "/register", user ? "История" : "Регистрация", "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
           const active = h === "/" ? path === "/" : path.startsWith(h);
           return (
             <Link key={t} href={h} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? "text-accent" : "text-muted"}`}>

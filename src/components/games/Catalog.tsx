@@ -5,20 +5,24 @@ import { CATEGORY_NAMES, GAMES, type GameCategory, type GameSlug } from "@/lib/g
 import { useGameModal } from "./GameModal";
 
 type Item = { slug: GameSlug; title: string; tagline: string; enabled: boolean };
-type Tab = GameCategory | "all" | "fav";
-const TABS: [Tab, string, string][] = [["all", "Все игры", "❄️"], ["slots", CATEGORY_NAMES.slots, "🎁"], ["originals", CATEGORY_NAMES.originals, "🎄"], ["fav", "Избранное", "❤️"]];
+type Tab = GameCategory | "all" | "fav" | "new";
+const TABS: [Tab, string, string][] = [["all", "Все игры", "❄️"], ["new", "Новинки", "✨"], ["slots", CATEGORY_NAMES.slots, "🎁"], ["table", CATEGORY_NAMES.table, "🃏"], ["originals", CATEGORY_NAMES.originals, "⚡"], ["fav", "Избранное", "❤️"]];
+const isTab = (x?: string): x is Tab => TABS.some(([k]) => k === x);
 
 export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: string }) {
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState<Tab>(initialCat === "slots" || initialCat === "originals" || initialCat === "fav" ? initialCat : "all");
+  const [cat, setCat] = useState<Tab>(isTab(initialCat) ? initialCat : "all");
   const { favs } = useGameModal();
-  const list = useMemo(() => games.filter((g) => (cat === "all" || (cat === "fav" ? favs.includes(g.slug) : GAMES[g.slug].category === cat)) && (g.title + " " + g.tagline + " " + GAMES[g.slug].blurb).toLowerCase().includes(q.trim().toLowerCase())), [games, q, cat, favs]);
+  const inTab = (t: Tab, s: GameSlug) => t === "all" || (t === "fav" ? favs.includes(s) : t === "new" ? GAMES[s].badge === "Новинка" : GAMES[s].category === t);
+  const list = useMemo(() => games.filter((g) => inTab(cat, g.slug) && (g.title + " " + g.tagline + " " + GAMES[g.slug].blurb).toLowerCase().includes(q.trim().toLowerCase())), // eslint-disable-line react-hooks/exhaustive-deps
+    [games, q, cat, favs]);
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center gap-2">
         {TABS.map(([k, t, e]) => (
           <button key={k} onClick={() => setCat(k)} className={`flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold transition-colors ${cat === k ? "bg-brand-gradient text-white shadow-[0_8px_24px_-10px_#e8263f]" : "bg-panel text-soft ring-1 ring-line hover:text-white"}`}>
             <span aria-hidden>{e}</span>{t}
+            <span className={`rounded-md px-1.5 text-[11px] font-bold ${cat === k ? "bg-white/20" : "bg-raised text-muted"}`}>{games.filter((g) => inTab(k, g.slug)).length}</span>
           </button>
         ))}
         <label className="ml-auto flex h-10 w-full items-center gap-2 rounded-xl border border-line bg-panel px-3 focus-within:border-brand sm:w-64">

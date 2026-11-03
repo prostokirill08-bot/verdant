@@ -27,6 +27,7 @@ enum LedgerType {
   WIN           // начисление выигрыша
   REFUND        // возврат ставки (отмена раунда)
   ADMIN_ADJUST  // ручная корректировка администратором
+  PROMO         // призы акций: сундук со снежными ключами, турнир недели
 }
 
 enum RoundStatus {
@@ -59,6 +60,8 @@ model User {
   resets        PasswordReset[]
   ledger        LedgerEntry[]
   meters        SlotMeter[]
+  promo         PromoState?
+  promoWins     PromoWin[]
 }
 
 model Session {
@@ -225,4 +228,28 @@ model SlotMeter {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, gameSlug])
+}
+
+/// Снежные ключи игрока: выпадают за ставки, 4 ключа открывают сундук.
+model PromoState {
+  userId     String   @id
+  keys       Int      @default(0)
+  opened     Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Выигрыши акций: призы из сундука и места в турнире недели (лента и защита от двойной выплаты).
+model PromoWin {
+  id         String   @id @default(cuid())
+  userId     String
+  kind       String                       // chest | grand | tournament
+  amount     BigInt
+  week       String?                      // неделя турнира, например 2026-W45
+  place      Int?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([week, place])
+  @@index([createdAt])
 }

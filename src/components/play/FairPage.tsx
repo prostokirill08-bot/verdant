@@ -9,6 +9,7 @@ import * as O from "@/lib/fair/outcomes";
 import { playAtlas, playNeon, rngFromArray, SLOT_FLOATS } from "@/lib/fair/slots";
 import { CHEST_NAMES, decodeMeters, playWorkshop } from "@/lib/fair/workshop";
 import * as X from "@/lib/fair/extra";
+import * as K from "@/lib/fair/cards";
 import { GAME_NAMES, GAME_SLUGS, isGameSlug, type GameSlug } from "@/lib/games";
 import { ErrorLine, Label, Panel, Segmented } from "./kit";
 
@@ -104,7 +105,7 @@ function Verifier() {
     if (!window.crypto?.subtle) { setErr("Браузер не поддерживает WebCrypto (нужен HTTPS)"); return; }
     const edge = Number(p.edgeBp) || 0; const nonce = Number(n) || 0;
     const slot = game === "atlas" || game === "neon-garden";
-    const EXTRA: Record<string, number> = { coinflip: X.COIN_MAX_FLIPS, wheel: 1, keno: 10, tower: X.TOWER_FLOATS, hilo: X.HILO_MAX_CARDS };
+    const EXTRA: Record<string, number> = { coinflip: X.COIN_MAX_FLIPS, wheel: 1, keno: 10, tower: X.TOWER_FLOATS, hilo: X.HILO_MAX_CARDS, blackjack: K.BJ_FLOATS, videopoker: K.VP_FLOATS, baccarat: K.BAC_FLOATS, sledrace: K.SLED_FLOATS };
     const need = game === "crash" ? 1 : slot ? SLOT_FLOATS : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
     const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, need);
     if (game === "workshop") {
@@ -140,6 +141,19 @@ function Verifier() {
     if (game === "keno") lines.push(["Выпавшие числа", X.kenoDraw(fs).sort((a, b) => a - b).join(", ")]);
     if (game === "tower") { const lv = (p.level && p.level in X.TOWER_LEVELS ? p.level : "medium") as X.TowerLevel; X.towerLayout(fs, lv).forEach((t, i) => lines.push([`Этаж ${i + 1}: ловушки`, t.map((x) => x + 1).join(", ")])); }
     if (game === "hilo") lines.push(["Карты по порядку", fs.slice(0, 20).map((f) => X.RANK_LABEL[X.hiloCard(f).rank]).join(" ") + " …"]);
+    const cn = (cs: K.Card[]) => cs.map((c) => `${X.RANK_LABEL[c.rank] ?? ""}${["♠", "♥", "♦", "♣"][c.suit] ?? ""}`).join(" ");
+    if (game === "blackjack") {
+      const st = K.bjReplay(fs, (p.actions ?? "").replace(/[^hsdp]/g, "")); const r = K.bjSettle(st);
+      st.hands.forEach((h, i) => lines.push([`Рука ${i + 1}${h.doubled ? " (удвоена)" : ""}`, `${cn(h.cards)} = ${K.bjTotal(h.cards).total}`]));
+      lines.push(["Дилер", `${cn(st.dealer)} = ${K.bjTotal(st.dealer).total}`], ["Выплата", `${r.ret} из ${r.staked} базовых ставок`]);
+    }
+    if (game === "videopoker") {
+      const deck = K.vpDeck(fs); const held = (p.held ?? "00000").split("").map((x) => x === "1");
+      const hand = K.vpDraw(deck, held); const e = K.vpEval(hand);
+      lines.push(["Раздача", cn(deck.slice(0, 5))], ["Запасные карты", cn(deck.slice(5))], ["После замены", cn(hand)], ["Комбинация", `${e.name} · ${e.mult}×`]);
+    }
+    if (game === "baccarat") { const r = K.baccarat(fs); lines.push(["Игрок", `${cn(r.player)} = ${r.playerScore}`], ["Банкир", `${cn(r.banker)} = ${r.bankerScore}`], ["Победитель", r.winner === "player" ? "Игрок" : r.winner === "banker" ? "Банкир" : "Ничья"]); }
+    if (game === "sledrace") { const r = K.sledRace(fs); lines.push(["Порядок на финише", r.order.map((i) => K.SLEDS[i]!.emoji).join(" → ")], ["Победитель", K.SLEDS[r.winner]!.name]); }
     if (game === "mines") { const m = Math.min(24, Math.max(1, Number(p.mines) || 3)); const l = O.minesLayout(fs, m); lines.push(["Мины (клетки 1–25)", l.map((x) => x + 1).join(", ")]); }
     setOut({ hashOk: await sha256Hex(s.trim()), lines });
   }, [game, s, c, n, p]);
@@ -177,6 +191,8 @@ function Verifier() {
         {game === "coinflip" && <label className="grid gap-1"><Label>Бросков</Label><input value={p.flips ?? "1"} onChange={set("flips")} className={inp} /></label>}
         {game === "wheel" && <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}><option value="low">низкий</option><option value="medium">средний</option><option value="high">высокий</option></select></label>}
         {game === "tower" && <label className="grid gap-1"><Label>Сложность</Label><select value={p.level ?? "medium"} onChange={set("level")} className={inp}>{Object.entries(X.TOWER_LEVELS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></label>}
+        {game === "blackjack" && <label className="col-span-2 grid gap-1"><Label>Ходы (h — ещё, s — хватит, d — удвоить, p — разделить)</Label><input value={p.actions ?? ""} onChange={set("actions")} className={inp} placeholder="hs" /></label>}
+        {game === "videopoker" && <label className="col-span-2 grid gap-1"><Label>Оставленные карты (1 — держать)</Label><input value={p.held ?? "00000"} onChange={set("held")} className={inp} /></label>}
         {game === "mines" && <label className="grid gap-1"><Label>Мин</Label><input value={p.mines} onChange={set("mines")} className={inp} /></label>}
         {(game === "limbo" || game === "crash" || game === "dice") && <label className="grid gap-1"><Label>Преимущество, б.п.</Label><input value={p.edgeBp} onChange={set("edgeBp")} className={inp} /></label>}
       </div>

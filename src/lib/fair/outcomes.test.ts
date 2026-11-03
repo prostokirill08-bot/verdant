@@ -130,3 +130,22 @@ test("Мастерская Санты: пересчёт по сиду, сунд�
   }
   const rtp = paid / (N * 100); assert.ok(rtp > 0.92 && rtp < 0.99, `RTP ${rtp}`);
 });
+
+test("карточные игры: комбинации покера, правила баккары, повтор блэкджека", async () => {
+  const K = await import("./cards");
+  const C = (rank: number, suit: number) => ({ rank, suit });
+  assert.equal(K.vpEval([C(1, 0), C(13, 0), C(12, 0), C(11, 0), C(10, 0)]).rank, "royal");
+  assert.equal(K.vpEval([C(1, 0), C(2, 1), C(3, 0), C(4, 0), C(5, 0)]).rank, "straight");
+  assert.equal(K.vpEval([C(10, 0), C(10, 1), C(3, 0), C(4, 0), C(5, 2)]).rank, "nothing");
+  assert.equal(K.vpEval([C(12, 0), C(12, 1), C(3, 0), C(4, 0), C(5, 2)]).rank, "jacks");
+  for (let n = 0; n < 300; n++) {
+    const deck = K.vpDeck(rnd(K.VP_FLOATS)); assert.equal(new Set(deck.map((c) => c.rank * 4 + c.suit)).size, 10);
+    const b = K.baccarat(rnd(K.BAC_FLOATS)); assert.ok(b.player.length >= 2 && b.player.length <= 3 && b.banker.length <= 3);
+    if (b.player.length === 2 && b.banker.length === 2) assert.ok(b.playerScore >= 6 || b.bankerScore >= 8);
+    // Повтор блэкджека по записанным ходам даёт ту же раздачу
+    const fs = rnd(K.BJ_FLOATS); let s = K.bjDeal(fs); let g = 0;
+    while (!s.finished && g++ < 10) { const a = K.bjAllowed(s); s = K.bjAct(s, a.split ? "split" : K.bjTotal(s.hands[s.active]!.cards).total < 14 ? "hit" : a.double && g === 1 ? "double" : "stand", fs); }
+    assert.deepEqual(K.bjReplay(fs, s.actions), s);
+  }
+  const w = K.sledRace([0.5, 0.1, 0.2, 0.3, 0.4, 0.5]); assert.equal(w.winner, 1); assert.equal(w.order[0], 1);
+});

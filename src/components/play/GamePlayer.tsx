@@ -14,12 +14,20 @@ import { TowerGame } from "./Tower";
 import { WheelGame } from "./Wheel";
 import { NeonGame } from "./slots/Neon";
 import { WorkshopGame } from "./slots/Workshop";
+import { BlackjackGame } from "./Blackjack";
+import { VideoPokerGame } from "./VideoPoker";
+import { BaccaratGame } from "./Baccarat";
+import { SledRaceGame } from "./SledRace";
 
 export function GamePlayer({ cfg }: { cfg: GameConfig }) {
   switch (cfg.slug) {
     case "atlas": return <AtlasGame cfg={cfg} />;
     case "neon-garden": return <NeonGame cfg={cfg} />;
     case "workshop": return <WorkshopGame cfg={cfg} />;
+    case "blackjack": return <BlackjackGame cfg={cfg} />;
+    case "videopoker": return <VideoPokerGame cfg={cfg} />;
+    case "baccarat": return <BaccaratGame cfg={cfg} />;
+    case "sledrace": return <SledRaceGame cfg={cfg} />;
     case "crash": return <CrashGame cfg={cfg} />;
     case "tower": return <TowerGame cfg={cfg} />;
     case "hilo": return <HiloGame cfg={cfg} />;
