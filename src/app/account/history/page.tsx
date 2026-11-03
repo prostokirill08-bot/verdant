@@ -7,7 +7,7 @@ import { GAME_NAMES, isGameSlug } from "@/lib/games";
 
 type Item = { id: string; type: string; amount: string; balanceAfter: string; note: string | null; createdAt: string; game: string | null; multiplier: string | null };
 const TYPES: [string, string][] = [["ALL", "Все"], ["BET", "Ставки"], ["WIN", "Выигрыши"], ["DEMO_GRANT", "Бонусы"], ["REFUND", "Возвраты"], ["ADMIN_ADJUST", "Корректировки"]];
-const LABEL: Record<string, string> = { BET: "Ставка", WIN: "Выигрыш", DEMO_GRANT: "Демо-снежинки", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
+const LABEL: Record<string, string> = { BET: "Ставка", WIN: "Выигрыш", DEMO_GRANT: "Демо-рубли", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
 
 export default function HistoryPage() {
   const [type, setType] = useState("ALL");

@@ -121,13 +121,13 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
         </div>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает снежинок) */}
+        {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает рублей) */}
         <Pill onClick={() => setAuto(auto > 0 ? 0 : Infinity)} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "■ Стоп" : "∞ Авто"}</Pill>
         <Pill onClick={() => setTurbo(!turbo)} active={turbo}>⚡ Турбо</Pill>
         <Pill onClick={onInfo}>Выплаты</Pill>
         <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold><span className="block leading-tight">Бонус</span><span className="block truncate text-[10.5px] font-semibold leading-tight">{points(buyCost)}</span></Pill>
       </div>
-      {!enough && user && <p className="text-center text-[12.5px] text-danger">Недостаточно снежинок — уменьши ставку или забери бонус в кабинете.</p>}
+      {!enough && user && <p className="text-center text-[12.5px] text-danger">Недостаточно средств — уменьши ставку или забери бонус в кабинете.</p>}
     </div>
   );
 }
@@ -223,7 +223,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
             </motion.p>
             <motion.p animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 0.45, repeat: Infinity }}
               className="mt-2 font-mono text-[clamp(40px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 30px ${c1}, 0 0 60px #ffd16688` }}>
-              {fmt((Number(amount) / 100) * e)} ❄️
+              {fmt((Number(amount) / 100) * e)} ₽
             </motion.p>
             <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×{shownMult.toFixed(2)} ставки</p>
             {label && <p className="mt-3 text-[clamp(14px,3vw,18px)] font-semibold text-white/85">{label}</p>}
@@ -275,7 +275,7 @@ export function InfoModal({ open, onClose, title, children }: { open: boolean; o
   );
 }
 
-/** Общий хук слота: ставка, турбо, автоигра (останавливается на бонусе или при нехватке снежинок). */
+/** Общий хук слота: ставка, турбо, автоигра (останавливается на бонусе или при нехватке рублей). */
 export function useSlotState(cfg: GameConfig) {
   const [bet, setBet] = useState(unitsToInput(BigInt(cfg.minBet) > 100n ? BigInt(cfg.minBet) : 100n));
   const [turbo, setTurbo] = useState(false);
@@ -290,7 +290,7 @@ export function BonusLabel() {
   );
 }
 
-/** Выигрыш = ставка × множитель (в единицах снежинок). */
+/** Выигрыш = ставка × множитель (в единицах рублей). */
 export const winUnits = (units: bigint, mult: number) => (units * BigInt(Math.round(mult * 10000))) / 10000n;
 
 export type BonusState = { left: number; done: number; total: string; add: string | null; tick: number };
@@ -323,7 +323,7 @@ export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | n
             <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш в бонусе</p>
             <motion.p key={state.tick} animate={state.add ? { scale: [1.18, 1] } : {}} transition={{ duration: 0.35 }}
               className="font-mono text-[clamp(22px,5vw,30px)] font-bold leading-none tabular" style={{ color, textShadow: `0 0 18px ${color}` }}>
-              {shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ❄️
+              {shown.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
             </motion.p>
             <AnimatePresence>
               {state.add && (

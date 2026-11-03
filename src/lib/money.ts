@@ -1,4 +1,4 @@
-// Снежинки хранятся целыми «сотыми» (bigint). 1 снежинка = 100.
+// Суммы хранятся целыми «сотыми» (bigint). 1 ₽ = 100 коп.
 export const SCALE = 100n;
 
 export function toUnits(points: number | string): bigint {

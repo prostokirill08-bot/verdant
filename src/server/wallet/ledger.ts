@@ -19,7 +19,7 @@ export async function applyEntry(tx: Tx, p: { userId: string; type: LedgerType; 
     where: { id: wallet.id, ...(p.amount < 0n ? { balance: { gte: -p.amount } } : {}) },
     data: { balance: { increment: p.amount }, version: { increment: 1 } },
   });
-  if (updated.count === 0) throw new HttpError(400, "Недостаточно снежинок", "insufficient");
+  if (updated.count === 0) throw new HttpError(400, "Недостаточно средств", "insufficient");
   const w = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id } });
   const entry = await tx.ledgerEntry.create({ data: { walletId: w.id, userId: p.userId, type: p.type, amount: p.amount, balanceAfter: w.balance, idempotencyKey: p.idempotencyKey, roundId: p.roundId, note: p.note } });
   return { entry, duplicate: false };

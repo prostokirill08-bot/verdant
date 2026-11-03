@@ -111,7 +111,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
     return true; // автоигра продолжается и после бонуса
   }
 
-  // Автоигра: следующий спин, пока есть снежинки; бонус её останавливает
+  // Автоигра: следующий спин, пока есть деньги; бонус её останавливает
   useEffect(() => {
     if (auto <= 0 || playing || reqBusy) return;
     if (user && (parsePoints(bet) ?? 0n) > BigInt(balance)) { setAuto(0); return; }

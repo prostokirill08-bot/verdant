@@ -18,7 +18,7 @@ export async function registerUser(p: { email: string; username: string; passwor
   try {
     const user = await withTx(async (tx) => {
       const u = await tx.user.create({ data: { email: p.email, username: p.username, passwordHash, publicId: publicId(), wallet: { create: {} } } });
-      if (settings.startGrant > 0) await applyEntry(tx, { userId: u.id, type: "DEMO_GRANT", amount: BigInt(settings.startGrant), idempotencyKey: `signup:${u.id}`, note: "Стартовые демо-снежинки" });
+      if (settings.startGrant > 0) await applyEntry(tx, { userId: u.id, type: "DEMO_GRANT", amount: BigInt(settings.startGrant), idempotencyKey: `signup:${u.id}`, note: "Стартовые демо-рубли" });
       await createSeedPair(tx, u.id);
       return u;
     }, 1); // занятый email/ник повторять бессмысленно
