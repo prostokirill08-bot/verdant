@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { TelegramLink } from "@/components/shell/TelegramLink";
 import Link from "next/link";
 import { db } from "@/server/db";
 import { getSession } from "@/server/auth/session";
@@ -57,6 +58,8 @@ export default async function Home() {
         </div>
         <Image src="/img/ny/mascot/cat.webp" alt="Котонавт в шапке Деда Мороза" width={300} height={300} className="animate-floaty pointer-events-none absolute -bottom-6 right-0 w-[150px] opacity-90 [mask-image:radial-gradient(circle,#000_55%,transparent_72%)] sm:right-6 sm:w-[260px] sm:opacity-100" />
       </section>
+
+      <TelegramLink />
 
       <section className="grid gap-3 md:grid-cols-3">
         {[

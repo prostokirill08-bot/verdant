@@ -14,6 +14,7 @@ import { OnlineBadge } from "./OnlineBadge";
 import { KeysBadge } from "./KeysBadge";
 import { useGameModal } from "@/components/games/GameModal";
 import { isGuestEmail } from "@/lib/guest";
+import { TelegramLink } from "./TelegramLink";
 import { Logo } from "./Logo";
 
 function NavLink({ href, children, active, onClick }: { href: string; children: React.ReactNode; active: boolean; onClick?: (e: React.MouseEvent) => void }) {
@@ -78,7 +79,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {user.role !== "USER" && <NavLink href="/admin" active={path.startsWith("/admin")}>Админ-панель</NavLink>}
           </div>
         )}
-        <p className="mt-auto px-3 text-[11.5px] leading-relaxed text-muted/70">🎄 С наступающим! Демо-платформа: только виртуальные демо-рубли — их нельзя купить или вывести.</p>
+        <div className="mt-auto"><TelegramLink variant="side" /></div>
+        <p className="px-3 text-[11.5px] leading-relaxed text-muted/70">🎄 С наступающим! Демо-платформа: только виртуальные демо-рубли — их нельзя купить или вывести.</p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

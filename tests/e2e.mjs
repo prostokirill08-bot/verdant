@@ -208,6 +208,34 @@ else {
   ok("завершение сессии из админки", !!sess && (await a.req(`/api/admin/sessions/${sess.ref}`, undefined, "DELETE")).s === 200 && (await p.req("/api/account/profile")).s === 401);
   me && ok("сверка админа", (await a.req("/api/account/verify")).j.ok === true);
 }
+// ---------- Telegram Mini App ----------
+// Нужен сервер, запущенный с TELEGRAM_BOT_TOKEN; тест подписывает initData тем же токеном, как это делает Telegram.
+const TG = process.env.TELEGRAM_BOT_TOKEN;
+if (TG) {
+  console.log("— Telegram");
+  const sign = (f) => { const chk = Object.entries(f).map(([k, v]) => `${k}=${v}`).sort().join("\n"); const sec = createHmac("sha256", "WebAppData").update(TG).digest(); return new URLSearchParams({ ...f, hash: createHmac("sha256", sec).update(chk).digest("hex") }).toString(); };
+  const tgId = 900000000 + Math.floor(Math.random() * 99999999);
+  const initData = sign({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: tgId, first_name: "Кирилл", username: "kq" }) });
+  const t = new Client();
+  r = await t.req("/api/auth/telegram", { initData });
+  const me = (await t.req("/api/auth/me")).j;
+  ok("telegram: вход по initData создаёт аккаунт", r.s === 200 && r.j.created === true && me.user?.email === `tg_${tgId}@telegram.local` && BigInt(me.balance) > 0n, JSON.stringify(r.j));
+  ok("telegram: короткий ник заменён на tg_<id>", me.user?.username === `tg_${tgId}`.slice(0, 20), me.user?.username);
+  ok("telegram: повторный вход — тот же аккаунт", (await t.req("/api/auth/telegram", { initData })).j.same === true);
+  const t2 = new Client(); await t2.req("/api/auth/telegram", { initData });
+  ok("telegram: с другого устройства — тот же аккаунт", (await t2.req("/api/auth/me")).j.user?.publicId === me.user?.publicId);
+  ok("telegram: можно играть", (await t.req("/api/games/dice/bet", { amount: "1", params: { target: 50, over: true }, key: key() })).s === 200);
+  ok("telegram: поддельная подпись → 401", (await new Client().req("/api/auth/telegram", { initData: initData.replace(String(tgId), String(tgId + 1)) })).s === 401);
+  // Привязка: вошёл в обычный аккаунт внутри Telegram → Telegram привязывается к нему
+  const pl = await newPlayer(); const id2 = tgId + 1;
+  await pl.req("/api/auth/telegram", { initData: sign({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: id2, first_name: "Kirill" }) }) });
+  ok("telegram: привязка к обычному аккаунту", (await pl.req("/api/auth/me")).j.user?.username === pl.username);
+  const wh = createHash("sha256").update(`verdant-webhook:${TG}`).digest("hex").slice(0, 48);
+  const hook = (secret) => fetch(B + "/api/telegram/webhook", { method: "POST", headers: { "content-type": "application/json", ...(secret ? { "x-telegram-bot-api-secret-token": secret } : {}) }, body: JSON.stringify({ update_id: 1, message: { chat: { id: 1, type: "private" }, text: "/start" } }) }).then((x) => x.status);
+  ok("telegram: вебхук без секрета → 401", (await hook("")) === 401 && (await hook("x".repeat(48))) === 401);
+  ok("telegram: вебхук с секретом → 200", (await hook(wh)) === 200);
+}
+
 const h = await fetch(B + "/api/health").then((x) => x.json());
 ok("health", h.ok === true && h.db === true);
 console.log(`\n${pass} passed, ${fail} failed`);

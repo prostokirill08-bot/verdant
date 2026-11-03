@@ -46,6 +46,7 @@ model User {
   role          Role       @default(USER)
   status        UserStatus @default(ACTIVE)
   avatar        String     @default("orbit")  // ключ встроенного аватара
+  telegramId    BigInt?    @unique            // вход через Telegram Mini App
   failedLogins  Int        @default(0)
   lockedUntil   DateTime?
   lastLoginAt   DateTime?

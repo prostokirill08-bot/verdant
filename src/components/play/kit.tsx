@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { api, ApiError } from "@/lib/api";
 import { points, timeAgo } from "@/lib/format";
 import { GAMES, type GameSlug } from "@/lib/games";
+import { haptic } from "@/lib/telegram";
 import Image from "next/image";
 
 export type GameConfig = { slug: GameSlug; title: string; minBet: string; maxBet: string; edgeBp: number; enabled: boolean };
@@ -105,7 +106,7 @@ export function PlayButton({ children, onClick, disabled, loading, variant = "pr
   const { user, loading: authLoading } = useAuth();
   const path = usePathname();
   if (!authLoading && !user) return <Link href={`/login?next=${encodeURIComponent(path)}`} className="block"><Button size="lg" className="w-full">Войти, чтобы играть</Button></Link>;
-  return <Button size="lg" variant={variant} className="w-full" onClick={onClick} disabled={disabled || authLoading} loading={loading}>{children}</Button>;
+  return <Button size="lg" variant={variant} className="w-full" onClick={() => { haptic("tap"); onClick(); }} disabled={disabled || authLoading} loading={loading}>{children}</Button>;
 }
 
 export function ErrorLine({ text }: { text: string }) {

@@ -17,12 +17,18 @@ export type SessionUser = {
 // Secure-cookie включаем, когда сайт работает по HTTPS
 const secure = isHttps();
 
-export async function createSession(userId: string, ip: string, userAgent: string | null) {
+/**
+ * embedded — вход из Telegram Mini App. В Telegram Web сайт открыт во фрейме чужого сайта, и обычные cookie
+ * (SameSite=Lax/Strict) туда не доходят. Поэтому такие cookie — SameSite=None + Partitioned: они живут
+ * только внутри Telegram и не видны другим сайтам. Защиту от CSRF держат проверка Origin и токен в заголовке.
+ */
+export async function createSession(userId: string, ip: string, userAgent: string | null, opts: { embedded?: boolean } = {}) {
   const token = randomToken(32), csrfToken = randomToken(24);
   await db.session.create({ data: { id: sha256(token), userId, csrfToken, ip, userAgent: userAgent?.slice(0, 300), expiresAt: new Date(Date.now() + TTL_MS) } });
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: TTL_MS / 1000 });
-  jar.set(CSRF_COOKIE, csrfToken, { httpOnly: false, sameSite: "strict", secure, path: "/", maxAge: TTL_MS / 1000 });
+  const embed = opts.embedded && secure ? { sameSite: "none" as const, partitioned: true } : null;
+  jar.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: TTL_MS / 1000, ...embed });
+  jar.set(CSRF_COOKIE, csrfToken, { httpOnly: false, sameSite: "strict", secure, path: "/", maxAge: TTL_MS / 1000, ...embed });
 }
 
 export async function destroySession(sessionId?: string) {

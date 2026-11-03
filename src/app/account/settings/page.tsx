@@ -5,6 +5,7 @@ import { Avatar, AVATARS, type AvatarKey } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { api } from "@/lib/api";
+import { isTelegramEmail } from "@/lib/guest";
 
 type Sess = { current: boolean; ip: string | null; userAgent: string | null; createdAt: string };
 
@@ -51,17 +52,19 @@ export default function SettingsPage() {
         </form>
         <dl className="mt-6 grid gap-2 border-t border-line pt-4 text-[14px]">
           <div className="flex justify-between"><dt className="text-muted">ID игрока</dt><dd className="font-mono">{user.publicId}</dd></div>
-          <div className="flex justify-between"><dt className="text-muted">Email</dt><dd>{user.email}</dd></div>
+          {isTelegramEmail(user.email)
+            ? <div className="flex justify-between"><dt className="text-muted">Вход</dt><dd>через Telegram</dd></div>
+            : <div className="flex justify-between"><dt className="text-muted">Email</dt><dd>{user.email}</dd></div>}
         </dl>
       </Panel>
-      <Panel title="Пароль">
+      {!isTelegramEmail(user.email) && <Panel title="Пароль">
         <form className="grid gap-3" onSubmit={changePw}>
           <Field id="pw-current" label="Текущий пароль" type="password" autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} />
           <Field id="pw-next" label="Новый пароль" type="password" autoComplete="new-password" value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} hint="От 8 символов, буквы и цифры" />
           <div className="flex items-center gap-3"><Button type="submit" loading={pwBusy} disabled={!pw.current || !pw.next}>Сменить пароль</Button></div>
           {pwMsg && <p className="text-[13.5px] text-soft">{pwMsg}</p>}
         </form>
-      </Panel>
+      </Panel>}
       <Panel title="Активные сеансы">
         <ul className="grid gap-2">
           {sessions.map((s, i) => (

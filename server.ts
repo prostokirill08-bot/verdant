@@ -20,6 +20,7 @@ const { startCrashEngine } = await import("@/server/crash/engine");
 const { crashSnapshot } = await import("@/server/crash/service");
 const { subscribe } = await import("@/server/realtime/bus");
 const { startJobs } = await import("@/server/jobs");
+const { setupBot } = await import("@/server/telegram/bot");
 const { db } = await import("@/server/db");
 const upgradeNext = app.getUpgradeHandler();
 const server = createServer((req, res) => handle(req, res));
@@ -60,6 +61,7 @@ setInterval(() => {
 server.listen(port, () => console.log(`> Verdant: http://localhost:${port} (${dev ? "dev" : "production"})`));
 void startCrashEngine();
 startJobs();
+void setupBot();
 
 // Корректная остановка: перестаём принимать соединения, закрываем сокеты и БД.
 // Оборванный раунд Crash отменится с возвратом ставок при следующем запуске.
