@@ -5,6 +5,7 @@ import {
 } from "@/lib/fair/outcomes";
 import { toUnits } from "@/lib/money";
 import { ATLAS, NEON, playAtlas, playNeon, type Rng } from "@/lib/fair/slots";
+import { COIN_MAX_FLIPS, coinMultiplier, coinSides, KENO_PAYS, kenoDraw, WHEEL, wheelSegment, type WheelRisk } from "@/lib/fair/extra";
 
 /** Сумма ставки приходит строкой баллов («12.5»), на сервере переводится в сотые. */
 export const amountSchema = z.string().max(16).regex(/^\d+([.,]\d{1,2})?$/, "Неверная сумма ставки").transform((s) => toUnits(s));
@@ -73,6 +74,35 @@ const roulette: InstantGame<RouletteParams> = {
   },
 };
 
+const coinflip: InstantGame<{ side: "heads" | "tails"; flips: number }> = {
+  params: z.object({ side: z.enum(["heads", "tails"]), flips: z.number().int().min(1, "От 1 до 10 бросков").max(COIN_MAX_FLIPS, "От 1 до 10 бросков") }),
+  floats: COIN_MAX_FLIPS,
+  resolve(p, fs, bet, edgeBp) {
+    const sides = coinSides(fs, p.flips); const win = sides.every((x) => x === p.side); const m = coinMultiplier(p.flips, edgeBp);
+    return { payout: win ? byMult(bet, m) : 0n, multiplier: win ? m : 0, result: { sides, win, side: p.side, flips: p.flips, payoutMultiplier: m } };
+  },
+};
+
+const wheel: InstantGame<{ risk: WheelRisk }> = {
+  params: z.object({ risk: z.enum(["low", "medium", "high"]) }),
+  floats: 1,
+  resolve(p, fs, bet) {
+    const segment = wheelSegment(fs[0]!); const m = WHEEL[p.risk][segment]!;
+    return { payout: byMult(bet, m), multiplier: m, result: { segment, risk: p.risk, multiplier: m } };
+  },
+};
+
+const keno: InstantGame<{ picks: number[] }> = {
+  params: z.object({ picks: z.array(z.number().int().min(1).max(40)).min(1, "Выбери от 1 до 10 чисел").max(10, "Выбери от 1 до 10 чисел") })
+    .refine((p) => new Set(p.picks).size === p.picks.length, "Числа не должны повторяться"),
+  floats: 10,
+  resolve(p, fs, bet) {
+    const drawn = kenoDraw(fs); const hits = p.picks.filter((n) => drawn.includes(n));
+    const m = KENO_PAYS[p.picks.length]![hits.length] ?? 0;
+    return { payout: byMult(bet, m), multiplier: m, result: { drawn, hits, picks: p.picks } };
+  },
+};
+
 /** Слоты: множитель считается от базовой ставки; при покупке бонуса списывается ставка × цена бонуса. */
 function slot(price: number, play: (rng: Rng, o: { buy?: boolean }) => { totalMult: number }): InstantGame<{ buy: boolean }> {
   return {
@@ -88,6 +118,6 @@ function slot(price: number, play: (rng: Rng, o: { buy?: boolean }) => { totalMu
 const atlas = slot(ATLAS.buyPrice, playAtlas);
 const neonGarden = slot(NEON.buyPrice, playNeon);
 
-export const INSTANT_GAMES = { dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden } as Record<string, InstantGame<unknown>>;
-export type InstantSlug = "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden";
+export const INSTANT_GAMES = { dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno } as Record<string, InstantGame<unknown>>;
+export type InstantSlug = "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno";
 export const isInstant = (s: string): s is InstantSlug => s in INSTANT_GAMES;

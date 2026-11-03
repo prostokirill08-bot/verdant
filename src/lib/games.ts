@@ -1,5 +1,5 @@
 // Каталог игр: категория, обложка, цвет темы. Настройки (лимиты, вкл/выкл) — в БД.
-export const GAME_SLUGS = ["atlas", "neon-garden", "crash", "mines", "dice", "plinko", "limbo", "roulette"] as const;
+export const GAME_SLUGS = ["atlas", "neon-garden", "crash", "mines", "tower", "hilo", "wheel", "keno", "coinflip", "dice", "plinko", "limbo", "roulette"] as const;
 export type GameSlug = (typeof GAME_SLUGS)[number];
 export type GameCategory = "slots" | "originals";
 
@@ -17,6 +17,11 @@ export const GAMES: Record<GameSlug, GameMeta> = {
   dice: { name: "Dice", category: "originals", cover: "/img/covers/dice.webp", theme: ["#a855f7", "#22d3ee"], blurb: "Выбери шанс и брось кости" },
   plinko: { name: "Plinko", category: "originals", cover: "/img/covers/plinko.webp", theme: ["#ec4899", "#8b5cf6"], blurb: "Шарик скачет по штырькам" },
   limbo: { name: "Limbo", category: "originals", cover: "/img/covers/limbo.webp", theme: ["#fbbf24", "#8b5cf6"], blurb: "Задай цель — множитель решит" },
+  tower: { name: "Башня", category: "originals", cover: "/img/covers/tower.webp", theme: ["#f59e0b", "#7c3aed"], badge: "Новинка", blurb: "Поднимайся по этажам, обходя ловушки" },
+  hilo: { name: "Hi-Lo", category: "originals", cover: "/img/covers/hilo.webp", theme: ["#ef4444", "#fbbf24"], badge: "Новинка", blurb: "Следующая карта выше или ниже?" },
+  wheel: { name: "Колесо фортуны", category: "originals", cover: "/img/covers/wheel.webp", theme: ["#ec4899", "#fbbf24"], badge: "Новинка", blurb: "Крути колесо — до 19,8×" },
+  keno: { name: "Кено", category: "originals", cover: "/img/covers/keno.webp", theme: ["#22d3ee", "#ec4899"], badge: "Новинка", blurb: "Выбери до 10 чисел из 40" },
+  coinflip: { name: "Монетка", category: "originals", cover: "/img/covers/coinflip.webp", theme: ["#fbbf24", "#8b5cf6"], badge: "Новинка", blurb: "Орёл или решка — серия до 10 бросков" },
   roulette: { name: "Roulette", category: "originals", cover: "/img/covers/roulette.webp", theme: ["#ef4444", "#16a34a"], blurb: "Европейская рулетка на 37 секторов" },
 };
 export const GAME_NAMES = Object.fromEntries(GAME_SLUGS.map((s) => [s, GAMES[s].name])) as Record<GameSlug, string>;

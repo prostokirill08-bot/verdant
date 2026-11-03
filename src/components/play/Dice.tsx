@@ -86,5 +86,5 @@ export function DiceGame({ cfg }: { cfg: GameConfig }) {
     </div>
   );
 
-  return <GameLayout controls={controls} stage={stage} footer={<RoundsPanel slug="dice" version={version} describe={describe} />} />;
+  return <GameLayout slug="dice" controls={controls} stage={stage} footer={<RoundsPanel slug="dice" version={version} describe={describe} />} />;
 }

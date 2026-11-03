@@ -8,7 +8,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { api, ApiError } from "@/lib/api";
 import { points, timeAgo } from "@/lib/format";
-import type { GameSlug } from "@/lib/games";
+import { GAMES, type GameSlug } from "@/lib/games";
+import Image from "next/image";
 
 export type GameConfig = { slug: GameSlug; title: string; minBet: string; maxBet: string; edgeBp: number; enabled: boolean };
 export type RoundView = {
@@ -120,12 +121,22 @@ export function Stat({ label, value, tone }: { label: string; value: React.React
 }
 
 /** Макет страницы игры: панель управления слева (снизу на телефоне), сцена справа, ниже — история. */
-export function GameLayout({ controls, stage, footer }: { controls: React.ReactNode; stage: React.ReactNode; footer?: React.ReactNode }) {
+export function GameLayout({ controls, stage, footer, slug }: { controls: React.ReactNode; stage: React.ReactNode; footer?: React.ReactNode; slug?: GameSlug }) {
+  const meta = slug ? GAMES[slug] : null;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
       <Panel className="grid min-w-0 overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="order-2 grid min-w-0 content-start gap-4 border-t border-line p-4 lg:order-1 lg:border-r lg:border-t-0 [&>*]:min-w-0">{controls}</div>
-        <div className="order-1 min-w-0 lg:order-2">{stage}</div>
+        <div className="relative order-1 min-w-0 lg:order-2">
+          {/* Атмосфера игры: размытая обложка и свечение в её цветах под игровым полем */}
+          {meta && (
+            <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+              <Image src={meta.cover} alt="" fill sizes="60vw" className="scale-125 object-cover opacity-30 blur-2xl" />
+              <div className="absolute inset-0" style={{ background: `radial-gradient(70% 60% at 50% 0%, ${meta.theme[0]}33, transparent 70%), linear-gradient(180deg, transparent, var(--color-panel) 95%)` }} />
+            </div>
+          )}
+          <div className="relative">{stage}</div>
+        </div>
       </Panel>
       {footer}
     </div>

@@ -11,6 +11,11 @@ export function GameIcon({ slug, size = 22, className = "" }: { slug: GameSlug; 
     case "limbo": return <svg {...p}><path d="M4 19h16" /><path d="M6 19V9M12 19V5M18 19v-7" /><path d="M10 5h4" /></svg>;
     case "atlas": return <svg {...p}><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z" /><path d="M5 17a3 3 0 0 1 3-3h9" /><path d="m11 6 .9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z" /></svg>;
     case "neon-garden": return <svg {...p}><circle cx="8" cy="16" r="3.5" /><circle cx="16" cy="17" r="3" /><path d="M8 12.5C9 8 12 6 15 5M16 14c0-4-1-7-1-9" /></svg>;
+    case "tower": return <svg {...p}><path d="M7 21V8l5-5 5 5v13zM10 21v-4h4v4M10 11h4" /></svg>;
+    case "hilo": return <svg {...p}><rect x="5" y="3" width="11" height="15" rx="2" /><path d="M19 8l2 2-2 2M19 16l2-2" /></svg>;
+    case "wheel": return <svg {...p}><circle cx="12" cy="13" r="8" /><path d="M12 5v16M4 13h16M6.3 7.3l11.4 11.4M17.7 7.3 6.3 18.7" /><path d="M10 2h4l-2 3z" /></svg>;
+    case "keno": return <svg {...p}><circle cx="8" cy="8" r="3" /><circle cx="16" cy="8" r="3" /><circle cx="8" cy="16" r="3" /><circle cx="16" cy="16" r="3" /></svg>;
+    case "coinflip": return <svg {...p}><ellipse cx="12" cy="12" rx="8" ry="8" /><path d="m12 8 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z" /></svg>;
     case "roulette": return <svg {...p}><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 4v5M12 15v5M4 12h5M15 12h5" /></svg>;
   }
 }

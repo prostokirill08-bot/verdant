@@ -84,5 +84,5 @@ export function LimboGame({ cfg }: { cfg: GameConfig }) {
     </div>
   );
 
-  return <GameLayout controls={controls} stage={stage} footer={<RoundsPanel slug="limbo" version={version} describe={describe} />} />;
+  return <GameLayout slug="limbo" controls={controls} stage={stage} footer={<RoundsPanel slug="limbo" version={version} describe={describe} />} />;
 }

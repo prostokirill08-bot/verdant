@@ -82,3 +82,22 @@ test("Слоты: RTP в разумных пределах", async () => {
     assert.ok(ret / N > 0.8 && ret / N < 1.1, `rtp ${ret / N}`);
   }
 });
+
+test("Новые игры: колесо RTP 99%, кено без повторов, башня и hi-lo по формулам", async () => {
+  const X = await import("./extra");
+  for (const r of X.WHEEL_RISKS) { assert.equal(X.WHEEL[r].length, 20); assert.ok(Math.abs(X.WHEEL[r].reduce((a, b) => a + b, 0) / 20 - 0.99) < 1e-9, r); }
+  for (let i = 0; i < 300; i++) { const d = X.kenoDraw(rnd(10)); assert.equal(new Set(d).size, 10); assert.ok(d.every((n) => n >= 1 && n <= 40)); }
+  for (const lv of Object.keys(X.TOWER_LEVELS) as (keyof typeof X.TOWER_LEVELS)[]) {
+    const l = X.towerLayout(rnd(X.TOWER_FLOATS), lv);
+    assert.equal(l.length, X.TOWER_FLOORS); assert.ok(l.every((t) => t.length === X.TOWER_LEVELS[lv].traps && t.every((x) => x < X.TOWER_LEVELS[lv].tiles)));
+  }
+  assert.equal(X.towerMultiplier("hard", 1, 100), 1.98);
+  assert.equal(X.coinMultiplier(1, 100), 1.98);
+  const o = X.hiloOdds(7); assert.ok(Math.abs(o.higher + o.lower - 14 / 13) < 1e-12);
+  // Кено: RTP таблиц по гипергеометрическому распределению — 95–98%
+  const C = (n: number, k: number) => { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return r; };
+  for (let k = 1; k <= 10; k++) {
+    const rtp = X.KENO_PAYS[k]!.reduce((s, m, h) => s + m * (C(k, h) * C(40 - k, 10 - h)) / C(40, 10), 0);
+    assert.ok(rtp > 0.95 && rtp < 0.98, `keno ${k}: ${rtp}`);
+  }
+});

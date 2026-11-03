@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { browserFloats, sha256Hex } from "@/lib/fair/browser";
 import * as O from "@/lib/fair/outcomes";
 import { playAtlas, playNeon, rngFromArray, SLOT_FLOATS } from "@/lib/fair/slots";
+import * as X from "@/lib/fair/extra";
 import { GAME_NAMES, GAME_SLUGS, isGameSlug, type GameSlug } from "@/lib/games";
 import { ErrorLine, Label, Panel, Segmented } from "./kit";
 
@@ -102,7 +103,8 @@ function Verifier() {
     if (!window.crypto?.subtle) { setErr("Браузер не поддерживает WebCrypto (нужен HTTPS)"); return; }
     const edge = Number(p.edgeBp) || 0; const nonce = Number(n) || 0;
     const slot = game === "atlas" || game === "neon-garden";
-    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS : O.FLOATS_NEEDED[game];
+    const EXTRA: Record<string, number> = { coinflip: X.COIN_MAX_FLIPS, wheel: 1, keno: 10, tower: X.TOWER_FLOATS, hilo: X.HILO_MAX_CARDS };
+    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
     const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, need);
     if (slot) {
       const r = (game === "atlas" ? playAtlas : playNeon)(rngFromArray(fs), { buy: p.buy === "true" });
@@ -123,6 +125,11 @@ function Verifier() {
       const { path, bucket } = O.plinkoPath(fs, rows);
       lines.push(["Путь", path.map((x) => (x ? "→" : "←")).join(" ")], ["Лунка", String(bucket + 1)], ["Множитель", `${O.PLINKO_TABLE[rows][risk][bucket]}×`]);
     }
+    if (game === "coinflip") { const n = Math.min(10, Math.max(1, Number(p.flips) || 1)); lines.push(["Броски", X.coinSides(fs, n).map((x) => (x === "heads" ? "орёл" : "решка")).join(", ")]); }
+    if (game === "wheel") { const r = (X.WHEEL_RISKS as readonly string[]).includes(p.risk!) ? (p.risk as X.WheelRisk) : "medium"; const seg = X.wheelSegment(fs[0]!); lines.push(["Сектор", String(seg + 1)], ["Множитель", `${X.WHEEL[r][seg]}×`]); }
+    if (game === "keno") lines.push(["Выпавшие числа", X.kenoDraw(fs).sort((a, b) => a - b).join(", ")]);
+    if (game === "tower") { const lv = (p.level && p.level in X.TOWER_LEVELS ? p.level : "medium") as X.TowerLevel; X.towerLayout(fs, lv).forEach((t, i) => lines.push([`Этаж ${i + 1}: ловушки`, t.map((x) => x + 1).join(", ")])); }
+    if (game === "hilo") lines.push(["Карты по порядку", fs.slice(0, 20).map((f) => X.RANK_LABEL[X.hiloCard(f).rank]).join(" ") + " …"]);
     if (game === "mines") { const m = Math.min(24, Math.max(1, Number(p.mines) || 3)); const l = O.minesLayout(fs, m); lines.push(["Мины (клетки 1–25)", l.map((x) => x + 1).join(", ")]); }
     setOut({ hashOk: await sha256Hex(s.trim()), lines });
   }, [game, s, c, n, p]);
@@ -153,6 +160,9 @@ function Verifier() {
           <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}>{O.PLINKO_RISKS.map((r) => <option key={r} value={r}>{r === "low" ? "низкий" : r === "medium" ? "средний" : "высокий"}</option>)}</select></label>
         </>}
         {(game === "atlas" || game === "neon-garden") && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
+        {game === "coinflip" && <label className="grid gap-1"><Label>Бросков</Label><input value={p.flips ?? "1"} onChange={set("flips")} className={inp} /></label>}
+        {game === "wheel" && <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}><option value="low">низкий</option><option value="medium">средний</option><option value="high">высокий</option></select></label>}
+        {game === "tower" && <label className="grid gap-1"><Label>Сложность</Label><select value={p.level ?? "medium"} onChange={set("level")} className={inp}>{Object.entries(X.TOWER_LEVELS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></label>}
         {game === "mines" && <label className="grid gap-1"><Label>Мин</Label><input value={p.mines} onChange={set("mines")} className={inp} /></label>}
         {(game === "limbo" || game === "crash" || game === "dice") && <label className="grid gap-1"><Label>Преимущество, б.п.</Label><input value={p.edgeBp} onChange={set("edgeBp")} className={inp} /></label>}
       </div>

@@ -213,5 +213,5 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
     </Panel>
   );
 
-  return <GameLayout controls={controls} stage={stage} footer={<div className="grid min-w-0 gap-4 [&>*]:min-w-0">{players}<RoundsPanel slug="crash" version={version} describe={describe} /></div>} />;
+  return <GameLayout slug="crash" controls={controls} stage={stage} footer={<div className="grid min-w-0 gap-4 [&>*]:min-w-0">{players}<RoundsPanel slug="crash" version={version} describe={describe} /></div>} />;
 }

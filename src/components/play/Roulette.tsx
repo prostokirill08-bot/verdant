@@ -149,7 +149,7 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
     </div>
   );
 
-  return <GameLayout controls={controls} stage={stage} footer={<RoundsPanel slug="roulette" version={version} describe={describe} />} />;
+  return <GameLayout slug="roulette" controls={controls} stage={stage} footer={<RoundsPanel slug="roulette" version={version} describe={describe} />} />;
 }
 
 function short(u: bigint) {

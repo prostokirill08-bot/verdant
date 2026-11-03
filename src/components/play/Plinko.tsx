@@ -94,7 +94,7 @@ export function PlinkoGame({ cfg }: { cfg: GameConfig }) {
     </div>
   );
 
-  return <GameLayout controls={controls} stage={stage} footer={<RoundsPanel slug="plinko" version={version} describe={describe} />} />;
+  return <GameLayout slug="plinko" controls={controls} stage={stage} footer={<RoundsPanel slug="plinko" version={version} describe={describe} />} />;
 }
 
 /** Анимация шарика по пути, который рассчитал сервер: удар о штырёк → отскок → следующий ряд. */

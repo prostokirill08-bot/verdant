@@ -8,6 +8,9 @@ import { points } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
+// Игры, где RTP задаётся преимуществом платформы; у слотов, Plinko, рулетки, колеса и кено — свои таблицы
+const EDGE_GAMES = new Set(["crash", "mines", "dice", "limbo", "coinflip", "tower", "hilo"]);
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params; const g = isGameSlug(slug) ? await db.game.findUnique({ where: { slug } }) : null;
   return { title: g?.title ?? "Игра" };
@@ -36,7 +39,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
         </div>
         <div className="flex w-full flex-wrap gap-2 text-[12.5px] sm:w-auto">
           <span className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-soft ring-1 ring-line">Ставка {points(game.minBet)} – {points(game.maxBet)}</span>
-          {!slot && slug !== "plinko" && slug !== "roulette" && <span className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-soft ring-1 ring-line">RTP {(100 - game.houseEdgeBp / 100).toFixed(2)}%</span>}
+          {EDGE_GAMES.has(slug) && <span className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-soft ring-1 ring-line">RTP {(100 - game.houseEdgeBp / 100).toFixed(2)}%</span>}
           <Link href="/fair" className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-accent ring-1 ring-line hover:ring-accent/50">🛡️ Честность</Link>
         </div>
       </div>

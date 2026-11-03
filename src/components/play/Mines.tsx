@@ -117,7 +117,7 @@ export function MinesGame({ cfg }: { cfg: GameConfig }) {
     </div>
   );
 
-  return <GameLayout controls={controls} stage={stage} footer={<RoundsPanel slug="mines" version={version} describe={describe} />} />;
+  return <GameLayout slug="mines" controls={controls} stage={stage} footer={<RoundsPanel slug="mines" version={version} describe={describe} />} />;
 }
 
 const Gem = () => (
