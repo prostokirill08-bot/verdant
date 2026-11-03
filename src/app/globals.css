@@ -117,8 +117,16 @@ html.bigwin-open .cell-hot, html.bigwin-open .reel-wait { animation-play-state: 
 @keyframes chest-full { 0%, 100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.08) rotate(-3deg); } 75% { transform: scale(1.08) rotate(3deg); } }
 .gift-wobble { display: inline-block; will-change: transform; animation: gift-wobble 1.6s ease-in-out infinite; }
 @keyframes gift-wobble { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(0); } }
-.tap-hint { animation: tap-hint 1s ease-in-out infinite; }
-@keyframes tap-hint { 50% { transform: translateY(-4px); } }
+/* Монеты сыплются из сундука и с золотой горы: подлёт вверх, потом падение (transform/opacity) */
+.coin-spill { opacity: 0; will-change: transform, opacity; animation: coin-spill 1.5s cubic-bezier(.3, .2, .6, 1) forwards;
+  background: conic-gradient(from 30deg, #fff4b8, #e3a417, #ffe58f, #b9790a, #fff4b8); box-shadow: inset 0 0 0 2px #a86a00, 0 0 6px #ffd16699; }
+@keyframes coin-spill {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0) scale(.6); }
+  8% { opacity: 1; }
+  30% { transform: translate3d(calc(var(--dx) * .35), var(--up), 0) rotate(calc(var(--r) * .3)) scaleX(.5); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--r)) scaleX(1); }
+}
 html.bigwin-open .chest-full, html.bigwin-open .gift-wobble { animation-play-state: paused; }
 
 /* ===== Крупный выигрыш: только transform/opacity — анимации идут на видеокарте ===== */

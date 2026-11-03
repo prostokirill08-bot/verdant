@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -79,21 +79,21 @@ type ChestView = { kind: ChestKind; have: number; full?: boolean; open?: boolean
 const DOME = { aspect: "408 / 518", winTop: "9%", winH: "56.3%", winX: "8%" };
 /** Шахматный порядок: спереди 3 сундука, сзади 2 между ними (центры в % ширины, размер в % ширины). */
 const PLACE: Record<number, { cx: number; w: number; top: string; z: number }> = {
-  0: { cx: 17, w: 31, top: "40.5%", z: 3 }, 2: { cx: 50, w: 31, top: "40.5%", z: 3 }, 4: { cx: 83, w: 31, top: "40.5%", z: 3 },
+  0: { cx: 17, w: 31, top: "36.5%", z: 3 }, 2: { cx: 50, w: 31, top: "36.5%", z: 3 }, 4: { cx: 83, w: 31, top: "36.5%", z: 3 },
   1: { cx: 33.5, w: 27, top: "0%", z: 1 }, 3: { cx: 66.5, w: 27, top: "0%", z: 1 },
 };
 
-function Chest({ v, i, refEl, waiting, onOpen }: { v: ChestView; i: number; refEl: (el: HTMLDivElement | null) => void; waiting: boolean; onOpen: () => void }) {
+function Chest({ v, i, refEl }: { v: ChestView; i: number; refEl: (el: HTMLDivElement | null) => void }) {
   const st = CHEST_STYLE[v.kind]; const pl = PLACE[i]!;
   // Монет внутри тем больше, чем больше их нападало; до краёв сундук наполняет только «счастливая» монета
   const fill = v.full ? 1 : Math.min(0.8, 0.25 + (v.have / WS.visualMax) * 0.6);
   const shown = v.full || v.have > 0;
   return (
     <div ref={refEl} data-chest={i} className="absolute" style={{ left: `${pl.cx - pl.w / 2}%`, width: `${pl.w}%`, top: pl.top, zIndex: pl.z }}>
-      <motion.button type="button" key={v.bump ?? 0} onClick={waiting ? onOpen : undefined} disabled={!waiting} aria-label={`Сундук «${CHEST_NAMES[v.kind]}»`}
+      <motion.div key={v.bump ?? 0} role="img" aria-label={`Сундук «${CHEST_NAMES[v.kind]}»`}
         animate={v.bump ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.3 }}
-        className={`relative block w-full ${v.full ? "chest-full" : ""} ${waiting ? "cursor-pointer" : "cursor-default"}`} style={{ aspectRatio: DOME.aspect }}>
-        {(v.full || waiting) && <span aria-hidden className="pointer-events-none absolute -inset-[18%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}88, transparent 62%)` }} />}
+        className={`relative block w-full ${v.full ? "chest-full" : ""}`} style={{ aspectRatio: DOME.aspect }}>
+        {v.full && <span aria-hidden className="pointer-events-none absolute -inset-[18%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}88, transparent 62%)` }} />}
         {/* Слои: сундук → горка монет (поднимается через transform) → передняя стенка → значок бонуса */}
         <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
         <div className="absolute overflow-hidden" style={{ top: DOME.winTop, height: DOME.winH, left: DOME.winX, right: DOME.winX }}>
@@ -107,8 +107,41 @@ function Chest({ v, i, refEl, waiting, onOpen }: { v: ChestView; i: number; refE
           style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
           <Glyph kind={v.kind} className="size-[64%]" />
         </span>
-        {waiting && <span className="tap-hint pointer-events-none absolute -bottom-[6%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-ink shadow">👆 Открой</span>}
-      </motion.button>
+      </motion.div>
+    </div>
+  );
+}
+
+/** Горы золотых монет под сундуками. back — гора за передним рядом, front — россыпь у ног передних сундуков. */
+function GoldHeap({ layer }: { layer: "back" | "front" }) {
+  const parts = layer === "back"
+    ? [{ l: -4, w: 46, flip: false }, { l: 27, w: 46, flip: true }, { l: 58, w: 46, flip: false }]
+    : [{ l: -20, w: 40, flip: true }, { l: 13.5, w: 40, flip: false }, { l: 46.5, w: 40, flip: true }, { l: 80, w: 40, flip: false }];   // вершины — между сундуками, значки не закрываются
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-x-0" style={layer === "back" ? { top: "30%", height: "24%", zIndex: 2 } : { bottom: "-3%", height: "23%", zIndex: 4 }}>
+      {parts.map((p, k) => (
+        <div key={k} className="absolute bottom-0 h-full" style={{ left: `${p.l}%`, width: `${p.w}%`, transform: p.flip ? "scaleX(-1)" : undefined }}>
+          <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="260px" className="object-cover object-bottom" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Монеты сыплются: из открывшегося сундука вылетают вверх и в стороны, с золотой горы катятся вниз (только CSS transform). */
+function CoinSpill({ chest }: { chest: number }) {
+  const pl = PLACE[chest]!;
+  const coins = useMemo(() => {
+    const out: { x: string; y: string; dx: number; dy: number; up: number; r: number; d: number; s: number }[] = [];
+    for (let k = 0; k < 16; k++) out.push({ x: `${pl.cx}%`, y: pl.top === "0%" ? "18%" : "55%", dx: (Math.random() - 0.5) * 260, dy: 180 + Math.random() * 160, up: 60 + Math.random() * 70, r: (Math.random() - 0.5) * 900, d: Math.random() * 0.5, s: 14 + Math.random() * 10 });
+    for (let k = 0; k < 18; k++) out.push({ x: `${5 + Math.random() * 90}%`, y: `${40 + Math.random() * 40}%`, dx: (Math.random() - 0.5) * 70, dy: 160 + Math.random() * 220, up: 6 + Math.random() * 16, r: (Math.random() - 0.5) * 700, d: 0.15 + Math.random() * 1.1, s: 12 + Math.random() * 8 });
+    return out;
+  }, [chest, pl]);
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-30 overflow-visible">
+      {coins.map((c, k) => (
+        <span key={k} className="coin-spill absolute rounded-full" style={{ left: c.x, top: c.y, width: c.s, height: c.s, animationDelay: `${c.d}s`, ["--dx" as string]: `${c.dx}px`, ["--dy" as string]: `${c.dy}px`, ["--up" as string]: `${-c.up}px`, ["--r" as string]: `${c.r}deg` }} />
+      ))}
     </div>
   );
 }
@@ -227,8 +260,22 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
   const pickRes = useRef<((i: number) => void) | null>(null);
   // Бонус идёт по нажатиям игрока: кнопка действия и сундук, который ждёт открытия
   const [action, setAction] = useState<{ label: string; color: string } | null>(null);
-  const [opening, setOpening] = useState<number | null>(null);
+  const [spill, setSpill] = useState<{ chest: number; key: number } | null>(null);
   const actionRes = useRef<(() => void) | null>(null);
+  const actionEl = useRef<HTMLButtonElement>(null);
+  // Кнопка бонуса всегда на виду: на телефоне она может оказаться под нижним меню — подкручиваем страницу
+  useEffect(() => {
+    const el = actionEl.current; if (!action || !el) return;
+    const r = el.getBoundingClientRect();
+    if (r.bottom > window.innerHeight - 84 || r.top < 70) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [action]);
+  // Панель бонуса (подарки, колокольчики, колесо) тоже должна быть на экране целиком
+  const featKind = feat?.kind;
+  useEffect(() => {
+    const el = reelsBox.current; if (!featKind || !el) return;
+    const r = el.getBoundingClientRect();
+    if (r.bottom > window.innerHeight - 84 || r.top < 70) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [featKind]);
   const waitTap = (label: string, color: string) => new Promise<void>((res) => { actionRes.current = () => { actionRes.current = null; setAction(null); res(); }; setAction({ label, color }); });
   const flyDone = useRef<Map<number, () => void>>(new Map());
   const chestEls = useRef<(HTMLDivElement | null)[]>([]);
@@ -304,17 +351,18 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
 
   async function playTrigger(tr: WsTrigger, r: WsResult) {
     const st = CHEST_STYLE[tr.kind];
-    // Сундук ждёт, пока игрок сам его откроет
-    setOpening(tr.chest);
-    // На телефоне сундуки могут быть выше экрана — подкручиваем страницу к ним
+    // Сундук открывается сам: на телефоне подкручиваем страницу к сундукам, с золотой горы сыплются монеты
     const top = stageRef.current?.getBoundingClientRect().top ?? 0;
     if (top < 60 || top > window.innerHeight * 0.5) stageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    await waitTap(`Открыть сундук «${CHEST_NAMES[tr.kind]}»`, st.color);
-    setOpening(null);
-    setChests((cs) => cs.map((c, i) => (i === tr.chest ? { ...c, open: true } : c)));
-    setBanner(<Intro t={tr} />);
-    await waitTap("Начать бонус", st.color);
-    setBanner(null);
+    setSpill({ chest: tr.chest, key: Date.now() });
+    await sleep(turboRef.current ? 1300 : 2000);
+    // Заставка бонуса уходит сама через пару секунд (можно пропустить нажатием)
+    await new Promise<void>((res) => {
+      const go = () => { clearTimeout(tm); setBanner(null); res(); };
+      const tm = setTimeout(go, turboRef.current ? 1500 : 2400);
+      setBanner(<div onClick={go} className="grid cursor-pointer place-items-center"><Intro t={tr} /></div>);
+    });
+    setSpill(null);
     const f = tr.feature;
     if (f.kind === "gifts") {
       const opened: (number | null)[] = Array(f.boxes.length).fill(null);
@@ -414,8 +462,12 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
-          <div ref={stageRef} className="relative mx-auto w-full max-w-[560px] scroll-mt-20" style={{ aspectRatio: "100 / 74" }}>
-            {chests.map((c, i) => <Chest key={c.kind} v={c} i={i} refEl={(el) => { chestEls.current[i] = el; }} waiting={opening === i} onOpen={() => actionRes.current?.()} />)}
+          <div ref={stageRef} className="relative z-20 mx-auto w-full max-w-[560px] scroll-mt-20" style={{ aspectRatio: "100 / 82" }}>
+            {/* Золото: гора за передним рядом (на ней стоят задние сундуки) и россыпь у ног передних */}
+            <GoldHeap layer="back" />
+            {chests.map((c, i) => <Chest key={c.kind} v={c} i={i} refEl={(el) => { chestEls.current[i] = el; }} />)}
+            <GoldHeap layer="front" />
+            {spill && <CoinSpill key={spill.key} chest={spill.chest} />}
           </div>
           <BonusTotal state={fs} color={st} title={fs?.title} sub={fs?.sub} label="Выигрыш сундука" />
           <div ref={reelsBox} className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#3a1d0e,#140a05)] p-2 shadow-[inset_0_0_0_2px_rgb(255_176_46/0.6),0_20px_50px_-20px_#000] sm:p-3">
@@ -436,7 +488,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
           </div>
           <DryCounter dry={dry} prev={prev} avg={57} />
           {action ? (
-            <motion.button type="button" data-testid="bonus-action" onClick={() => actionRes.current?.()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: [1, 1.03, 1], opacity: 1 }} transition={{ scale: { duration: 1.2, repeat: Infinity } }}
+            <motion.button ref={actionEl} type="button" data-testid="bonus-action" onClick={() => actionRes.current?.()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: [1, 1.03, 1], opacity: 1 }} transition={{ scale: { duration: 1.2, repeat: Infinity } }}
               className="h-16 rounded-2xl font-display text-[clamp(16px,4vw,20px)] font-bold uppercase tracking-wide text-ink shadow-[0_12px_30px_-10px_#000]"
               style={{ background: `linear-gradient(180deg, #fff6, transparent), ${action.color}`, boxShadow: `0 0 0 3px #ffffff33, 0 0 30px -4px ${action.color}` }}>
               {action.label}
