@@ -1,9 +1,9 @@
 import { route, HttpError } from "@/server/http";
 import { db } from "@/server/db";
 
-const SLOTS = new Set(["atlas", "neon-garden"]);
+const SLOTS = new Set(["atlas", "neon-garden", "workshop"]);
 
-// Сколько обычных спинов игрок сделал в слоте с последнего бонуса, выпавшего сам (купленные бонусы не считаются)
+// Сколько обычных спинов игрок сделал в слоте с последнего бонуса, выпавшего сам (купленные бонусы не считаются; в «Мастерской» — любой открытый сундук)
 export const GET = route({ rate: { key: "rounds", limit: 120, window: 60 } }, async ({ user, params }) => {
   const slug = params.slug!;
   if (!SLOTS.has(slug)) throw new HttpError(404, "Игра не найдена", "not_found");
@@ -16,7 +16,8 @@ export const GET = route({ rate: { key: "rounds", limit: 120, window: 60 } }, as
         SELECT max(x."createdAt") FROM "Round" x
         WHERE x."userId" = ${user.id} AND x."gameSlug" = ${slug} AND x.status <> 'ACTIVE'
           AND COALESCE(x.result->>'bought', 'false') <> 'true'
-          AND (jsonb_typeof(x.result->'fs') = 'object' OR jsonb_typeof(x.result->'feature') = 'object')
+          AND (jsonb_typeof(x.result->'fs') = 'object' OR jsonb_typeof(x.result->'feature') = 'object'
+               OR (jsonb_typeof(x.result->'triggers') = 'array' AND jsonb_array_length(x.result->'triggers') > 0))
       ), 'epoch'::timestamp)`;
   return { spins: rows[0]?.n ?? 0 };
 });

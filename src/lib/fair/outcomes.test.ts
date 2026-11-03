@@ -109,3 +109,24 @@ test("Интрига: включается после второго бонус-
   assert.equal(anticipationFrom(g([["b", "b"], ["x", "x"], ["x", "x"], ["x", "x"], ["x", "x"]]), "b"), 1);
   assert.equal(anticipationFrom(g([["b", "x"], ["x", "x"], ["x", "x"], ["x", "x"], ["b", "x"]]), "b"), null);
 });
+
+test("Мастерская Санты: пересчёт по сиду, сундуки, RTP", async () => {
+  const W = await import("./workshop");
+  const { rngFromArray, SLOT_FLOATS } = await import("./slots");
+  // сервер (поток) = браузер (массив), с состоянием сундуков между спинами
+  let m = W.emptyMeters();
+  for (let n = 0; n < 60; n++) {
+    const it = floats("ws-seed", "client", n); const arr = takeFloats("ws-seed", "client", n, SLOT_FLOATS * 2);
+    const a = W.playWorkshop(() => it.next().value as number, m, 100); const b = W.playWorkshop(rngFromArray(arr), W.decodeMeters(W.encodeMeters(m)), 100);
+    assert.deepEqual(a, b); m = a.after;
+  }
+  // RTP; бонус всегда от текущей ставки; сундук обнуляется ровно при открытии
+  const it = floats("ws-rtp", "c", 0); const rng = () => it.next().value as number;
+  let meters = W.emptyMeters(); let paid = 0; const N = 400000;
+  for (let i = 0; i < N; i++) {
+    const r = W.playWorkshop(rng, meters, 100);
+    for (const t of r.triggers) { assert.equal(t.stake, 100); assert.ok(t.coins >= 1); assert.equal(r.coins.filter((c) => c.fills).length, r.triggers.length); }
+    meters = r.after; paid += r.total;
+  }
+  const rtp = paid / (N * 100); assert.ok(rtp > 0.92 && rtp < 0.99, `RTP ${rtp}`);
+});

@@ -4,19 +4,19 @@
 export type Rng = () => number;
 export const rngFromArray = (a: number[]): Rng => { let i = 0; return () => { if (i >= a.length) throw new Error("Недостаточно чисел для пересчёта"); return a[i++]!; }; };
 
-function pick<T extends string>(rng: Rng, weights: Record<T, number>): T {
+export function pick<T extends string>(rng: Rng, weights: Record<T, number>): T {
   const entries = Object.entries(weights) as [T, number][];
   const total = entries.reduce((s, [, w]) => s + w, 0);
   let x = rng() * total;
   for (const [k, w] of entries) { if ((x -= w) < 0) return k; }
   return entries[entries.length - 1]![0];
 }
-const r2 = (x: number) => Math.round(x * 10000) / 10000;
+export const r2 = (x: number) => Math.round(x * 10000) / 10000;
 
-type LineWin = { line: number; sym: string; count: number; mult: number };
+export type LineWin = { line: number; sym: string; count: number; mult: number };
 
 /** Выигрыши по линиям слева направо; wild заменяет любой обычный символ. pays — в «ставках на линию». */
-function evalLines(grid: string[][], lines: number[][], pays: Record<string, Record<number, number>>, wild: string, lineShare: number): LineWin[] {
+export function evalLines(grid: string[][], lines: number[][], pays: Record<string, Record<number, number>>, wild: string, lineShare: number): LineWin[] {
   const out: LineWin[] = [];
   lines.forEach((pattern, li) => {
     const syms = pattern.map((row, reel) => grid[reel]![row]!);

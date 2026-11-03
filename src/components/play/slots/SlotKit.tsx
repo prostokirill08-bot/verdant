@@ -87,7 +87,7 @@ const STEPS = [10n, 20n, 50n, 100n, 200n, 500n, 1000n, 2000n, 5000n, 10000n, 200
 
 /** Панель слота: ставка, большая кнопка вращения, автоигра, турбо, покупка бонуса, таблица выплат. */
 export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, auto, setAuto, turbo, setTurbo, onInfo, accent, lastWin }: {
-  cfg: GameConfig; bet: string; setBet: (v: string) => void; busy: boolean; onSpin: () => void; onBuy: () => void; buyPrice: number;
+  cfg: GameConfig; bet: string; setBet: (v: string) => void; busy: boolean; onSpin: () => void; onBuy?: () => void; buyPrice?: number;
   auto: number; setAuto: (n: number) => void; turbo: boolean; setTurbo: (v: boolean) => void; onInfo: () => void; accent: [string, string]; lastWin: string | null;
 }) {
   const { balance, user } = useAuth();
@@ -100,7 +100,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
     if (next) setBet(unitsToInput(next));
   };
   const enough = !user || units <= BigInt(balance);
-  const buyCost = units * BigInt(buyPrice);
+  const buyCost = units * BigInt(buyPrice ?? 0);
   return (
     <div className="grid min-w-0 gap-3">
       <div className="flex min-w-0 items-center justify-between gap-1 rounded-2xl bg-black/55 p-1.5 sm:gap-2 sm:p-2 ring-1 ring-white/10">
@@ -127,12 +127,12 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
           <p className={`truncate font-mono text-[14px] font-bold tabular sm:text-[18px] ${lastWin && BigInt(lastWin) > 0n ? "text-gold" : "text-white/50"}`}>{lastWin ? points(lastWin) : "—"}</p>
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className={`grid gap-2 ${onBuy ? "grid-cols-4" : "grid-cols-3"}`}>
         {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает рублей) */}
         <Pill onClick={() => setAuto(auto > 0 ? 0 : Infinity)} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "■ Стоп" : "∞ Авто"}</Pill>
         <Pill onClick={() => setTurbo(!turbo)} active={turbo}>⚡ Турбо</Pill>
         <Pill onClick={onInfo}>Выплаты</Pill>
-        <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold><span className="block leading-tight">Бонус</span><span className="block truncate text-[10.5px] font-semibold leading-tight">{points(buyCost)}</span></Pill>
+        {onBuy && <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold><span className="block leading-tight">Бонус</span><span className="block truncate text-[10.5px] font-semibold leading-tight">{points(buyCost)}</span></Pill>}
       </div>
       {!enough && user && <p className="text-center text-[12.5px] text-danger">Недостаточно средств — уменьши ставку или забери бонус в кабинете.</p>}
     </div>
@@ -322,7 +322,7 @@ export type BonusState = { left: number; done: number; total: string; add: strin
  * Счётчик бонуса: общая сумма выигрыша за все бесплатные вращения.
  * После каждого вращения сумма плавно докручивается, а сверху всплывает «+выигрыш спина».
  */
-export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | null; color?: string }) {
+export function BonusTotal({ state, color = "#ffd166", title = "🎁 Бонус", sub, label = "Выигрыш в бонусе" }: { state: BonusState | null; color?: string; title?: string; sub?: string; label?: string }) {
   const el = useRef<HTMLSpanElement>(null);
   const from = useRef(0);
   const target = state ? Number(state.total) / 100 : 0;
@@ -343,11 +343,11 @@ export function BonusTotal({ state, color = "#ffd166" }: { state: BonusState | n
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} data-testid="bonus-total"
           className="relative flex items-center justify-between gap-3 rounded-2xl bg-black/75 px-4 py-2.5 ring-2" style={{ boxShadow: `0 0 30px -8px ${color}`, ["--tw-ring-color" as string]: color }}>
           <div className="text-[12px] font-semibold uppercase leading-tight tracking-wider text-white/70">
-            <span className="block text-[13px] text-white">🎁 Бонус</span>
-            Спин {state.done} · осталось {state.left}
+            <span className="block text-[13px] text-white">{title}</span>
+            {sub ?? `Спин ${state.done} · осталось ${state.left}`}
           </div>
           <div className="relative text-right">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш в бонусе</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">{label}</p>
             <motion.p key={state.tick} animate={state.add ? { scale: [1.18, 1] } : {}} transition={{ duration: 0.35 }}
               className="font-mono text-[clamp(22px,5vw,30px)] font-bold leading-none tabular" style={{ color, textShadow: `0 0 10px ${color}` }}>
               <span ref={el}>{from.current.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> {SNOW}

@@ -13,11 +13,13 @@ import { KenoGame } from "./Keno";
 import { TowerGame } from "./Tower";
 import { WheelGame } from "./Wheel";
 import { NeonGame } from "./slots/Neon";
+import { WorkshopGame } from "./slots/Workshop";
 
 export function GamePlayer({ cfg }: { cfg: GameConfig }) {
   switch (cfg.slug) {
     case "atlas": return <AtlasGame cfg={cfg} />;
     case "neon-garden": return <NeonGame cfg={cfg} />;
+    case "workshop": return <WorkshopGame cfg={cfg} />;
     case "crash": return <CrashGame cfg={cfg} />;
     case "tower": return <TowerGame cfg={cfg} />;
     case "hilo": return <HiloGame cfg={cfg} />;

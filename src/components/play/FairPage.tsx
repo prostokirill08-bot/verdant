@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { browserFloats, sha256Hex } from "@/lib/fair/browser";
 import * as O from "@/lib/fair/outcomes";
 import { playAtlas, playNeon, rngFromArray, SLOT_FLOATS } from "@/lib/fair/slots";
+import { CHEST_NAMES, decodeMeters, playWorkshop } from "@/lib/fair/workshop";
 import * as X from "@/lib/fair/extra";
 import { GAME_NAMES, GAME_SLUGS, isGameSlug, type GameSlug } from "@/lib/games";
 import { ErrorLine, Label, Panel, Segmented } from "./kit";
@@ -106,6 +107,16 @@ function Verifier() {
     const EXTRA: Record<string, number> = { coinflip: X.COIN_MAX_FLIPS, wheel: 1, keno: 10, tower: X.TOWER_FLOATS, hilo: X.HILO_MAX_CARDS };
     const need = game === "crash" ? 1 : slot ? SLOT_FLOATS : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
     const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, need);
+    if (game === "workshop") {
+      // Нужны ставка и состояние сундуков до спина — они подставляются из ссылки «Проверить»
+      const bet = Math.round(Number(String(p.bet ?? "100").replace(",", ".")) || 100);
+      const fs2 = await browserFloats(s.trim(), c.trim(), nonce, SLOT_FLOATS * 2);
+      const r = playWorkshop(rngFromArray(fs2), decodeMeters(p.meters ?? ""), bet);
+      const lines: [string, string][] = [["Выплата", `${(r.total / 100).toFixed(2)} (×${r.totalMult})`], ["Выигрыш по линиям", `${r.base.mult}×`], ["Монет", String(r.coins.length)]];
+      r.triggers.forEach((t) => lines.push([`Сундук «${CHEST_NAMES[t.kind]}»`, `открыт на ${t.coins}-й монете, ×${t.mult}`]));
+      lines.push(["Монет в сундуках после", r.after.map((m) => m.have).join(" · ")]);
+      setOut({ hashOk: await sha256Hex(s.trim()), lines }); return;
+    }
     if (slot) {
       const r = (game === "atlas" ? playAtlas : playNeon)(rngFromArray(fs), { buy: p.buy === "true" });
       const lines: [string, string][] = [["Итоговый множитель", `${r.totalMult}×`]];
@@ -159,6 +170,10 @@ function Verifier() {
           <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}>{O.PLINKO_RISKS.map((r) => <option key={r} value={r}>{r === "low" ? "низкий" : r === "medium" ? "средний" : "высокий"}</option>)}</select></label>
         </>}
         {(game === "atlas" || game === "neon-garden") && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
+        {game === "workshop" && <>
+          <label className="grid gap-1"><Label>Ставка, коп.</Label><input value={p.bet ?? "100"} onChange={set("bet")} className={inp} /></label>
+          <label className="grid gap-1"><Label>Сундуки до спина</Label><input value={p.meters ?? ""} onChange={set("meters")} className={inp} placeholder="3|0|12|5|1" /></label>
+        </>}
         {game === "coinflip" && <label className="grid gap-1"><Label>Бросков</Label><input value={p.flips ?? "1"} onChange={set("flips")} className={inp} /></label>}
         {game === "wheel" && <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}><option value="low">низкий</option><option value="medium">средний</option><option value="high">высокий</option></select></label>}
         {game === "tower" && <label className="grid gap-1"><Label>Сложность</Label><select value={p.level ?? "medium"} onChange={set("level")} className={inp}>{Object.entries(X.TOWER_LEVELS).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></label>}

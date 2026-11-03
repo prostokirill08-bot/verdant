@@ -7,6 +7,7 @@ import { hashSeed, newServerSeed } from "../src/server/games/fair";
 const db = new PrismaClient();
 
 const GAMES = [
+  { slug: "workshop", title: "Мастерская Санты", tagline: "Монеты летят в сундуки — каждый сундук открывает свой бонус", sortOrder: 0 },
   { slug: "tower", title: "Башня", tagline: "Ледяная башня: поднимись к подарку на вершине", sortOrder: 3 },
   { slug: "hilo", title: "Hi-Lo", tagline: "Новогодние карты: следующая выше или ниже?", sortOrder: 3 },
   { slug: "wheel", title: "Колесо фортуны", tagline: "Колесо-леденец: 20 секторов, три уровня риска", sortOrder: 3 },

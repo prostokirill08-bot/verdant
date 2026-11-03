@@ -1,5 +1,5 @@
 // Каталог игр: категория, новогодняя обложка, цвет темы. Настройки (лимиты, вкл/выкл) — в БД.
-export const GAME_SLUGS = ["atlas", "neon-garden", "crash", "mines", "tower", "hilo", "wheel", "keno", "coinflip", "dice", "plinko", "limbo", "roulette"] as const;
+export const GAME_SLUGS = ["workshop", "atlas", "neon-garden", "crash", "mines", "tower", "hilo", "wheel", "keno", "coinflip", "dice", "plinko", "limbo", "roulette"] as const;
 export type GameSlug = (typeof GAME_SLUGS)[number];
 export type GameCategory = "slots" | "originals";
 
@@ -10,6 +10,7 @@ export type GameMeta = {
 };
 
 export const GAMES: Record<GameSlug, GameMeta> = {
+  workshop: { name: "Мастерская Санты", category: "slots", cover: "/img/ny/covers/workshop.webp", bg: "/img/ny/bg/workshop.webp", theme: ["#ffb02e", "#e8263f"], badge: "Новинка", blurb: "Монеты летят в 5 сундуков — у каждого свой бонус" },
   atlas: { name: "Атлас звёзд", category: "slots", cover: "/img/ny/covers/atlas.webp", bg: "/img/ny/bg/atlas.webp", theme: ["#5b8cff", "#ffd166"], badge: "Новинка", blurb: "Звёздная книга Деда Мороза: символ раскрывается на весь барабан" },
   "neon-garden": { name: "Зимний сад", category: "slots", cover: "/img/ny/covers/neon-garden.webp", bg: "/img/ny/bg/neon-garden.webp", theme: ["#ff4d6d", "#3ee08f"], badge: "Новинка", blurb: "Зимний сад: 3 подарка BONUS — фриспины с ×3" },
   crash: { name: "Crash", category: "originals", cover: "/img/ny/covers/crash.webp", theme: ["#ff5f3d", "#ffd166"], badge: "Хит", blurb: "Санта летит на санях — забери до падения" },

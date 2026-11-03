@@ -29,13 +29,19 @@ export async function playInstant(userId: string, slug: string, input: z.infer<t
     const game = await loadGame(tx, slug, amount);
     const cost = g.cost ? g.cost(params, amount) : amount;
     const { pair, nonce } = await nextNonce(tx, userId);
-    const storedParams = { ...toJson(params), edgeBp: game.houseEdgeBp, ...(cost !== amount ? { baseBet: amount.toString() } : {}) };
+    // Сундуки и прочие шкалы: состояние до раунда сохраняем в параметрах — по нему раунд можно пересчитать на /fair
+    const meter = g.persist ? await tx.slotMeter.findUnique({ where: { userId_gameSlug: { userId, gameSlug: slug } } }) : null;
+    const before = g.persist ? String((meter?.state as { s?: string } | null)?.s ?? "") : undefined;
+    const storedParams = { ...toJson(params), edgeBp: game.houseEdgeBp, ...(cost !== amount ? { baseBet: amount.toString() } : {}), ...(g.persist ? { bet: amount.toString(), meters: before } : {}) };
     const round = await tx.round.create({ data: { userId, gameSlug: slug, seedPairId: pair.id, nonce, betAmount: cost, params: storedParams } });
     await applyEntry(tx, { userId, type: "BET", amount: -cost, idempotencyKey: betKey, roundId: round.id, note: game.title });
 
     const fs = takeFloats(pair.serverSeed, pair.clientSeed, nonce, g.floats);
     const stream = floats(pair.serverSeed, pair.clientSeed, nonce);
-    const out = g.resolve(params, fs, amount, game.houseEdgeBp, () => stream.next().value as number);
+    const out = g.resolve(params, fs, amount, game.houseEdgeBp, () => stream.next().value as number, before);
+    if (g.persist && out.state !== undefined) {
+      await tx.slotMeter.upsert({ where: { userId_gameSlug: { userId, gameSlug: slug } }, create: { userId, gameSlug: slug, state: { s: out.state } }, update: { state: { s: out.state } } });
+    }
     let balance: bigint | undefined;
     if (out.payout > 0n) balance = (await applyEntry(tx, { userId, type: "WIN", amount: out.payout, idempotencyKey: `win:${round.id}`, roundId: round.id, note: game.title })).entry.balanceAfter;
     const done = await tx.round.update({

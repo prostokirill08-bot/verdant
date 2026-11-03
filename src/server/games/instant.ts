@@ -5,6 +5,7 @@ import {
 } from "@/lib/fair/outcomes";
 import { toUnits } from "@/lib/money";
 import { ATLAS, NEON, playAtlas, playNeon, type Rng } from "@/lib/fair/slots";
+import { decodeMeters, encodeMeters, playWorkshop } from "@/lib/fair/workshop";
 import { COIN_MAX_FLIPS, coinMultiplier, coinSides, KENO_PAYS, kenoDraw, WHEEL, wheelSegment, type WheelRisk } from "@/lib/fair/extra";
 
 /** Сумма ставки приходит строкой рублей («12.5»), на сервере переводится в сотые. */
@@ -20,7 +21,7 @@ const rouletteBet = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("column"), n: z.union([z.literal(1), z.literal(2), z.literal(3)]) }),
 ]);
 
-type Outcome = { payout: bigint; multiplier: number; result: Record<string, unknown> };
+type Outcome = { payout: bigint; multiplier: number; result: Record<string, unknown>; state?: string };
 type InstantGame<P> = {
   params: z.ZodType<P, z.ZodTypeDef, unknown>;
   /** Сколько чисел нужно заранее (fs). Слоты берут числа из потока rng по мере надобности. */
@@ -29,7 +30,9 @@ type InstantGame<P> = {
   total?: (p: P) => bigint;
   /** Сколько списать: для покупки бонуса — ставка × цена бонуса. */
   cost?: (p: P, bet: bigint) => bigint;
-  resolve: (p: P, fs: number[], bet: bigint, edgeBp: number, rng: Rng) => Outcome;
+  /** Игра с накопительным состоянием между раундами (сундуки): state — строка до раунда, Outcome.state — после. */
+  persist?: boolean;
+  resolve: (p: P, fs: number[], bet: bigint, edgeBp: number, rng: Rng, state?: string) => Outcome;
 };
 
 const byMult = (bet: bigint, m: number) => (bet * BigInt(Math.round(m * 10000))) / 10000n;
@@ -118,6 +121,17 @@ function slot(price: number, play: (rng: Rng, o: { buy?: boolean }) => { totalMu
 const atlas = slot(ATLAS.buyPrice, playAtlas);
 const neonGarden = slot(NEON.buyPrice, playNeon);
 
-export const INSTANT_GAMES = { dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno } as Record<string, InstantGame<unknown>>;
-export type InstantSlug = "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno";
+/** «Мастерская Санты»: монеты наполняют сундуки, состояние сундуков хранится между спинами. */
+const workshop: InstantGame<Record<string, never>> = {
+  params: z.object({}).strip() as unknown as z.ZodType<Record<string, never>, z.ZodTypeDef, unknown>,
+  floats: 0,
+  persist: true,
+  resolve(_p, _fs, bet, _edge, rng, state) {
+    const r = playWorkshop(rng, decodeMeters(state), Number(bet));
+    return { payout: BigInt(r.total), multiplier: r.totalMult, result: r as unknown as Record<string, unknown>, state: encodeMeters(r.after) };
+  },
+};
+
+export const INSTANT_GAMES = { workshop, dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno } as Record<string, InstantGame<unknown>>;
+export type InstantSlug = "workshop" | "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno";
 export const isInstant = (s: string): s is InstantSlug => s in INSTANT_GAMES;

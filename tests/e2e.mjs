@@ -62,6 +62,12 @@ ok("keno", (await p.req("/api/games/keno/bet", { amount: "1", params: { picks: [
 ok("keno: повтор чисел → 400", (await p.req("/api/games/keno/bet", { amount: "1", params: { picks: [1, 1] }, key: key() })).s === 400);
 ok("слот «Атлас»", (await p.req("/api/games/atlas/bet", { amount: "1", params: { buy: false }, key: key() })).j.round?.result.base.grid.length === 5);
 ok("слот «Неоновый сад»: покупка бонуса", (await p.req("/api/games/neon-garden/bet", { amount: "1", params: { buy: true }, key: key() })).j.round?.result.fs?.spins.length >= 10);
+{ // «Мастерская Санты»: сундуки сохраняются между спинами и совпадают с последним раундом
+  let last = null;
+  for (let i = 0; i < 15; i++) last = (await p.req("/api/games/workshop/bet", { amount: "1", params: {}, key: key() })).j.round;
+  const m = (await p.req("/api/games/workshop/meters")).j.chests?.map((c) => c.have).join(",");
+  ok("слот «Мастерская Санты»: сундуки между спинами", last?.result.base.grid.length === 5 && m === last.result.after.map((x) => x.have).join(",") && last.params.meters !== undefined);
+}
 r = await p.req("/api/tower/start", { amount: "1", level: "hard", key: key() });
 ok("tower: старт без раскрытия ловушек", r.s === 200 && !r.j.round.state.traps);
 r = await p.req("/api/tower/pick", { tile: 0 });
@@ -72,7 +78,7 @@ ok("hilo: старт", r.s === 200 && r.j.round.state.revealed.length === 1);
 ok("hilo: забрать без хода → 400", (await p.req("/api/hilo/cashout", {})).s === 400);
 r = await p.req("/api/hilo/guess", { guess: r.j.round.odds.higher >= 0.5 ? "higher" : "lower" });
 ok("hilo: ход", r.s === 200);
-if (r.j.round.status === "ACTIVE") ok("hilo: забрать", (await p.req("/api/hilo/cashout", {})).j.round?.status === "WON");
+if (r.j.round.status === "ACTIVE" && r.j.round.current > 1) ok("hilo: забрать", (await p.req("/api/hilo/cashout", {})).j.round?.status === "WON");
 ok("ставка больше баланса → 400", (await p.req("/api/games/dice/bet", { amount: "9999", params: { target: 50, over: true }, key: key() })).s === 400);
 ok("неверные параметры → 400", (await p.req("/api/games/dice/bet", { amount: "1", params: { target: 1, over: true }, key: key() })).s === 400);
 const before = await p.balance();
