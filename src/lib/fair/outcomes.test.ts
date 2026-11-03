@@ -61,3 +61,24 @@ test("Crash: кривая и обратная функция согласова�
   assert.equal(O.crashMultiplierAt(O.crashTimeFor(2) + 1), 2);
   assert.ok(O.crashPoint(0, 100) === 1);
 });
+
+test("Слоты: результат воспроизводится по сиду (сервер = браузер)", async () => {
+  const { playAtlas, playNeon, rngFromArray, SLOT_FLOATS } = await import("./slots");
+  for (let n = 0; n < 30; n++) {
+    const it = floats("slot-seed", "client", n); const fromServer = () => it.next().value as number;
+    const arr = await browserFloats("slot-seed", "client", n, SLOT_FLOATS);
+    assert.deepEqual(playAtlas(fromServer), playAtlas(rngFromArray(arr)));
+    const it2 = floats("slot-seed", "client", n); const arr2 = takeFloats("slot-seed", "client", n, SLOT_FLOATS);
+    assert.deepEqual(playNeon(() => it2.next().value as number, { buy: true }), playNeon(rngFromArray(arr2), { buy: true }));
+  }
+});
+
+test("Слоты: RTP в разумных пределах", async () => {
+  const { playAtlas, playNeon } = await import("./slots");
+  for (const fn of [playAtlas, playNeon]) {
+    const it = floats("rtp", "c", 0); const rng = () => it.next().value as number;
+    let ret = 0; const N = 60000;
+    for (let i = 0; i < N; i++) ret += fn(rng).totalMult;
+    assert.ok(ret / N > 0.8 && ret / N < 1.1, `rtp ${ret / N}`);
+  }
+});

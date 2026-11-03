@@ -2,17 +2,21 @@
 
 /* Дизайн-токены Verdant: тёмная «финансовая» палитра, один зелёный акцент */
 @theme {
-  --color-ink: #101214;        /* основной фон */
-  --color-panel: #191d20;      /* вторичный фон */
-  --color-raised: #252b2f;     /* поля, кнопки, наведение */
-  --color-line: #2c3338;       /* границы */
-  --color-accent: #00c47a;
-  --color-accent-strong: #00e08b;
-  --color-accent-ink: #04150d; /* текст на акценте */
-  --color-muted: #8b959c;
-  --color-soft: #c3cbd0;
-  --color-danger: #ff5a5f;
-  --color-warn: #f5b84a;
+  --color-ink: #0c0a1d;        /* основной фон — глубокий фиолетово-синий */
+  --color-panel: #16132e;      /* панели */
+  --color-raised: #231e45;     /* поля, кнопки, наведение */
+  --color-line: #2f2959;       /* границы */
+  --color-accent: #35f08c;     /* главный акцент: кнопки, выигрыши */
+  --color-accent-strong: #6dffb2;
+  --color-accent-ink: #03140b;
+  --color-brand: #8b5cf6;      /* фирменный фиолетовый */
+  --color-pink: #ec4899;
+  --color-cyan: #22d3ee;
+  --color-gold: #fbbf24;
+  --color-muted: #8f89b8;
+  --color-soft: #d0cbf2;
+  --color-danger: #ff4d6d;
+  --color-warn: #ffc145;
 
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -20,11 +24,20 @@
 
   --radius-xl: 14px;
   --radius-2xl: 20px;
-  --shadow-glow: 0 0 0 1px rgb(0 196 122 / 0.35), 0 8px 30px -8px rgb(0 196 122 / 0.45);
+  --shadow-glow: 0 0 0 1px rgb(53 240 140 / 0.35), 0 8px 30px -8px rgb(53 240 140 / 0.45);
 }
 
 :root { color-scheme: dark; }
 html, body { background: var(--color-ink); color: #fff; }
+/* Цветное свечение фона: фиолетовое сверху, розовое снизу */
+body { background-image: radial-gradient(1200px 600px at 10% -10%, rgb(139 92 246 / 0.22), transparent 60%), radial-gradient(900px 500px at 100% 110%, rgb(236 72 153 / 0.14), transparent 60%); background-attachment: fixed; }
+.text-gradient { background: linear-gradient(90deg, #a78bfa, #f472b6 50%, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.bg-brand-gradient { background: linear-gradient(135deg, #7c3aed, #db2777); }
+.btn-shine { position: relative; overflow: hidden; }
+.btn-shine::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%); transform: translateX(-120%); animation: shine 3.2s ease-in-out infinite; }
+@keyframes shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.animate-floaty { animation: floaty 5s ease-in-out infinite; }
 body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .tabular { font-variant-numeric: tabular-nums; }
 

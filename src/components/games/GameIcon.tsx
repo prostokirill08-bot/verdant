@@ -9,6 +9,8 @@ export function GameIcon({ slug, size = 22, className = "" }: { slug: GameSlug; 
     case "dice": return <svg {...p}><rect x="4" y="4" width="16" height="16" rx="4" /><circle cx="9" cy="9" r="1.2" fill="currentColor" /><circle cx="15" cy="15" r="1.2" fill="currentColor" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /></svg>;
     case "plinko": return <svg {...p}><circle cx="12" cy="5" r="1.4" fill="currentColor" /><circle cx="8" cy="10" r="1" fill="currentColor" /><circle cx="16" cy="10" r="1" fill="currentColor" /><circle cx="5" cy="15" r="1" fill="currentColor" /><circle cx="12" cy="15" r="1" fill="currentColor" /><circle cx="19" cy="15" r="1" fill="currentColor" /><path d="M3 20h18" /></svg>;
     case "limbo": return <svg {...p}><path d="M4 19h16" /><path d="M6 19V9M12 19V5M18 19v-7" /><path d="M10 5h4" /></svg>;
+    case "atlas": return <svg {...p}><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z" /><path d="M5 17a3 3 0 0 1 3-3h9" /><path d="m11 6 .9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z" /></svg>;
+    case "neon-garden": return <svg {...p}><circle cx="8" cy="16" r="3.5" /><circle cx="16" cy="17" r="3" /><path d="M8 12.5C9 8 12 6 15 5M16 14c0-4-1-7-1-9" /></svg>;
     case "roulette": return <svg {...p}><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 4v5M12 15v5M4 12h5M15 12h5" /></svg>;
   }
 }

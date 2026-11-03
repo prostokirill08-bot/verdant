@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { api, ApiError } from "@/lib/api";
 import { browserFloats, sha256Hex } from "@/lib/fair/browser";
 import * as O from "@/lib/fair/outcomes";
+import { playAtlas, playNeon, rngFromArray, SLOT_FLOATS } from "@/lib/fair/slots";
 import { GAME_NAMES, GAME_SLUGS, isGameSlug, type GameSlug } from "@/lib/games";
 import { ErrorLine, Label, Panel, Segmented } from "./kit";
 
@@ -100,7 +101,17 @@ function Verifier() {
     if (!s.trim()) return;
     if (!window.crypto?.subtle) { setErr("Браузер не поддерживает WebCrypto (нужен HTTPS)"); return; }
     const edge = Number(p.edgeBp) || 0; const nonce = Number(n) || 0;
-    const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, O.FLOATS_NEEDED[game]);
+    const slot = game === "atlas" || game === "neon-garden";
+    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS : O.FLOATS_NEEDED[game];
+    const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, need);
+    if (slot) {
+      const r = (game === "atlas" ? playAtlas : playNeon)(rngFromArray(fs), { buy: p.buy === "true" });
+      const lines: [string, string][] = [["Итоговый множитель", `${r.totalMult}×`]];
+      if ("fs" in r && r.fs) lines.push(["Бонус", `${r.fs.spins.length} бесплатных вращений, особый символ: ${r.fs.special}`]);
+      if ("feature" in r && r.feature) lines.push(["Бонус", r.feature.type]);
+      if (r.base) lines.push(["Выигрыш обычного вращения", `${r.base.mult}×`]);
+      setOut({ hashOk: await sha256Hex(s.trim()), lines }); return;
+    }
     const lines: [string, string][] = [];
     if (game === "dice") { const roll = O.diceRoll(fs[0]!); const t = Number(p.target), over = p.over === "true"; lines.push(["Бросок", roll.toFixed(2)], ["Итог", `${O.diceWin(roll, t, over) ? "выигрыш" : "проигрыш"} (${over ? ">" : "<"} ${t})`]); }
     if (game === "limbo") lines.push(["Множитель", `${O.limboResult(fs[0]!, edge).toFixed(2)}×`]);
@@ -141,6 +152,7 @@ function Verifier() {
           <label className="grid gap-1"><Label>Ряды</Label><select value={p.rows} onChange={set("rows")} className={inp}>{O.PLINKO_ROWS.map((r) => <option key={r}>{r}</option>)}</select></label>
           <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}>{O.PLINKO_RISKS.map((r) => <option key={r} value={r}>{r === "low" ? "низкий" : r === "medium" ? "средний" : "высокий"}</option>)}</select></label>
         </>}
+        {(game === "atlas" || game === "neon-garden") && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
         {game === "mines" && <label className="grid gap-1"><Label>Мин</Label><input value={p.mines} onChange={set("mines")} className={inp} /></label>}
         {(game === "limbo" || game === "crash" || game === "dice") && <label className="grid gap-1"><Label>Преимущество, б.п.</Label><input value={p.edgeBp} onChange={set("edgeBp")} className={inp} /></label>}
       </div>

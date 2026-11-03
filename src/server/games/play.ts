@@ -2,7 +2,7 @@ import { z } from "zod";
 import { applyEntry, withUserTx } from "../wallet/ledger";
 import { HttpError } from "../http";
 import { audit } from "../security/audit";
-import { takeFloats } from "./fair";
+import { floats, takeFloats } from "./fair";
 import { amountSchema, INSTANT_GAMES } from "./instant";
 import { loadGame, nextNonce, roundView, toJson } from "./rounds";
 
@@ -27,18 +27,20 @@ export async function playInstant(userId: string, slug: string, input: z.infer<t
       return { round: roundView(r), balance: w.balance, duplicate: true };
     }
     const game = await loadGame(tx, slug, amount);
+    const cost = g.cost ? g.cost(params, amount) : amount;
     const { pair, nonce } = await nextNonce(tx, userId);
-    const storedParams = { ...toJson(params), edgeBp: game.houseEdgeBp };
-    const round = await tx.round.create({ data: { userId, gameSlug: slug, seedPairId: pair.id, nonce, betAmount: amount, params: storedParams } });
-    await applyEntry(tx, { userId, type: "BET", amount: -amount, idempotencyKey: betKey, roundId: round.id, note: game.title });
+    const storedParams = { ...toJson(params), edgeBp: game.houseEdgeBp, ...(cost !== amount ? { baseBet: amount.toString() } : {}) };
+    const round = await tx.round.create({ data: { userId, gameSlug: slug, seedPairId: pair.id, nonce, betAmount: cost, params: storedParams } });
+    await applyEntry(tx, { userId, type: "BET", amount: -cost, idempotencyKey: betKey, roundId: round.id, note: game.title });
 
     const fs = takeFloats(pair.serverSeed, pair.clientSeed, nonce, g.floats);
-    const out = g.resolve(params, fs, amount, game.houseEdgeBp);
+    const stream = floats(pair.serverSeed, pair.clientSeed, nonce);
+    const out = g.resolve(params, fs, amount, game.houseEdgeBp, () => stream.next().value as number);
     let balance: bigint | undefined;
     if (out.payout > 0n) balance = (await applyEntry(tx, { userId, type: "WIN", amount: out.payout, idempotencyKey: `win:${round.id}`, roundId: round.id, note: game.title })).entry.balanceAfter;
     const done = await tx.round.update({
       where: { id: round.id }, include: { seedPair: true },
-      data: { status: out.payout >= amount ? "WON" : "LOST", payout: out.payout, multiplier: out.multiplier, result: toJson(out.result), settledAt: new Date() },
+      data: { status: out.payout >= cost ? "WON" : "LOST", payout: out.payout, multiplier: out.multiplier, result: toJson(out.result), settledAt: new Date() },
     });
     balance ??= (await tx.wallet.findUniqueOrThrow({ where: { userId } })).balance;
     return { round: roundView(done), balance, duplicate: false };

@@ -6,9 +6,13 @@ import { MinesGame } from "./Mines";
 import { PlinkoGame } from "./Plinko";
 import { RouletteGame } from "./Roulette";
 import type { GameConfig } from "./kit";
+import { AtlasGame } from "./slots/Atlas";
+import { NeonGame } from "./slots/Neon";
 
 export function GamePlayer({ cfg }: { cfg: GameConfig }) {
   switch (cfg.slug) {
+    case "atlas": return <AtlasGame cfg={cfg} />;
+    case "neon-garden": return <NeonGame cfg={cfg} />;
     case "crash": return <CrashGame cfg={cfg} />;
     case "mines": return <MinesGame cfg={cfg} />;
     case "dice": return <DiceGame cfg={cfg} />;

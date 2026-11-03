@@ -6,8 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { GameIcon } from "@/components/games/GameIcon";
-import { GAME_NAMES, GAME_SLUGS } from "@/lib/games";
+import Image from "next/image";
+import { GAMES, GAME_SLUGS } from "@/lib/games";
 import { points } from "@/lib/format";
 import { api } from "@/lib/api";
 import { Logo } from "./Logo";
@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh">
       {/* Боковая панель (компьютер) */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-line bg-panel px-3 py-5 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-line bg-panel/80 px-3 py-5 backdrop-blur lg:flex">
         <div className="px-2"><Logo /></div>
         <nav className="grid gap-1">
           <NavLink href="/" active={path === "/"}>
@@ -53,7 +53,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="grid gap-1">
           <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/70">Игры</p>
           {GAME_SLUGS.map((s) => (
-            <NavLink key={s} href={`/games/${s}`} active={path === `/games/${s}`}><GameIcon slug={s} size={18} />{GAME_NAMES[s]}</NavLink>
+            <NavLink key={s} href={`/games/${s}`} active={path === `/games/${s}`}>
+              <Image src={GAMES[s].cover} alt="" width={22} height={28} className="h-7 w-[22px] rounded-md object-cover ring-1 ring-white/10" />
+              <span className="truncate">{GAMES[s].name}</span>
+              {GAMES[s].badge === "Новинка" && <span className="ml-auto rounded-md bg-pink/20 px-1.5 text-[10px] font-bold uppercase text-pink">new</span>}
+            </NavLink>
           ))}
         </div>
         {user && (
@@ -78,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/account" className="flex h-10 items-center gap-2 rounded-xl border border-line bg-panel pl-3 pr-1.5 hover:border-accent/50" title="Демо-баланс">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Баллы</span>
                   <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
-                  <span className="grid size-7 place-items-center rounded-lg bg-accent text-accent-ink" aria-hidden>
+                  <span className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#5dffa6,#22d97a)] text-accent-ink" aria-hidden>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="M12 5v14M5 12h14" /></svg>
                   </span>
                 </Link>
@@ -116,9 +120,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Нижняя навигация (телефон) */}
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Навигация">
-        {[["/", "Главная"], ["/games", "Игры"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход"], [user ? "/account/history" : "/register", user ? "История" : "Регистрация"]].map(([h, t]) => (
-          <Link key={t} href={h!} className={`py-3 text-center text-[12px] font-medium ${path === h ? "text-accent" : "text-muted"}`}>{t}</Link>
-        ))}
+        {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/account/history" : "/register", user ? "История" : "Регистрация", "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
+          const active = h === "/" ? path === "/" : path.startsWith(h);
+          return (
+            <Link key={t} href={h} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? "text-accent" : "text-muted"}`}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden><path d={d} /></svg>{t}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

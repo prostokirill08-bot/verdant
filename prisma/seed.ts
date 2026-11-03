@@ -7,6 +7,8 @@ import { hashSeed, newServerSeed } from "../src/server/games/fair";
 const db = new PrismaClient();
 
 const GAMES = [
+  { slug: "atlas", title: "Атлас звёзд", tagline: "Книжный слот: особый символ на весь барабан", sortOrder: 0 },
+  { slug: "neon-garden", title: "Неоновый сад", tagline: "Фрукты, джокер и пять бонусов", sortOrder: 0 },
   { slug: "crash", title: "Crash", tagline: "Множитель растёт — забери до обвала", sortOrder: 1 },
   { slug: "mines", title: "Mines", tagline: "Открывай клетки и обходи мины", sortOrder: 2 },
   { slug: "dice", title: "Dice", tagline: "Выбери шанс и порог броска", sortOrder: 3 },
@@ -16,7 +18,7 @@ const GAMES = [
 ];
 
 async function main() {
-  for (const g of GAMES) await db.game.upsert({ where: { slug: g.slug }, update: { title: g.title, tagline: g.tagline, sortOrder: g.sortOrder }, create: g });
+  for (const g of GAMES) await db.game.upsert({ where: { slug: g.slug }, update: {}, create: g });
   await db.setting.upsert({ where: { key: "platform" }, update: {}, create: { key: "platform", value: { maintenance: false, registrationOpen: true, startGrant: 100000, dailyBonus: 25000 } } });
 
   const email = process.env.ADMIN_EMAIL ?? "admin@verdant.local";

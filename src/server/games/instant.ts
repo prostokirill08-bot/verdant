@@ -4,6 +4,7 @@ import {
   type PlinkoRows, type RouletteBetKind,
 } from "@/lib/fair/outcomes";
 import { toUnits } from "@/lib/money";
+import { ATLAS, NEON, playAtlas, playNeon, type Rng } from "@/lib/fair/slots";
 
 /** Сумма ставки приходит строкой баллов («12.5»), на сервере переводится в сотые. */
 export const amountSchema = z.string().max(16).regex(/^\d+([.,]\d{1,2})?$/, "Неверная сумма ставки").transform((s) => toUnits(s));
@@ -21,10 +22,13 @@ const rouletteBet = z.discriminatedUnion("kind", [
 type Outcome = { payout: bigint; multiplier: number; result: Record<string, unknown> };
 type InstantGame<P> = {
   params: z.ZodType<P, z.ZodTypeDef, unknown>;
+  /** Сколько чисел нужно заранее (fs). Слоты берут числа из потока rng по мере надобности. */
   floats: number;
   /** Сумма ставки, если она задаётся параметрами (рулетка: сумма фишек). */
   total?: (p: P) => bigint;
-  resolve: (p: P, fs: number[], bet: bigint, edgeBp: number) => Outcome;
+  /** Сколько списать: для покупки бонуса — ставка × цена бонуса. */
+  cost?: (p: P, bet: bigint) => bigint;
+  resolve: (p: P, fs: number[], bet: bigint, edgeBp: number, rng: Rng) => Outcome;
 };
 
 const byMult = (bet: bigint, m: number) => (bet * BigInt(Math.round(m * 10000))) / 10000n;
@@ -69,6 +73,21 @@ const roulette: InstantGame<RouletteParams> = {
   },
 };
 
-export const INSTANT_GAMES = { dice, limbo, plinko, roulette } as Record<string, InstantGame<unknown>>;
-export type InstantSlug = "dice" | "limbo" | "plinko" | "roulette";
+/** Слоты: множитель считается от базовой ставки; при покупке бонуса списывается ставка × цена бонуса. */
+function slot(price: number, play: (rng: Rng, o: { buy?: boolean }) => { totalMult: number }): InstantGame<{ buy: boolean }> {
+  return {
+    params: z.object({ buy: z.boolean().default(false) }),
+    floats: 0,
+    cost: (p, bet) => (p.buy ? bet * BigInt(price) : bet),
+    resolve(p, _fs, bet, _edge, rng) {
+      const r = play(rng, { buy: p.buy });
+      return { payout: byMult(bet, r.totalMult), multiplier: r.totalMult, result: r as unknown as Record<string, unknown> };
+    },
+  };
+}
+const atlas = slot(ATLAS.buyPrice, playAtlas);
+const neonGarden = slot(NEON.buyPrice, playNeon);
+
+export const INSTANT_GAMES = { dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden } as Record<string, InstantGame<unknown>>;
+export type InstantSlug = "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden";
 export const isInstant = (s: string): s is InstantSlug => s in INSTANT_GAMES;
