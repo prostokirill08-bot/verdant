@@ -76,17 +76,17 @@ function Cell({ c, frozen }: { c: WsCell; frozen?: boolean }) {
 type ChestView = { kind: ChestKind; have: number; full?: boolean; open?: boolean; bump?: number };
 
 /** Окно, в котором растёт горка монет (доли картинки сундука): от верха до передней стенки. */
-const DOME = { aspect: "1 / 1", winTop: "10%", winH: "52%", winX: "16%" };
+const DOME = { aspect: "408 / 518", winTop: "9%", winH: "56.3%", winX: "8%" };
 /** Шахматный порядок: спереди 3 сундука, сзади 2 между ними (центры в % ширины, размер в % ширины). */
 const PLACE: Record<number, { cx: number; w: number; top: string; z: number }> = {
-  0: { cx: 17, w: 31, top: "34%", z: 3 }, 2: { cx: 50, w: 31, top: "34%", z: 3 }, 4: { cx: 83, w: 31, top: "34%", z: 3 },
+  0: { cx: 17, w: 31, top: "40.5%", z: 3 }, 2: { cx: 50, w: 31, top: "40.5%", z: 3 }, 4: { cx: 83, w: 31, top: "40.5%", z: 3 },
   1: { cx: 33.5, w: 27, top: "0%", z: 1 }, 3: { cx: 66.5, w: 27, top: "0%", z: 1 },
 };
 
 function Chest({ v, i, refEl, waiting, onOpen }: { v: ChestView; i: number; refEl: (el: HTMLDivElement | null) => void; waiting: boolean; onOpen: () => void }) {
   const st = CHEST_STYLE[v.kind]; const pl = PLACE[i]!;
   // Монет внутри тем больше, чем больше их нападало; до краёв сундук наполняет только «счастливая» монета
-  const fill = v.full ? 1 : Math.min(0.85, 0.12 + v.have / WS.visualMax);
+  const fill = v.full ? 1 : Math.min(0.8, 0.25 + (v.have / WS.visualMax) * 0.6);
   const shown = v.full || v.have > 0;
   return (
     <div ref={refEl} data-chest={i} className="absolute" style={{ left: `${pl.cx - pl.w / 2}%`, width: `${pl.w}%`, top: pl.top, zIndex: pl.z }}>
@@ -97,12 +97,13 @@ function Chest({ v, i, refEl, waiting, onOpen }: { v: ChestView; i: number; refE
         {/* Слои: сундук → горка монет (поднимается через transform) → передняя стенка → значок бонуса */}
         <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
         <div className="absolute overflow-hidden" style={{ top: DOME.winTop, height: DOME.winH, left: DOME.winX, right: DOME.winX }}>
-          <div className="absolute inset-0 transition-transform duration-500 ease-out" style={{ transform: `translateY(${shown ? (1 - fill) * 100 : 100}%)` }}>
-            <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-contain object-bottom" />
+          {/* Горка монет занимает нижние 62% окна; поднимается из-за передней стенки по мере наполнения */}
+          <div className="absolute inset-x-0 bottom-0 h-[62%] transition-transform duration-500 ease-out" style={{ transform: `translateY(${shown ? (1 - fill) * 100 : 100}%)` }}>
+            <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-cover object-bottom" />
           </div>
         </div>
         <Image src={`/img/ny/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
-        <span className="absolute left-1/2 top-[66%] grid aspect-square w-[30%] -translate-x-1/2 place-items-center rounded-full"
+        <span className="absolute left-1/2 top-[68%] grid aspect-square w-[28%] -translate-x-1/2 place-items-center rounded-full"
           style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
           <Glyph kind={v.kind} className="size-[64%]" />
         </span>
@@ -413,7 +414,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
-          <div ref={stageRef} className="relative mx-auto w-full max-w-[560px] scroll-mt-20" style={{ aspectRatio: "100 / 66" }}>
+          <div ref={stageRef} className="relative mx-auto w-full max-w-[560px] scroll-mt-20" style={{ aspectRatio: "100 / 74" }}>
             {chests.map((c, i) => <Chest key={c.kind} v={c} i={i} refEl={(el) => { chestEls.current[i] = el; }} waiting={opening === i} onOpen={() => actionRes.current?.()} />)}
           </div>
           <BonusTotal state={fs} color={st} title={fs?.title} sub={fs?.sub} label="Выигрыш сундука" />
