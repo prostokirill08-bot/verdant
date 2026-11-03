@@ -10,6 +10,7 @@ import Image from "next/image";
 import { GAMES, GAME_SLUGS } from "@/lib/games";
 import { points } from "@/lib/format";
 import { api } from "@/lib/api";
+import { OnlineBadge } from "./OnlineBadge";
 import { Logo } from "./Logo";
 
 function NavLink({ href, children, active }: { href: string; children: React.ReactNode; active: boolean }) {
@@ -74,14 +75,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Верхняя панель */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
           <div className="garland absolute inset-x-0 -bottom-[14px]" aria-hidden />
           <div className="lg:hidden"><Logo /></div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
+            <OnlineBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
-                <Link href="/account" className="flex h-10 items-center gap-2 rounded-xl border border-line bg-panel pl-3 pr-1.5 hover:border-accent/50" title="Демо-баланс">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Баллы</span>
+                <Link href="/account" className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3" title="Демо-баланс">
+                  <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баллы</span>
                   <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
                   <span className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white" aria-hidden>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="M12 5v14M5 12h14" /></svg>
@@ -107,8 +109,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </>
             ) : (
               <>
-                <Link href="/login"><Button variant="ghost">Войти</Button></Link>
-                <Link href="/register"><Button>Регистрация</Button></Link>
+                <Link href="/login"><Button variant="ghost" className="!px-2.5 sm:!px-4">Войти</Button></Link>
+                <Link href="/register"><Button className="!px-3 sm:!px-4"><span className="sm:hidden">Начать</span><span className="hidden sm:inline">Регистрация</span></Button></Link>
               </>
             )}
           </div>

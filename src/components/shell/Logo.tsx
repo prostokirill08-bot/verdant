@@ -12,7 +12,7 @@ export function Logo() {
           <circle cx="19.5" cy="4.5" r="3" fill="#fff" />
         </svg>
       </span>
-      <span className="font-display text-[18px] font-bold tracking-tight">verdant</span>
+      <span className="font-display text-[18px] font-bold tracking-tight max-[379px]:hidden">verdant</span>
     </Link>
   );
 }
