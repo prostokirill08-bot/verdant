@@ -41,7 +41,7 @@ export default function AccountPage() {
           <div className="min-w-0"><p className="truncate text-[20px] font-semibold">{s.user.username}</p>
             <p className="font-mono text-[13px] text-muted">ID {s.user.publicId} · с {new Date(s.user.createdAt).toLocaleDateString("ru-RU")}</p></div>
         </div>
-        <p className="relative mt-8 text-[12px] font-semibold uppercase tracking-wider text-muted">Демо-баланс</p>
+        <p className="relative mt-8 text-[12px] font-semibold uppercase tracking-wider text-muted">Баланс</p>
         <p className="relative mt-1 font-mono text-[40px] font-semibold leading-none tabular">{points(s.balance)}</p>
         <div className="relative mt-6 flex flex-wrap items-center gap-3">
           <Button onClick={bonus} loading={busy} disabled={!!s.bonus.availableAt}>

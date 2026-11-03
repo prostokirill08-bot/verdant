@@ -78,7 +78,7 @@ export default function AdminUser({ params }: { params: Promise<{ id: string }> 
           </Panel>
           {isAdmin && (
             <Panel className="grid content-start gap-3 p-4">
-              <h2 className="font-semibold">Корректировка демо-баланса</h2>
+              <h2 className="font-semibold">Корректировка баланса</h2>
               <Segmented value={dir} onChange={setDir} options={[["credit", "Начислить"], ["debit", "Списать"]]} />
               <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, "").slice(0, 10))} placeholder="Сумма в рублях" inputMode="decimal" className={`${inputCls} font-mono`} />
               <input value={adjReason} onChange={(e) => setAdjReason(e.target.value)} placeholder="Причина (обязательно)" className={inputCls} maxLength={200} />

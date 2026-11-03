@@ -82,8 +82,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <OnlineBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
-                <Link href="/account" className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3" title="Демо-баланс">
-                  <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Демо</span>
+                <Link href="/account" className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3" title="Баланс">
+                  <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
                   <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
                   <span className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white" aria-hidden>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="M12 5v14M5 12h14" /></svg>
