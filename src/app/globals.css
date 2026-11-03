@@ -1,49 +1,104 @@
 @import "tailwindcss";
 
-/* Дизайн-токены Verdant: тёмная «финансовая» палитра, один зелёный акцент */
+/* Verdant · Winter Edition — визуальный слой. Игровая и серверная логика не затрагивается. */
 @theme {
-  --color-ink: #0c0a1d;        /* основной фон — глубокий фиолетово-синий */
-  --color-panel: #16132e;      /* панели */
-  --color-raised: #231e45;     /* поля, кнопки, наведение */
-  --color-line: #2f2959;       /* границы */
-  --color-accent: #35f08c;     /* главный акцент: кнопки, выигрыши */
-  --color-accent-strong: #6dffb2;
-  --color-accent-ink: #03140b;
-  --color-brand: #8b5cf6;      /* фирменный фиолетовый */
-  --color-pink: #ec4899;
-  --color-cyan: #22d3ee;
-  --color-gold: #fbbf24;
-  --color-muted: #8f89b8;
-  --color-soft: #d0cbf2;
-  --color-danger: #ff4d6d;
-  --color-warn: #ffc145;
+  --color-ink: #07130f;
+  --color-panel: #0d1e18;
+  --color-raised: #142b22;
+  --color-line: #244638;
+  --color-accent: #42d99a;
+  --color-accent-strong: #8cf2c2;
+  --color-accent-ink: #03170e;
+  --color-brand: #c49a4a;
+  --color-pink: #d97883;
+  --color-cyan: #8bd8d0;
+  --color-gold: #e7c779;
+  --color-muted: #91aa9e;
+  --color-soft: #d8e8df;
+  --color-danger: #ef6874;
+  --color-warn: #e7c779;
 
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: var(--font-unbounded), var(--font-geist), sans-serif;
 
-  --radius-xl: 14px;
-  --radius-2xl: 20px;
-  --shadow-glow: 0 0 0 1px rgb(53 240 140 / 0.35), 0 8px 30px -8px rgb(53 240 140 / 0.45);
+  --radius-xl: 16px;
+  --radius-2xl: 22px;
+  --shadow-glow: 0 0 0 1px rgb(66 217 154 / 0.28), 0 10px 34px -12px rgb(66 217 154 / 0.3);
 }
 
 :root { color-scheme: dark; }
-html, body { background: var(--color-ink); color: #fff; }
-/* Цветное свечение фона: фиолетовое сверху, розовое снизу */
-body { background-image: radial-gradient(1200px 600px at 10% -10%, rgb(139 92 246 / 0.22), transparent 60%), radial-gradient(900px 500px at 100% 110%, rgb(236 72 153 / 0.14), transparent 60%); background-attachment: fixed; }
-.text-gradient { background: linear-gradient(90deg, #a78bfa, #f472b6 50%, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.bg-brand-gradient { background: linear-gradient(135deg, #7c3aed, #db2777); }
+html, body { min-height: 100%; background: var(--color-ink); color: #f5fbf7; }
+body {
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(900px 520px at 12% -12%, rgb(34 105 72 / .28), transparent 66%),
+    radial-gradient(760px 440px at 100% 8%, rgb(183 145 70 / .10), transparent 65%),
+    radial-gradient(900px 600px at 50% 110%, rgb(17 76 54 / .18), transparent 70%);
+  background-attachment: fixed;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Лёгкий снег на фоне — только украшение, клики проходят сквозь него. */
+body::before {
+  content: "";
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  pointer-events: none;
+  opacity: .36;
+  background-image:
+    radial-gradient(2px 2px at 24px 38px, #fff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 118px 92px, #d9f4e7 98%, transparent),
+    radial-gradient(2px 2px at 210px 18px, #fff 98%, transparent),
+    radial-gradient(1px 1px at 285px 142px, #fff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 355px 65px, #d9f4e7 98%, transparent);
+  background-size: 390px 190px;
+  animation: winter-drift 24s linear infinite;
+}
+
+/* Тонкая праздничная подсветка верхней панели. */
+header.sticky {
+  border-bottom-color: rgb(197 166 100 / .24) !important;
+  background-image: linear-gradient(90deg, rgb(13 30 24 / .96), rgb(17 39 29 / .94), rgb(13 30 24 / .96));
+  box-shadow: 0 1px 0 rgb(231 199 121 / .06), 0 12px 34px rgb(0 0 0 / .12);
+}
+
+.text-gradient {
+  background: linear-gradient(100deg, #f2d995 0%, #fff0c2 35%, #83e2b4 72%, #d5f4e4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bg-brand-gradient { background: linear-gradient(135deg, #b58b43, #e8d18e 52%, #3c9b70); }
 .btn-shine { position: relative; overflow: hidden; }
-.btn-shine::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%); transform: translateX(-120%); animation: shine 3.2s ease-in-out infinite; }
-@keyframes shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.btn-shine::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 28%, rgb(255 255 255 / .34) 50%, transparent 72%);
+  transform: translateX(-120%); animation: shine 3.8s ease-in-out infinite;
+}
+@keyframes shine { 0%, 65% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes winter-drift { from { background-position: 0 -190px; } to { background-position: 0 760px; } }
 .animate-floaty { animation: floaty 5s ease-in-out infinite; }
-body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* тонкий скроллбар в тон */
-* { scrollbar-width: thin; scrollbar-color: var(--color-raised) transparent; }
+/* Общие поверхности и состояния — сохраняют исходную геометрию компонентов. */
+:where(.border-line) { border-color: rgb(55 103 78 / .55); }
+:where(a, button) { -webkit-tap-highlight-color: transparent; }
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid rgb(231 199 121 / .82);
+  outline-offset: 3px;
+}
+::selection { color: #06150e; background: #9de7bf; }
+* { scrollbar-width: thin; scrollbar-color: #28523e transparent; }
 
+@media (max-width: 640px) {
+  body::before { opacity: .22; }
+}
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
