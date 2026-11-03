@@ -33,12 +33,32 @@ const describe = (r: RoundView) => {
 };
 const money = (u: number) => points(Math.round(u));
 
-function Coin({ chest, size = "cell" }: { chest: number; size?: "cell" | "fly" }) {
-  const st = CHEST_STYLE[CHESTS[chest]!];
+/** Значки бонусов (SVG): на сундуках и на монетах. */
+function Glyph({ kind, className = "" }: { kind: ChestKind; className?: string }) {
+  const common = { fill: "none", stroke: "#fff", strokeWidth: 2.2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return (
-    <span className={`relative grid place-items-center rounded-full ${size === "cell" ? "size-[82%]" : "size-full"}`}
-      style={{ background: `radial-gradient(circle at 35% 30%, #fff8, transparent 40%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: `inset 0 0 0 3px #ffd166, inset 0 0 0 6px ${st.dark}, 0 0 18px ${st.color}88` }}>
-      <span className={size === "cell" ? "text-[clamp(16px,4.5vw,30px)]" : "text-[18px]"} aria-hidden>{st.icon}</span>
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      {kind === "gifts" && <g {...common}><rect x="4" y="10" width="16" height="10" rx="1.5" fill="#fff3" /><rect x="3" y="7" width="18" height="4" rx="1" fill="#fff4" /><path d="M12 7v13M12 7c-2-4-6-3-5-1s5 1 5 1c2-4 6-3 5-1s-5 1-5 1" /></g>}
+      {kind === "frost" && <g {...common}>{[0, 60, 120].map((a) => <g key={a} transform={`rotate(${a} 12 12)`}><path d="M12 3v18M12 6.5l-2.5-2M12 6.5l2.5-2M12 17.5l-2.5 2M12 17.5l2.5 2" /></g>)}</g>}
+      {kind === "stars" && <path d="m12 2.8 2.8 5.8 6.3.9-4.6 4.5 1.1 6.3L12 17.3l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="#fff" stroke="#fff" strokeWidth="1" strokeLinejoin="round" />}
+      {kind === "bells" && <g {...common}><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z" fill="#fff4" /><path d="M10 21a2 2 0 0 0 4 0M12 3v2" /></g>}
+      {kind === "wheel" && <g {...common}><circle cx="12" cy="12" r="8.5" fill="#fff3" />{[0, 45, 90, 135].map((a) => <path key={a} d="M12 3.5v17" transform={`rotate(${a} 12 12)`} />)}<circle cx="12" cy="12" r="2" fill="#fff" /></g>}
+    </svg>
+  );
+}
+
+/** Монета: золотой гурт с насечкой и цветная эмаль со значком своего сундука. */
+function Coin({ chest, size = "cell" }: { chest: number; size?: "cell" | "fly" }) {
+  const k = CHESTS[chest]!; const st = CHEST_STYLE[k];
+  return (
+    <span className={`relative grid place-items-center rounded-full ${size === "cell" ? "size-[84%]" : "size-full"}`}
+      style={{ background: "conic-gradient(from 0deg, #fff1b0, #d99a12, #ffe38a, #b97a08, #fff1b0, #d99a12, #ffe38a, #b97a08, #fff1b0)", boxShadow: `0 4px 10px rgb(0 0 0 / 0.5), 0 0 16px ${st.color}66` }}>
+      {/* насечка по ободу */}
+      <span className="absolute inset-[4%] rounded-full" style={{ background: "repeating-conic-gradient(#8a5a00 0 4deg, transparent 4deg 10deg)", WebkitMask: "radial-gradient(circle, transparent 62%, #000 63%)", mask: "radial-gradient(circle, transparent 62%, #000 63%)" }} />
+      {/* эмаль цвета сундука */}
+      <span className="absolute inset-[17%] grid place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #ffffff66, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "inset 0 0 0 2px #fff3b0, inset 0 2px 6px rgb(0 0 0 / 0.45)" }}>
+        <Glyph kind={k} className="size-[62%] drop-shadow-[0_1px_1px_rgb(0_0_0/0.6)]" />
+      </span>
     </span>
   );
 }
@@ -53,31 +73,41 @@ function Cell({ c, frozen }: { c: WsCell; frozen?: boolean }) {
   );
 }
 
-type ChestView = { kind: ChestKind; have: number; full?: boolean; bump?: number };
+type ChestView = { kind: ChestKind; have: number; full?: boolean; open?: boolean; bump?: number };
 
-function Chest({ v, i, refEl }: { v: ChestView; i: number; refEl: (el: HTMLDivElement | null) => void }) {
-  const st = CHEST_STYLE[v.kind];
-  // Кристаллов тем больше, чем больше монет; до краёв сундук наполняет только «счастливая» монета
-  const fill = v.full ? 1 : Math.min(0.92, v.have / WS.visualMax);
+/** Окно, в котором растёт горка монет (доли картинки сундука): от верха до передней стенки. */
+const DOME = { aspect: "1 / 1", winTop: "10%", winH: "52%", winX: "16%" };
+/** Шахматный порядок: спереди 3 сундука, сзади 2 между ними (центры в % ширины, размер в % ширины). */
+const PLACE: Record<number, { cx: number; w: number; top: string; z: number }> = {
+  0: { cx: 17, w: 31, top: "34%", z: 3 }, 2: { cx: 50, w: 31, top: "34%", z: 3 }, 4: { cx: 83, w: 31, top: "34%", z: 3 },
+  1: { cx: 33.5, w: 27, top: "0%", z: 1 }, 3: { cx: 66.5, w: 27, top: "0%", z: 1 },
+};
+
+function Chest({ v, i, refEl, waiting, onOpen }: { v: ChestView; i: number; refEl: (el: HTMLDivElement | null) => void; waiting: boolean; onOpen: () => void }) {
+  const st = CHEST_STYLE[v.kind]; const pl = PLACE[i]!;
+  // Монет внутри тем больше, чем больше их нападало; до краёв сундук наполняет только «счастливая» монета
+  const fill = v.full ? 1 : Math.min(0.85, 0.12 + v.have / WS.visualMax);
+  const shown = v.full || v.have > 0;
   return (
-    <div ref={refEl} className="relative grid min-w-0 justify-items-center" data-chest={i}>
-      <motion.div key={v.bump ?? 0} animate={v.bump ? { scale: [1, 1.12, 1] } : {}} transition={{ duration: 0.3 }}
-        className={`relative aspect-[331/346] w-full ${v.full ? "chest-full" : ""}`}>
-        {/* Три слоя: сундук сзади → кристаллы (поднимаются через transform) → передняя стенка */}
-        <Image src="/img/ny/slots/workshop/chest-back.webp" alt={`Сундук «${CHEST_NAMES[v.kind]}»`} fill sizes="140px" className="object-contain" priority />
-        <div className="absolute inset-x-[6%] top-[4%] h-[56%] overflow-hidden">
-          <div className="absolute inset-0 transition-transform duration-500 ease-out" style={{ transform: `translateY(${(1 - fill) * 100}%)` }}>
-            <Image src={`/img/ny/slots/workshop/crystals-${i}.webp`} alt="" fill sizes="120px" className="object-contain object-bottom" />
+    <div ref={refEl} data-chest={i} className="absolute" style={{ left: `${pl.cx - pl.w / 2}%`, width: `${pl.w}%`, top: pl.top, zIndex: pl.z }}>
+      <motion.button type="button" key={v.bump ?? 0} onClick={waiting ? onOpen : undefined} disabled={!waiting} aria-label={`Сундук «${CHEST_NAMES[v.kind]}»`}
+        animate={v.bump ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.3 }}
+        className={`relative block w-full ${v.full ? "chest-full" : ""} ${waiting ? "cursor-pointer" : "cursor-default"}`} style={{ aspectRatio: DOME.aspect }}>
+        {(v.full || waiting) && <span aria-hidden className="pointer-events-none absolute -inset-[18%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}88, transparent 62%)` }} />}
+        {/* Слои: сундук → горка монет (поднимается через transform) → передняя стенка → значок бонуса */}
+        <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        <div className="absolute overflow-hidden" style={{ top: DOME.winTop, height: DOME.winH, left: DOME.winX, right: DOME.winX }}>
+          <div className="absolute inset-0 transition-transform duration-500 ease-out" style={{ transform: `translateY(${shown ? (1 - fill) * 100 : 100}%)` }}>
+            <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-contain object-bottom" />
           </div>
         </div>
-        <Image src="/img/ny/slots/workshop/chest-front.webp" alt="" fill sizes="140px" className="object-contain" priority />
-        {v.full && <span aria-hidden className="pointer-events-none absolute -inset-[10%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}77, transparent 62%)` }} />}
-      </motion.div>
-      <span className="mt-0.5 max-w-full truncate rounded-md px-1.5 text-center font-display text-[13px] font-bold uppercase leading-tight tracking-wide text-ink" style={{ background: st.color }}>
-        <span className="sm:hidden" aria-hidden>{st.icon}</span><span className="hidden sm:inline">{CHEST_NAMES[v.kind]}</span>
-      </span>
-      <span className="mt-0.5 h-1 w-[80%] overflow-hidden rounded-full bg-black/50"><span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${fill * 100}%`, background: st.color }} /></span>
-      <span className="mt-0.5 font-mono text-[clamp(9px,2.2vw,11px)] text-white/75" title="Монет в сундуке">🪙 {v.have}</span>
+        <Image src={`/img/ny/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        <span className="absolute left-1/2 top-[66%] grid aspect-square w-[30%] -translate-x-1/2 place-items-center rounded-full"
+          style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
+          <Glyph kind={v.kind} className="size-[64%]" />
+        </span>
+        {waiting && <span className="tap-hint pointer-events-none absolute -bottom-[6%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-ink shadow">👆 Открой</span>}
+      </motion.button>
     </div>
   );
 }
@@ -158,7 +188,7 @@ function Intro({ t }: { t: WsTrigger }) {
   const st = CHEST_STYLE[t.kind];
   return (
     <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }} className="grid max-w-[90%] place-items-center gap-2 p-4 text-center">
-      <span className="text-[clamp(40px,10vw,64px)]">{st.icon}</span>
+      <span className="grid size-[clamp(56px,14vw,84px)] place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: `0 0 0 3px #ffe08a, 0 0 30px ${st.color}` }}><Glyph kind={t.kind} className="size-[62%]" /></span>
       <p className="font-display text-[clamp(20px,5vw,34px)] font-bold" style={{ color: st.color }}>СУНДУК «{CHEST_NAMES[t.kind].toUpperCase()}»</p>
       <p className="text-[14px] text-white/85">{st.about}</p>
       <p className="rounded-full bg-black/50 px-3 py-1 font-mono text-[14px] text-gold ring-1 ring-gold/40">Открыт на {t.coins}-й монете · ставка {money(t.stake)}</p>
@@ -194,9 +224,15 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
   const stop = useRef<() => void>(() => {});
   const bigDone = useRef<() => void>(() => {});
   const pickRes = useRef<((i: number) => void) | null>(null);
+  // Бонус идёт по нажатиям игрока: кнопка действия и сундук, который ждёт открытия
+  const [action, setAction] = useState<{ label: string; color: string } | null>(null);
+  const [opening, setOpening] = useState<number | null>(null);
+  const actionRes = useRef<(() => void) | null>(null);
+  const waitTap = (label: string, color: string) => new Promise<void>((res) => { actionRes.current = () => { actionRes.current = null; setAction(null); res(); }; setAction({ label, color }); });
   const flyDone = useRef<Map<number, () => void>>(new Map());
   const chestEls = useRef<(HTMLDivElement | null)[]>([]);
   const reelsBox = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const turboRef = useRef(turbo); turboRef.current = turbo;
   const autoRef = useRef(auto); autoRef.current = auto;
   const t = (ms: number) => sleep(turboRef.current ? ms / 2 : ms);
@@ -254,19 +290,30 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       const s = spins[i]!;
       setFs({ left: spins.length - i - 1, done: i + 1, total: String(Math.round(total)), add: null, tick, title, sub: tr.kind === "stars" ? `Спин ${i + 1}/${spins.length} · множитель ×${s.x}` : `Спин ${i + 1}/${spins.length} · примёрзло ${s.sticky?.length ?? 0}`, color: st.color });
       if (tr.kind === "stars") setStarX(s.x ?? 1);
+      await waitTap(`Крутить · ${i + 1} из ${spins.length}`, st.color);
       await spinTo(s.grid);
       if (s.sticky) setSticky(new Set(s.sticky));
       showWins(s);
       const add = Math.floor(tr.stake * s.mult);
       if (add > 0) { total += add; tick++; }
       setFs((f) => f && { ...f, total: String(Math.round(total)), add: add > 0 ? String(add) : null, tick });
-      await t(add > 0 ? 900 : 300);
+      await t(add > 0 ? 700 : 200);
     }
   }
 
   async function playTrigger(tr: WsTrigger, r: WsResult) {
     const st = CHEST_STYLE[tr.kind];
-    setBanner(<Intro t={tr} />); await sleep(turboRef.current ? 1600 : 2600); setBanner(null);
+    // Сундук ждёт, пока игрок сам его откроет
+    setOpening(tr.chest);
+    // На телефоне сундуки могут быть выше экрана — подкручиваем страницу к ним
+    const top = stageRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 60 || top > window.innerHeight * 0.5) stageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    await waitTap(`Открыть сундук «${CHEST_NAMES[tr.kind]}»`, st.color);
+    setOpening(null);
+    setChests((cs) => cs.map((c, i) => (i === tr.chest ? { ...c, open: true } : c)));
+    setBanner(<Intro t={tr} />);
+    await waitTap("Начать бонус", st.color);
+    setBanner(null);
     const f = tr.feature;
     if (f.kind === "gifts") {
       const opened: (number | null)[] = Array(f.boxes.length).fill(null);
@@ -274,11 +321,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       let total = 0;
       for (let k = 0; k < f.picks; k++) {
         setFs({ left: f.picks - k, done: k, total: String(total), add: null, tick: k, title: "🎁 Подарки", sub: `Открой ещё ${f.picks - k} из ${f.boxes.length}`, color: st.color });
-        const i = await new Promise<number>((res) => {
-          pickRes.current = res;
-          // В автоигре подарок открывается сам
-          if (autoRef.current > 0) setTimeout(() => { const free = opened.map((v, j) => (v === null ? j : -1)).filter((j) => j >= 0); res(free[Math.floor(Math.random() * free.length)]!); }, 700);
-        });
+        const i = await new Promise<number>((res) => { pickRes.current = res; });
         pickRes.current = null;
         if (opened[i] !== null) { k--; continue; }
         opened[i] = f.boxes[k]!; total += Math.floor(tr.stake * f.boxes[k]!);
@@ -298,17 +341,19 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       let prevKeys: string[] = [];
       for (let k = 0; k < f.steps.length; k++) {
         const step = f.steps[k]!; const keys = Object.keys(step.cells);
+        if (k > 0) await waitTap(`Перекрут · осталось ${f.steps[k - 1]!.respins}`, st.color);
         const fresh = keys.filter((x) => !prevKeys.includes(x)); prevKeys = keys;
         const sum = Object.values(step.cells).reduce((s, v) => s + v, 0);
         setFeat({ kind: "bells", cells: step.cells, respins: step.respins, fresh, full: false });
         setFs({ left: step.respins, done: k, total: String(Math.floor(tr.stake * sum)), add: fresh.length && k > 0 ? String(Math.floor(tr.stake * fresh.reduce((s, x) => s + step.cells[x]!, 0))) : null, tick: k, title: "🔔 Колокольчики", sub: `Перекрутов: ${step.respins} · колокольчиков ${keys.length}/${WS.reels * WS.rows}`, color: st.color });
-        await t(k === 0 ? 1200 : fresh.length ? 900 : 550);
+        await t(k === 0 ? 700 : fresh.length ? 600 : 250);
       }
       if (f.full) { setBanner(<p className="font-display text-[28px] font-bold text-gold">ВСЁ ПОЛЕ! +×{WS.bellGrand}</p>); await sleep(1500); setBanner(null); }
     } else if (f.kind === "wheel") {
       setFeat({ kind: "wheel", angle: 0, spinning: false, segment: null });
-      setFs({ left: 0, done: 0, total: "0", add: null, tick: 0, title: "🎡 Колесо", sub: "Колесо крутится…", color: st.color });
-      await t(500);
+      setFs({ left: 0, done: 0, total: "0", add: null, tick: 0, title: "🎡 Колесо", sub: "Крути колесо!", color: st.color });
+      await waitTap("Крутить колесо", st.color);
+      setFs((x) => x && { ...x, sub: "Колесо крутится…" });
       const seg = 360 / WS.wheel.length;
       setFeat({ kind: "wheel", angle: 360 * 6 - f.segment * seg - (Math.random() - 0.5) * seg * 0.6, spinning: true, segment: f.segment });
       await sleep(4400);
@@ -323,6 +368,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
     setFeat(null); setFs(null); setHl(null); setLines([]);
     // Сундук опустел — показываем его заново (уже с новым порогом)
     setChests((cs) => cs.map((c, i) => (i === tr.chest ? { kind: c.kind, have: 0 } : c)));
+    setFs(null);
   }
 
   async function play(): Promise<boolean> {
@@ -338,6 +384,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
     else await t(r.baseWin > 0 ? 700 : 150);
     count(r.triggers.length > 0);
     if (r.base.mult >= 10) await showBig(r.base.mult, String(r.baseWin));
+    if (r.triggers.length) setAuto(0);   // бонус игрок проходит сам — автоигра останавливается
     for (const tr of r.triggers) await playTrigger(tr, r);
     setChests(meterView(r.after));
     setLastWin(r0.round.payout);
@@ -366,8 +413,8 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
-          <div className="grid grid-cols-5 gap-1 sm:gap-2">
-            {chests.map((c, i) => <Chest key={c.kind} v={c} i={i} refEl={(el) => { chestEls.current[i] = el; }} />)}
+          <div ref={stageRef} className="relative mx-auto w-full max-w-[560px] scroll-mt-20" style={{ aspectRatio: "100 / 66" }}>
+            {chests.map((c, i) => <Chest key={c.kind} v={c} i={i} refEl={(el) => { chestEls.current[i] = el; }} waiting={opening === i} onOpen={() => actionRes.current?.()} />)}
           </div>
           <BonusTotal state={fs} color={st} title={fs?.title} sub={fs?.sub} label="Выигрыш сундука" />
           <div ref={reelsBox} className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#3a1d0e,#140a05)] p-2 shadow-[inset_0_0_0_2px_rgb(255_176_46/0.6),0_20px_50px_-20px_#000] sm:p-3">
@@ -387,7 +434,13 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} short={big?.short} onDone={() => bigDone.current()} />
           </div>
           <DryCounter dry={dry} prev={prev} avg={57} />
-          {user ? (
+          {action ? (
+            <motion.button type="button" data-testid="bonus-action" onClick={() => actionRes.current?.()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: [1, 1.03, 1], opacity: 1 }} transition={{ scale: { duration: 1.2, repeat: Infinity } }}
+              className="h-16 rounded-2xl font-display text-[clamp(16px,4vw,20px)] font-bold uppercase tracking-wide text-ink shadow-[0_12px_30px_-10px_#000]"
+              style={{ background: `linear-gradient(180deg, #fff6, transparent), ${action.color}`, boxShadow: `0 0 0 3px #ffffff33, 0 0 30px -4px ${action.color}` }}>
+              {action.label}
+            </motion.button>
+          ) : user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play()}
               auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#b45309", "#ffb02e"]} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
@@ -425,7 +478,8 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             </div>
           ))}
         </div>
-        <p>Выигрыш бонуса — множитель × текущая ставка (не больше ×{WS.maxFeature}). Автоигра бесконечная, подарки в ней открываются сами. Расчётный RTP ≈ 95,5%.</p>
+        <p>Бонус проходишь сам: открываешь сундук, выбираешь подарки, запускаешь вращения, перекруты и колесо. Автоигра на бонусе останавливается. Призы бонуса определяются в момент спина — так любой раунд можно пересчитать на странице «Честность»; от порядка нажатий сумма не меняется.</p>
+        <p>Выигрыш бонуса — множитель × текущая ставка (не больше ×{WS.maxFeature}). Расчётный RTP ≈ 95,5%.</p>
       </InfoModal>
     </div>
   );
