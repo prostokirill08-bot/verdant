@@ -67,7 +67,7 @@ export function CoinflipGame({ cfg }: { cfg: GameConfig }) {
   const controls = (
     <>
       <BetAmount value={amount} onChange={setAmount} cfg={cfg} disabled={playing} />
-      <div><Label>Сторона</Label><Segmented value={side} onChange={setSide} disabled={playing} options={[["heads", "⭐ Орёл"], ["tails", "❄️ Решка"]]} /></div>
+      <div><Label>Сторона</Label><Segmented value={side} onChange={setSide} disabled={playing} options={[["heads", "⭐ Орёл"], ["tails", "V Решка"]]} /></div>
       <div>
         <Label aside={<span className="font-mono text-soft">{flips}</span>}>Бросков подряд</Label>
         <input type="range" min={1} max={10} value={flips} onChange={(e) => setFlips(Number(e.target.value))} disabled={playing} className="w-full accent-[#fbbf24]" aria-label="Количество бросков" />

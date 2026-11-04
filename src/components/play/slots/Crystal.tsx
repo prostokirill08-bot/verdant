@@ -11,7 +11,7 @@ import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sle
 
 const NAMES: Record<string, string> = {
   castle: "Ледяной дворец", troika: "Тройка", key: "Золотой ключ", bauble_gold: "Золотой шар", bauble_red: "Красный шар",
-  bauble_green: "Зелёный шар", bauble_blue: "Синий шар", orb: "Хрустальный шар", star: "Звезда",
+  bauble_green: "Зелёный шар", bauble_blue: "Синий шар", orb: "Crystal Vault", star: "Звезда",
 };
 const PAYING = CRY.ladder;
 const randomSym = () => { const x = Math.random(); return x < 0.05 ? "orb" : x < 0.08 ? "star" : PAYING[Math.floor(Math.random() * PAYING.length)]!; };
@@ -29,7 +29,7 @@ const START: string[][] = [["bauble_red", "castle", "bauble_blue"], ["key", "orb
 export function CrySym({ s, big }: { s: string; big?: boolean }) {
   return (
     <>
-      <Image src={`/img/ny/slots/crystal/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="120px" className={`rounded-lg object-cover ${s === "star" ? "ring-2 ring-gold/70" : s === "orb" ? "ring-2 ring-[#a78bfa]/80" : ""}`} draggable={false} />
+      <Image src={`/img/verdant/slots/crystal/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="120px" className={`rounded-lg object-cover ${s === "star" ? "ring-2 ring-gold/70" : s === "orb" ? "ring-2 ring-[#a78bfa]/80" : ""}`} draggable={false} />
       {s === "star" && !big && <BonusLabel />}
     </>
   );
@@ -186,11 +186,11 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
       <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #a78bfa" }}>
-        <Image src="/img/ny/bg/crystal.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <Image src="/img/verdant/bg/crystal.webp" alt="" fill priority sizes="100vw" className="object-cover object-[78%_center]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#120a2e]/45 via-[#0b0820]/35 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e9d5ff] drop-shadow-[0_2px_14px_rgb(167_139_250/0.9)]">🔮 ХРУСТАЛЬНЫЙ ШАР</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e9d5ff] drop-shadow-[0_2px_14px_rgb(167_139_250/0.9)]">◇ CRYSTAL VAULT</h2>
           </div>
           {/* Лестница улучшений: какой символ сейчас внутри шаров */}
           <AnimatePresence>{fs && (
@@ -232,7 +232,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         </div>
       </div>
       <RoundsPanel slug="crystal" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Хрустальный шар — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Crystal Vault — выплаты">
         <p>10 линий, ставка делится поровну между линиями. Выплата — за 3–5 одинаковых символов слева направо; числа — во сколько раз выигрыш больше ставки на линию.</p>
         <div className="grid grid-cols-2 gap-2">
           {[...CRY.ladder].reverse().map((s) => (
@@ -244,7 +244,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><CrySym s="orb" big /></span>
-          <p><b className="text-[#c4b5fd]">Хрустальный шар</b> — символ-загадка. После остановки все шары на поле раскрываются в <b>один и тот же</b> случайный символ.</p>
+          <p><b className="text-[#c4b5fd]">Crystal Vault</b> — символ-загадка. После остановки все шары на поле раскрываются в <b>один и тот же</b> случайный символ.</p>
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><CrySym s="star" big /></span>

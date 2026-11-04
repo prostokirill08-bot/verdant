@@ -10,7 +10,7 @@ import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sle
 
 const IMG: Record<string, string> = { astronaut: "astronaut", telescope: "telescope", comet: "comet", planet: "planet", book: "book" };
 const RANK: Record<string, [string, string]> = { "10": ["#ff6b6b", "#c2185b"], J: ["#60a5fa", "#1d4ed8"], Q: ["#4ade80", "#15803d"], K: ["#fbbf24", "#c2410c"], A: ["#c084fc", "#7e22ce"] };
-const NAMES: Record<string, string> = { astronaut: "Космо-Санта", telescope: "Телескоп с гирляндой", comet: "Рождественская звезда", planet: "Ёлочный шар", book: "Атлас Деда Мороза", A: "A", K: "K", Q: "Q", J: "J", "10": "10" };
+const NAMES: Record<string, string> = { astronaut: "Космический исследователь", telescope: "Телескоп", comet: "Звезда", planet: "Кристалл", book: "Атлас", A: "A", K: "K", Q: "Q", J: "J", "10": "10" };
 const SYMS = ATLAS.symbols.filter((s) => s !== "book");
 const randomSym = () => (Math.random() < 0.06 ? "book" : SYMS[Math.floor(Math.random() * SYMS.length)]!);
 // Стартовая раскладка фиксированная — одинаковая на сервере и в браузере (без ошибки гидратации)
@@ -19,7 +19,7 @@ const START: string[][] = [["A", "astronaut", "10"], ["K", "book", "Q"], ["teles
 export function Sym({ s, big }: { s: string; big?: boolean }) {
   if (IMG[s]) return (
     <>
-      <Image src={`/img/ny/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      <Image src={`/img/verdant/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
       {s === "book" && !big && <BonusLabel />}
     </>
   );
@@ -130,11 +130,11 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
       <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #5b8cff" }}>
-        <Image src="/img/ny/bg/atlas.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <Image src="/img/verdant/bg/atlas.webp" alt="" fill priority sizes="100vw" className="object-cover object-[78%_center]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/40 via-[#070b1f]/30 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_12px_rgb(124_92_255/0.9)]">🎄 АТЛАС ЗВЁЗД</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_12px_rgb(124_92_255/0.9)]">◈ ATLAS OF STARS</h2>
             <AnimatePresence>{fs && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 rounded-xl bg-black/50 px-3 py-1.5 ring-1 ring-gold/50">
                 <span className="relative size-8 overflow-hidden rounded-md"><Sym s={fs.special} /></span>
@@ -173,7 +173,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
         </div>
       </div>
       <RoundsPanel slug="atlas" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Атлас звёзд — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Atlas of Stars — выплаты">
         <p>10 линий, ставка делится поровну между линиями. Выплата — за 2–5 одинаковых символов слева направо. Числа ниже — во сколько раз выигрыш больше ставки на линию (ставка ÷ 10).</p>
         <div className="grid grid-cols-2 gap-2">
           {(["astronaut", "telescope", "comet", "planet", "A", "K", "Q", "J", "10"] as const).map((s) => (

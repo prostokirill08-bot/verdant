@@ -23,7 +23,7 @@ const fromGrid = (g: string[][], drop = true): Cell[] => g.flatMap((col, reel) =
 export function AvaSym({ s, big }: { s: string; big?: boolean }) {
   return (
     <>
-      <Image src={`/img/ny/slots/avalanche/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="100px" className={`rounded-lg object-cover ${s === "snowflake" ? "ring-2 ring-[#8fdcff]" : ""}`} draggable={false} />
+      <Image src={`/img/verdant/slots/avalanche/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="100px" className={`rounded-lg object-cover ${s === "snowflake" ? "ring-2 ring-[#8fdcff]" : ""}`} draggable={false} />
       {s === "snowflake" && !big && <BonusLabel />}
     </>
   );
@@ -176,17 +176,17 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
       <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #8fdcff" }}>
-        <Image src="/img/ny/bg/avalanche.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <Image src="/img/verdant/bg/avalanche.webp" alt="" fill priority sizes="100vw" className="object-cover object-[78%_center]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#06142e]/40 via-[#071026]/30 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e0f2fe] drop-shadow-[0_2px_14px_rgb(143_220_255/0.9)]">❄️ СНЕЖНАЯ ЛАВИНА</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e0f2fe] drop-shadow-[0_2px_14px_rgb(143_220_255/0.9)]">AVALANCHE</h2>
             <AnimatePresence>{x !== null && (
               <motion.div key={x} initial={{ scale: 1.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 12 }}
                 className="rounded-2xl bg-[linear-gradient(180deg,#e0f2fe,#60a5fa)] px-3 py-1 font-display text-[clamp(20px,4vw,28px)] font-bold text-[#06142e] shadow-[0_0_30px_#8fdcff]" data-testid="ava-x">×{x}</motion.div>
             )}</AnimatePresence>
           </div>
-          <BonusTotal state={fs} color="#8fdcff" title="❄️ Лавина" sub={fs && x ? `Множитель лавины ×${x} — растёт с каждым обвалом` : undefined} />
+          <BonusTotal state={fs} color="#8fdcff" title="✦ Лавина" sub={fs && x ? `Множитель лавины ×${x} — растёт с каждым обвалом` : undefined} />
           <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#123a6b,#071a38)] p-2 shadow-[inset_0_0_0_2px_rgb(191_230_255/0.6),0_20px_50px_-20px_#000] sm:p-3">
             <CascadeGrid cells={cells} hot={hot} shards={shards} />
             <AnimatePresence>{winText && (
@@ -206,7 +206,7 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
         </div>
       </div>
       <RoundsPanel slug="avalanche" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Снежная лавина — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Avalanche — выплаты">
         <p>Поле 6×5, линий нет: платят <b>8 и больше одинаковых символов в любом месте</b>. Выигрышные символы раскалываются, оставшиеся падают вниз, сверху досыпаются новые — и так, пока появляются новые выигрыши (каскад). Числа — во сколько раз выигрыш больше общей ставки за 8–9 / 10–11 / 12+ символов.</p>
         <div className="grid grid-cols-2 gap-2">
           {[...AVA.high].reverse().concat([...AVA.low].reverse()).map((s) => (

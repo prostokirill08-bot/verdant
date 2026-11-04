@@ -62,14 +62,14 @@ export function BonusesPage() {
         <p className="mt-1 text-muted">Все призы — в демо-рублях: их нельзя купить или вывести.</p>
       </div>
 
-      {/* ---------- Сундук со снежными ключами ---------- */}
-      <section id="chest" className="relative scroll-mt-24 overflow-hidden rounded-[28px] border border-line bg-[#0b1638]">
-        <Image src="/img/ny/banners/chest.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 1000px" className="object-cover object-[75%_center] opacity-70" />
+      {/* ---------- Сундук с ключами ---------- */}
+      <section id="chest" className="relative scroll-mt-24 overflow-hidden rounded-[28px] border border-line bg-[#06140b]">
+        <Image src="/img/verdant/banners/chest.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 1000px" className="object-cover object-[75%_center] opacity-70" />
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/10" />
         <div className="relative grid gap-5 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid content-start gap-3">
-            <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#8fdcff]">🔑 Акция · снежные ключи</p>
-            <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Сундук Деда Мороза</h2>
+            <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#52e994]">🔑 Акция · изумрудные ключи</p>
+            <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Изумрудный сундук</h2>
             <p className="max-w-lg text-[15px] text-white/80">Ключ выпадает за ставки в любой игре — в среднем 1 ключ на каждые {k ? points(k.perWager) : "2 000 ₽"} ставок: чем больше ставка, тем выше шанс. Собери {k?.need ?? 4} ключа и открой сундук: внутри приз или весь джекпот.</p>
             <div className="mt-1 w-fit rounded-2xl bg-black/40 px-4 py-3 ring-1 ring-gold/40">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold/80">Джекпот сундука</p>
@@ -109,11 +109,11 @@ export function BonusesPage() {
       {/* ---------- Турнир недели ---------- */}
       <section id="tournament" className="scroll-mt-24 overflow-hidden rounded-[28px] border border-line bg-panel">
         <div className="relative min-h-[220px] overflow-hidden">
-          <Image src="/img/ny/banners/tournament.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 1000px" className="object-cover object-[80%_center]" />
+          <Image src="/img/verdant/banners/tournament.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 1000px" className="object-cover object-[80%_center]" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/75 to-transparent" />
           <div className="relative grid gap-3 p-5 sm:p-8">
             <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-gold">🏆 Турнир недели</p>
-            <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Ледяная гонка</h2>
+            <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Emerald Challenge</h2>
             <p className="max-w-lg text-[15px] text-white/80">Побеждает самый крупный множитель одного выигрыша за неделю (ставка от 1 ₽, любая игра). Призы начисляются автоматически в понедельник.</p>
             {t && <div><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">До конца турнира</p><Countdown to={t.endsAt} label="До конца турнира" compact /></div>}
           </div>
@@ -160,7 +160,7 @@ export function BonusesPage() {
           <h2 className="mt-1 font-display text-[22px] font-bold">Подарок дня от Котонавта</h2>
           <p className="mt-1 max-w-xs text-[14px] text-white/75">Раз в сутки забирай демо-рубли в кабинете.</p>
           <Link href={user ? "/account" : "/register"} className="mt-4 inline-block"><Button>{user ? "Забрать подарок" : "Начать играть"}</Button></Link>
-          <Image src="/img/ny/mascot/cat.webp" alt="" width={200} height={200} className="pointer-events-none absolute -bottom-4 right-0 w-[130px] [mask-image:radial-gradient(circle,#000_55%,transparent_72%)]" />
+          <Image src="/img/verdant/covers/coinflip.webp" alt="" width={200} height={200} className="pointer-events-none absolute -bottom-4 right-0 w-[130px] [mask-image:radial-gradient(circle,#000_55%,transparent_72%)]" />
         </section>
         {/* ---------- Последние призы ---------- */}
         <section className="rounded-[28px] border border-line bg-panel p-5">
@@ -205,7 +205,7 @@ function ChestReveal({ opened, onClose }: { opened: Opened | null; onClose: () =
             <AnimatePresence>
               {stage === 1 && (
                 <motion.div initial={{ opacity: 0, y: 20, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="relative grid gap-1">
-                  <p className="font-display text-[15px] font-bold uppercase tracking-[0.2em] text-[#8fdcff]">{opened.grand ? "Джекпот!" : "Твой приз"}</p>
+                  <p className="font-display text-[15px] font-bold uppercase tracking-[0.2em] text-[#52e994]">{opened.grand ? "Джекпот!" : "Твой приз"}</p>
                   <p className="font-display text-[44px] font-bold text-gold [text-shadow:0_0_30px_#ffb02e]" data-testid="chest-prize">+{points(opened.prize)}</p>
                   <p className="text-[13px] text-white/70">Начислено на баланс · нажми, чтобы закрыть</p>
                 </motion.div>

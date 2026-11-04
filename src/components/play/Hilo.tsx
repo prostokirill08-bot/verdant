@@ -82,7 +82,7 @@ export function HiloGame({ cfg }: { cfg: GameConfig }) {
   const stage = (
     <div className="grid min-h-[400px] place-items-center gap-5 p-5">
       <div className="relative flex items-center gap-6">
-        <div className="hidden h-[190px] w-[136px] place-items-center rounded-2xl bg-[repeating-linear-gradient(45deg,#b5122f_0_10px,#8a0d24_10px_20px)] text-[48px] ring-2 ring-gold/60 sm:grid" aria-hidden>❄️</div>
+        <div className="hidden h-[190px] w-[136px] place-items-center rounded-2xl bg-[radial-gradient(circle_at_50%_35%,#1d9a5a,#06140c_70%)] text-[48px] ring-2 ring-accent/50 sm:grid" aria-hidden>V</div>
         <AnimatePresence mode="popLayout">
           {cur ? (
             <motion.div key={cur.i} initial={{ rotateY: 90, x: -40 }} animate={{ rotateY: 0, x: 0 }} transition={{ duration: 0.35 }}>

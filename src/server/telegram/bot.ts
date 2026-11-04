@@ -22,7 +22,7 @@ async function call<T = unknown>(method: string, payload: Record<string, unknown
   return data.result as T;
 }
 
-const DESCRIPTION = "Verdant — новогодние мини-игры: слоты, Crash, Mines, блэкджек, турнир недели и сундук с джекпотом.\n\nДемо-проект: игра идёт только на виртуальные демо-рубли, их нельзя купить или вывести.";
+const DESCRIPTION = "VERDANT — оригинальные мини-игры: слоты, Crash, Mines, блэкджек и турнир недели.\n\nДемо-проект: игра идёт только на виртуальные демо-рубли, их нельзя купить или вывести.";
 
 /** Настройка бота при старте сервера: вебхук, кнопка меню «Играть», команды и описание. */
 export async function setupBot() {
@@ -35,7 +35,7 @@ export async function setupBot() {
     await call("setWebhook", { url: `${url}/api/telegram/webhook`, secret_token: webhookSecret(), allowed_updates: ["message"], drop_pending_updates: true });
     await call("setChatMenuButton", { menu_button: { type: "web_app", text: "Играть", web_app: { url } } });
     await call("setMyCommands", { commands: [{ command: "start", description: "Открыть игры" }, { command: "games", description: "Список игр" }, { command: "help", description: "Что это за бот" }] });
-    await call("setMyShortDescription", { short_description: "Новогодние мини-игры на демо-рублях 🎄" }).catch(() => {});
+    await call("setMyShortDescription", { short_description: "Мини-игры VERDANT на виртуальных демо-кредитах" }).catch(() => {});
     await call("setMyDescription", { description: DESCRIPTION }).catch(() => {});
     console.log(`[telegram] бот @${me.username} подключён, Mini App: ${url}`);
   } catch (e) {
@@ -45,7 +45,7 @@ export async function setupBot() {
 
 type Message = { chat: { id: number; type: string }; text?: string; from?: { first_name?: string } };
 const open = (text: string, path = "") => ({ text, web_app: { url: `${appUrl()}${path}` } });
-const FEATURED: [string, string][] = [["🎰 Мастерская Санты", "workshop"], ["🃏 Блэкджек", "blackjack"], ["🚀 Crash", "crash"], ["💣 Mines", "mines"], ["🛷 Гонка на санях", "sledrace"], ["🂡 Снежный покер", "videopoker"]];
+const FEATURED: [string, string][] = [["🎰 Emerald Cases", "workshop"], ["🃏 Блэкджек", "blackjack"], ["🚀 Crash", "crash"], ["💣 Mines", "mines"], ["➤ Race", "sledrace"], ["🂡 Video Poker", "videopoker"]];
 
 /** Ответ на сообщение боту. Кнопки web_app открывают сайт внутри Telegram с автоматическим входом. */
 export async function handleMessage(m: Message) {
@@ -57,7 +57,7 @@ export async function handleMessage(m: Message) {
     const game = arg && (GAME_SLUGS as readonly string[]).includes(arg) ? arg : null;
     await call("sendMessage", {
       chat_id: m.chat.id,
-      text: `Привет${name ? `, ${name}` : ""}! 🎄\n\nЭто Verdant — 21 новогодняя игра, сундук со снежными ключами и турнир недели. Вход — через Telegram, ничего вводить не нужно. Баланс пополняется в демо-кассе — от 300 ₽.\n\nДемо-проект: реальных денег здесь нет.`,
+      text: `Привет${name ? `, ${name}` : ""}! \n\nЭто VERDANT — коллекция оригинальных игровых режимов, турниры и достижения. Вход — через Telegram, ничего вводить не нужно. Баланс пополняется в демо-кассе — от 300 ₽.\n\nДемо-проект: реальных денег здесь нет.`,
       reply_markup: { inline_keyboard: [[open(game ? "▶️ Открыть игру" : "🎮 Играть", game ? `/games/${game}` : "")], [open("🎁 Бонусы и турнир", "/bonuses")]] },
     });
   } else if (cmd === "/games") {

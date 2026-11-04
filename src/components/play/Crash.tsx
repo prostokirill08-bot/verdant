@@ -108,7 +108,7 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
 
   // Спрайт саней Санты (PNG с прозрачностью)
   const sleigh = useRef<HTMLImageElement | null>(null);
-  useEffect(() => { const img = new Image(); img.src = "/img/ny/sprites/sleigh.png"; sleigh.current = img; }, []);
+  useEffect(() => { const img = new Image(); img.src = "/img/verdant/rocket.svg"; sleigh.current = img; }, []);
   const drawSleigh = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, crashed: boolean, w: number) => {
     const img = sleigh.current!; const sw = Math.min(150, Math.max(90, w * 0.16)); const sh = (sw * img.naturalHeight) / img.naturalWidth;
     ctx.save(); ctx.translate(x, y); ctx.rotate(Math.max(-1.1, Math.min(ang, 1.4)));
@@ -212,21 +212,21 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
       </div>
       <div className="relative h-[300px] overflow-hidden sm:h-[380px]">
         {/* Ночное небо над заснеженной деревней */}
-        <NextImage src="/img/ny/bg/crash.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover opacity-70" />
+        <NextImage src="/img/verdant/bg/crash.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover object-[100%_center] opacity-30" />
         <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/10 to-ink/70" />
         <canvas ref={canvas} className="absolute inset-0 size-full" aria-hidden />
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <AnimatePresence mode="wait">
             {status === "BETTING" ? (
               <motion.div key="bet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid w-56 gap-2 text-center">
-                <p className="text-[13px] uppercase tracking-wider text-soft">🛷 Санта готовится к взлёту</p>
+                <p className="text-[13px] uppercase tracking-wider text-soft">Ракета готовится к запуску</p>
                 <p className="font-display text-[40px] font-bold tabular">{(left / 1000).toFixed(1)}с</p>
                 <div className="h-1.5 overflow-hidden rounded-full bg-raised"><div className="h-full bg-[linear-gradient(90deg,#e8263f,#ffd166)]" style={{ width: `${(left / 7000) * 100}%` }} /></div>
               </motion.div>
             ) : status === "RUNNING" || status === "CRASHED" ? (
               <motion.div key={`run-${round?.id}`} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
                 <span ref={label} className={`font-display text-[56px] font-bold tabular sm:text-[76px] ${status === "CRASHED" ? "text-danger" : "text-white"}`}>{(status === "CRASHED" ? round!.crashPoint! : liveMult).toFixed(2)}×</span>
-                {status === "CRASHED" && <p className="font-semibold text-danger">Сани упали в сугроб! ❄️</p>}
+                {status === "CRASHED" && <p className="font-semibold text-danger">Раунд завершён</p>}
               </motion.div>
             ) : (
               <p key="wait" className="text-muted">{status === "DISABLED" ? "Игра временно отключена" : "Подключение…"}</p>

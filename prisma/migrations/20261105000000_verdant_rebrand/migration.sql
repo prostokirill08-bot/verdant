@@ -1,0 +1,22 @@
+-- Ребрендинг VERDANT: названия и описания игр в каталоге (совпадают с src/lib/games.ts)
+UPDATE "Game" SET "title" = 'Avalanche', "tagline" = 'Собирай комбинации и открывай каскадные множители' WHERE "slug" = 'avalanche';
+UPDATE "Game" SET "title" = 'Neon Burst', "tagline" = 'Яркие символы, бонусные раунды и крупные комбинации' WHERE "slug" = 'salute';
+UPDATE "Game" SET "title" = 'Crystal Vault', "tagline" = 'Открой кристальные символы и собери выигрышную линию' WHERE "slug" = 'crystal';
+UPDATE "Game" SET "title" = 'Emerald Cases', "tagline" = 'Серия сундуков с разными наградами и бонусами' WHERE "slug" = 'workshop';
+UPDATE "Game" SET "title" = 'Atlas of Stars', "tagline" = 'Исследуй символы и активируй расширяющиеся wild-барабаны' WHERE "slug" = 'atlas';
+UPDATE "Game" SET "title" = 'Neon Garden', "tagline" = 'Неоновые символы и бонусные бесплатные вращения' WHERE "slug" = 'neon-garden';
+UPDATE "Game" SET "title" = 'Blackjack', "tagline" = 'Набери 21 раньше дилера: удвоение, сплит, блэкджек 3:2' WHERE "slug" = 'blackjack';
+UPDATE "Game" SET "title" = 'Video Poker', "tagline" = 'Собери сильную комбинацию из пяти карт' WHERE "slug" = 'videopoker';
+UPDATE "Game" SET "title" = 'Baccarat', "tagline" = 'Игрок, банкир или ничья — кто ближе к девяти' WHERE "slug" = 'baccarat';
+UPDATE "Game" SET "title" = 'Race', "tagline" = 'Выбери участника и следи за гонкой до финиша' WHERE "slug" = 'sledrace';
+UPDATE "Game" SET "title" = 'Crash', "tagline" = 'Следи за ростом множителя и забирай вовремя' WHERE "slug" = 'crash';
+UPDATE "Game" SET "title" = 'Mines', "tagline" = 'Открывай безопасные клетки и обходи мины' WHERE "slug" = 'mines';
+UPDATE "Game" SET "title" = 'Dice', "tagline" = 'Выбери вероятность и брось кости' WHERE "slug" = 'dice';
+UPDATE "Game" SET "title" = 'Plinko', "tagline" = 'Запусти шар сквозь поле множителей' WHERE "slug" = 'plinko';
+UPDATE "Game" SET "title" = 'Limbo', "tagline" = 'Проверь, достигнет ли раунд заданного множителя' WHERE "slug" = 'limbo';
+UPDATE "Game" SET "title" = 'Tower', "tagline" = 'Поднимайся по уровням и выбирай момент остановки' WHERE "slug" = 'tower';
+UPDATE "Game" SET "title" = 'Hi-Lo', "tagline" = 'Угадай, будет следующая карта выше или ниже' WHERE "slug" = 'hilo';
+UPDATE "Game" SET "title" = 'Wheel', "tagline" = 'Запусти колесо и поймай нужный сектор' WHERE "slug" = 'wheel';
+UPDATE "Game" SET "title" = 'Keno', "tagline" = 'Выбери числа и проверь совпадения' WHERE "slug" = 'keno';
+UPDATE "Game" SET "title" = 'Coinflip', "tagline" = 'Выбери сторону монеты' WHERE "slug" = 'coinflip';
+UPDATE "Game" SET "title" = 'Roulette', "tagline" = 'Классическая рулетка на 37 секторов' WHERE "slug" = 'roulette';

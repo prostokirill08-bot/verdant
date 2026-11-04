@@ -1,10 +1,10 @@
 "use client";
 import { motion } from "framer-motion";
 
-// Игральная карта в новогоднем стиле: белая карта с остролистом, рубашка — красная в полоску со снежинкой.
+// Игральная карта в фирменном изумрудном стиле VERDANT.
 const SUITS = ["♠", "♥", "♦", "♣"];
 const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-const FACE: Record<number, string> = { 11: "🧝", 12: "👸", 13: "🎅" };
+const FACE: Record<number, string> = { 11: "🧝", 12: "👸", 13: "♛" };
 export type CardData = { rank: number; suit: number };
 
 const SIZE = {
@@ -24,18 +24,18 @@ export function PlayingCard({ card, hidden, size = "md", delay = 0, from = { x: 
       className={`relative aspect-[5/7] shrink-0 [perspective:600px] ${SIZE[size]}`}>
       <motion.div className="absolute inset-0 [transform-style:preserve-3d]" initial={false} animate={{ rotateY: showFace ? 0 : 180 }} transition={{ duration: 0.45, delay: showFace ? delay + 0.15 : 0 }}>
         {/* Лицо */}
-        <div className={`absolute inset-0 overflow-hidden rounded-[inherit] bg-[linear-gradient(160deg,#ffffff,#e9f1ff)] shadow-[0_10px_24px_-10px_rgb(0_0_0/0.8)] [backface-visibility:hidden] ${red ? "text-[#e11d48]" : "text-[#1e1b4b]"}`}
+        <div className={`absolute inset-0 overflow-hidden rounded-[inherit] bg-[linear-gradient(160deg,#ffffff,#e8f5ec)] shadow-[0_10px_24px_-10px_rgb(0_0_0/0.8)] [backface-visibility:hidden] ${red ? "text-[#e11d48]" : "text-[#1e1b4b]"}`}
           style={glow ? { boxShadow: `0 0 0 2px ${glow}, 0 0 18px ${glow}` } : undefined}>
           {card && <>
             <span className="absolute left-[8%] top-[5%] text-center font-display font-bold leading-[0.95]">{RANKS[card.rank]}<br />{SUITS[card.suit]}</span>
             <span className="absolute bottom-[5%] right-[8%] rotate-180 text-center font-display font-bold leading-[0.95]">{RANKS[card.rank]}<br />{SUITS[card.suit]}</span>
             <span className="absolute inset-0 grid place-items-center text-[2.4em] leading-none">{FACE[card.rank] ?? SUITS[card.suit]}</span>
-            <span aria-hidden className="absolute right-[6%] top-[5%] text-[0.75em] opacity-80">🌿</span>
+            <span aria-hidden className="absolute right-[6%] top-[5%] text-[0.75em] opacity-80">◈</span>
           </>}
         </div>
         {/* Рубашка */}
-        <div className="absolute inset-0 grid place-items-center overflow-hidden rounded-[inherit] bg-[repeating-linear-gradient(45deg,#b5122f_0_8px,#8a0d24_8px_16px)] shadow-[0_10px_24px_-10px_rgb(0_0_0/0.8)] ring-2 ring-inset ring-gold/60 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-          <span className="text-[1.8em]" aria-hidden>❄️</span>
+        <div className="absolute inset-0 grid place-items-center overflow-hidden rounded-[inherit] bg-[repeating-linear-gradient(45deg,#0e5835_0_8px,#062516_8px_16px)] shadow-[0_10px_24px_-10px_rgb(0_0_0/0.8)] ring-2 ring-inset ring-accent/60 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <span className="text-[1.8em]" aria-hidden>✦</span>
         </div>
       </motion.div>
     </motion.div>

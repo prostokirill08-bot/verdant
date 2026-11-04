@@ -69,7 +69,7 @@ export function KenoGame({ cfg }: { cfg: GameConfig }) {
             <motion.button key={n} type="button" onClick={() => toggle(n)} disabled={locked} aria-pressed={picked}
               animate={out ? { scale: [1.25, 1] } : { scale: 1 }} transition={{ duration: 0.25 }}
               className={`relative grid aspect-square place-items-center rounded-full font-mono text-[clamp(12px,2.6vw,16px)] font-bold transition-colors ${hit ? "bg-[radial-gradient(circle_at_35%_30%,#fff6c8,#ffd166_45%,#b7791f)] text-ink shadow-[0_0_18px_rgb(255_209_102/0.8)]" : picked ? "bg-[radial-gradient(circle_at_35%_30%,#ffb3bd,#e8263f_50%,#7a0c20)] text-white" : out ? "bg-[radial-gradient(circle_at_35%_30%,#e2f6ff,#8fdcff_45%,#2a6fa0)] text-ink" : "bg-[radial-gradient(circle_at_35%_30%,#3a4a8a,#1a2349_60%)] text-soft ring-1 ring-white/10 hover:brightness-125"}`}>
-              {/* Ёлочный шар: колпачок сверху */}
+              {/* Кристалл: колпачок сверху */}
               <span aria-hidden className="absolute -top-[9%] left-1/2 h-[16%] w-[26%] -translate-x-1/2 rounded-sm bg-[linear-gradient(180deg,#ffe7a3,#b7791f)]" />
               {hit ? "⭐" : n}
             </motion.button>

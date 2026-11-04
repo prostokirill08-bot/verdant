@@ -162,7 +162,7 @@ const TIERS = [
   { at: 100, title: "ЛЕГЕНДАРНЫЙ ВЫИГРЫШ", c: ["#3ee08f", "#ffd166"] },
   { at: 200, title: "УЛЬТРА ВЫИГРЫШ", c: ["#ff5cf0", "#ffd166"] },
 ] as const;
-const RAIN = ["🪙", "⭐", "❄️", "🎁", "✨", "🪙", "💰"];
+const RAIN = ["🪙", "⭐", "✦", "🎁", "✨", "🪙", "💰"];
 const fmt = (v: number) => v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const tierOf = (m: number) => TIERS.reduce((best, t, i) => (m >= t.at ? i : best), 0);
 
@@ -192,7 +192,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
 
   useEffect(() => {
     if (!show) { setTierIdx(0); setFinished(false); skip.current = false; return; }
-    document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый снег под оверлеем
+    document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый эффекты под оверлеем
     const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0; let lastTick = 0;
     sfx(short ? "win" : "bigwin");
     const tick = (t: number) => {

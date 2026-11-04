@@ -6,7 +6,7 @@ import { useGameModal } from "./GameModal";
 
 type Item = { slug: GameSlug; title: string; tagline: string; enabled: boolean };
 type Tab = GameCategory | "all" | "fav" | "new";
-const TABS: [Tab, string, string][] = [["all", "Все игры", "❄️"], ["new", "Новинки", "✨"], ["slots", CATEGORY_NAMES.slots, "🎁"], ["table", CATEGORY_NAMES.table, "🃏"], ["originals", CATEGORY_NAMES.originals, "⚡"], ["fav", "Избранное", "❤️"]];
+const TABS: [Tab, string, string][] = [["all", "Все игры", "◈"], ["new", "Новинки", "✨"], ["slots", CATEGORY_NAMES.slots, "▣"], ["table", CATEGORY_NAMES.table, "🃏"], ["originals", CATEGORY_NAMES.originals, "⚡"], ["fav", "Избранное", "❤️"]];
 const isTab = (x?: string): x is Tab => TABS.some(([k]) => k === x);
 
 export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: string }) {

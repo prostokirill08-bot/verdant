@@ -2,8 +2,8 @@ import { forwardRef } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 const styles: Record<Variant, string> = {
-  // Лаймовый акцент новой темы
-  primary: "bg-[linear-gradient(135deg,#a7f66b,#6cc837)] text-[#0a1608] hover:brightness-110 shadow-[0_8px_26px_-12px_#8bea4e,inset_0_-3px_0_rgb(0_0_0/0.15),inset_0_1px_0_rgb(255_255_255/0.35)]",
+  // Неоново-зелёный акцент темы VERDANT
+  primary: "bg-[linear-gradient(135deg,#a7f66b,#35c46e)] text-[#06140a] hover:brightness-110 shadow-[0_8px_26px_-12px_#5be37f,inset_0_-3px_0_rgb(0_0_0/0.15),inset_0_1px_0_rgb(255_255_255/0.35)]",
   secondary: "bg-raised text-white hover:bg-[#25305e]",
   ghost: "bg-transparent text-soft hover:text-white hover:bg-raised",
   danger: "bg-danger/15 text-danger hover:bg-danger/25",

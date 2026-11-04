@@ -12,14 +12,14 @@ import { BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySp
 
 // ===== Оформление =====
 const SYMS = ["cane", "mitten", "ginger", "cocoa", "globe", "nutcracker", "santa"];
-const NAMES: Record<string, string> = { cane: "Леденец", mitten: "Варежка", ginger: "Пряник", cocoa: "Какао", globe: "Снежный шар", nutcracker: "Щелкунчик", santa: "Дед Мороз" };
+const NAMES: Record<string, string> = { cane: "Талисман", mitten: "Перчатка", ginger: "Символ", cocoa: "Энергия", globe: "Сфера", nutcracker: "Страж", santa: "Пилот" };
 /** Цвет и значок каждого сундука: монета того же цвета летит в него. */
 const CHEST_STYLE: Record<ChestKind, { color: string; dark: string; icon: string; about: string }> = {
   gifts: { color: "#3ee08f", dark: "#0d6b3c", icon: "🎁", about: "Открой 3 подарка из 12 — в каждом множитель до ×100." },
-  frost: { color: "#5bc8ff", dark: "#0b4f80", icon: "❄️", about: "10 вращений: каждый Дед Мороз примерзает к месту до конца бонуса." },
+  frost: { color: "#5bc8ff", dark: "#0b4f80", icon: "✦", about: "10 вращений: каждый символ фиксируется на месте до конца бонуса." },
   stars: { color: "#c38bff", dark: "#4b1f8a", icon: "⭐", about: "10 вращений: множитель растёт на +1 после каждого выигрыша." },
   bells: { color: "#ffd166", dark: "#8a5a00", icon: "🔔", about: "Колокольчики с номиналами и 3 перекрута; новый колокольчик возвращает перекруты к 3. Всё поле — ×200." },
-  wheel: { color: "#ff5f6f", dark: "#8a0d24", icon: "🎡", about: "Колесо Деда Мороза: от ×5 до ×250 ставки бонуса." },
+  wheel: { color: "#ff5f6f", dark: "#8a0d24", icon: "🎡", about: "Колесо бонусов: от ×5 до ×250 ставки бонуса." },
 };
 const START: WsCell[][] = [
   [{ sym: "cane" }, { sym: "globe" }, { sym: "mitten" }, { sym: "ginger" }], [{ sym: "cocoa" }, { sym: "santa" }, { sym: "cane" }, { sym: "coin", chest: 0 }],
@@ -68,7 +68,7 @@ function Cell({ c, frozen }: { c: WsCell; frozen?: boolean }) {
   if (c.sym === "coin") return <span className="grid size-full place-items-center"><Coin chest={c.chest ?? 0} /></span>;
   return (
     <span className="relative block size-full">
-      <Image src={`/img/ny/slots/workshop/${c.sym}.webp`} alt={NAMES[c.sym] ?? c.sym} fill sizes="110px" className={`rounded-lg object-cover ${c.sym === "santa" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      <Image src={`/img/verdant/slots/workshop/${c.sym}.webp`} alt={NAMES[c.sym] ?? c.sym} fill sizes="110px" className={`rounded-lg object-cover ${c.sym === "santa" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
       {frozen && <span aria-hidden className="pointer-events-none absolute inset-0 rounded-lg bg-[linear-gradient(160deg,rgb(191_230_255/0.45),rgb(91_200_255/0.15))] ring-2 ring-[#bfe6ff]" />}
     </span>
   );
@@ -96,14 +96,14 @@ function Chest({ v, i, refEl }: { v: ChestView; i: number; refEl: (el: HTMLDivEl
         className={`relative block w-full ${v.full ? "chest-full" : ""}`} style={{ aspectRatio: DOME.aspect }}>
         {v.full && <span aria-hidden className="pointer-events-none absolute -inset-[18%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}88, transparent 62%)` }} />}
         {/* Слои: сундук → горка монет (поднимается через transform) → передняя стенка → значок бонуса */}
-        <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        <Image src={`/img/verdant/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
         <div className="absolute overflow-hidden" style={{ top: DOME.winTop, height: DOME.winH, left: DOME.winX, right: DOME.winX }}>
           {/* Горка монет занимает нижние 62% окна; поднимается из-за передней стенки по мере наполнения */}
           <div className="absolute inset-x-0 bottom-0 h-[62%] transition-transform duration-500 ease-out" style={{ transform: `translateY(${shown ? (1 - fill) * 100 : 100}%)` }}>
-            <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-cover object-bottom" />
+            <Image src="/img/verdant/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-cover object-bottom" />
           </div>
         </div>
-        <Image src={`/img/ny/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        <Image src={`/img/verdant/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
         <span className="absolute left-1/2 top-[68%] grid aspect-square w-[28%] -translate-x-1/2 place-items-center rounded-full"
           style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
           <Glyph kind={v.kind} className="size-[64%]" />
@@ -122,7 +122,7 @@ function GoldHeap({ layer }: { layer: "back" | "front" }) {
     <div aria-hidden className="pointer-events-none absolute inset-x-0" style={layer === "back" ? { top: "30%", height: "24%", zIndex: 2 } : { bottom: "-3%", height: "23%", zIndex: 4 }}>
       {parts.map((p, k) => (
         <div key={k} className="absolute bottom-0 h-full" style={{ left: `${p.l}%`, width: `${p.w}%`, transform: p.flip ? "scaleX(-1)" : undefined }}>
-          <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="260px" className="object-cover object-bottom" />
+          <Image src="/img/verdant/slots/workshop/pile.webp" alt="" fill sizes="260px" className="object-cover object-bottom" />
         </div>
       ))}
     </div>
@@ -390,7 +390,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       setFeat({ kind: "gifts", boxes: display, opened: [...opened], picks: f.picks, reveal: true });
       await t(1400);
     } else if (f.kind === "frost" || f.kind === "stars") {
-      await runSpins(f.spins, tr, f.kind === "frost" ? "❄️ Мороз" : "⭐ Звездопад");
+      await runSpins(f.spins, tr, f.kind === "frost" ? "✦ Мороз" : "⭐ Звездопад");
       setSticky(new Set()); setStarX(null);
     } else if (f.kind === "bells") {
       let prevKeys: string[] = [];
@@ -463,11 +463,11 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
       <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #ffb02e" }}>
-        <Image src="/img/ny/bg/workshop.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <Image src="/img/verdant/bg/workshop.webp" alt="" fill priority sizes="100vw" className="object-cover object-[78%_center]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/45 via-[#070b1f]/35 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-3 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4.4vw,32px)] font-bold tracking-wide text-[#ffd98a] drop-shadow-[0_2px_12px_rgb(255_150_40/0.8)]">🎅 МАСТЕРСКАЯ САНТЫ</h2>
+            <h2 className="font-display text-[clamp(20px,4.4vw,32px)] font-bold tracking-wide text-[#ffd98a] drop-shadow-[0_2px_12px_rgb(255_150_40/0.8)]">▣ EMERALD CASES</h2>
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
@@ -521,7 +521,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
           ))}
         </div>, document.body)}
       <RoundsPanel slug="workshop" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Мастерская Санты — правила">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Emerald Cases — правила">
         <p>25 фиксированных линий, ставка делится на 25. Выплата — за 3–5 одинаковых символов слева направо (числа — во сколько раз больше ставки на линию). <b>Дед Мороз</b> — дикий символ на барабанах 2–4.</p>
         <div className="grid grid-cols-2 gap-2">
           {(["nutcracker", "globe", "cocoa", "ginger", "mitten", "cane"] as const).map((s) => (

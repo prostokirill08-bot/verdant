@@ -68,15 +68,15 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
 
   const stage = (
     <div className="relative grid min-h-[440px] content-center gap-3 p-3 sm:p-6">
-      <div className="relative overflow-hidden rounded-3xl bg-[#dfe9ff] bg-cover bg-center p-2 pt-[clamp(70px,16vw,120px)] shadow-inner ring-1 ring-white/30" style={{ backgroundImage: "linear-gradient(180deg, transparent 0, transparent 22%, #eef4ffd9 45%), url(/img/ny/sprites/sled-bg.webp)" }} data-testid="sled-track">
+      <div className="relative overflow-hidden rounded-3xl bg-[#071b11] bg-cover bg-[80%_center] p-2 pt-[clamp(70px,16vw,120px)] shadow-inner ring-1 ring-white/30" style={{ backgroundImage: "linear-gradient(180deg, transparent 0, transparent 22%, #071b11d9 45%), url(/img/verdant/bg/sledrace.webp)" }} data-testid="sled-track">
         {/* Клетчатый финиш */}
         <div aria-hidden className="absolute bottom-2 top-[clamp(70px,16vw,120px)] w-3 bg-[repeating-conic-gradient(#1e1b4b_0_25%,#fff_0_50%)] [background-size:12px_12px]" style={{ left: `calc(${FINISH}% + 30px)` }} />
         <div className="relative grid gap-1.5">
           {SLEDS.map((s, i) => {
             const p = paths?.[i]; const place = race ? race.r.order.indexOf(i) : -1;
             return (
-              <div key={s.name} className={`relative h-[clamp(48px,11vw,62px)] rounded-xl ${race?.r.pick === i ? "bg-[#ffd166]/30 ring-2 ring-[#ffb02e]/70" : "bg-white/50"}`}>
-                <div aria-hidden className="absolute inset-x-3 top-1/2 h-px -translate-y-1/2 border-t-2 border-dashed border-[#9fb6e8]" />
+              <div key={s.name} className={`relative h-[clamp(48px,11vw,62px)] rounded-xl ${race?.r.pick === i ? "bg-[#174d2d]/60 ring-2 ring-[#42e889]/70" : "bg-[#0c2818]/80"}`}>
+                <div aria-hidden className="absolute inset-x-3 top-1/2 h-px -translate-y-1/2 border-t-2 border-dashed border-[#3b9560]" />
                 <motion.div key={race?.id ?? "idle"} className="absolute top-1/2 -translate-y-1/2" initial={{ left: "0%" }}
                   animate={p ? { left: p.left } : { left: "0%" }} transition={p ? { duration: p.duration, times: p.times, ease: "linear" } : undefined}>
                   <span className="relative flex items-end">
@@ -85,7 +85,7 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
                   </span>
                 </motion.div>
                 <AnimatePresence>
-                  {race && !running && <motion.span initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} className={`absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-[12px] font-bold ${place === 0 ? "bg-gold text-ink" : "bg-[#1e1b4b]/70 text-white"}`}>{place + 1}</motion.span>}
+                  {race && !running && <motion.span initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} className={`absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-[12px] font-bold ${place === 0 ? "bg-gold text-ink" : "bg-[#092315]/90 text-white"}`}>{place + 1}</motion.span>}
                 </AnimatePresence>
               </div>
             );
@@ -99,7 +99,7 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
               {race.payout > 0n ? `${SLEDS[race.r.winner]!.emoji} Первым приехал твой саночник! +${points(race.payout)}` : `Первым приехал ${SLEDS[race.r.winner]!.emoji} ${SLEDS[race.r.winner]!.name}`}
             </motion.p>
           )}
-          {running && <motion.p key="go" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-display text-[20px] font-bold text-white">Поехали! 🛷</motion.p>}
+          {running && <motion.p key="go" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-display text-[20px] font-bold text-white">Поехали! ➤</motion.p>}
         </AnimatePresence>
       </div>
     </div>

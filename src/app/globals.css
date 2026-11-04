@@ -35,6 +35,25 @@ body{font-family:var(--font-sans);-webkit-font-smoothing:antialiased;background:
 main .rounded-3xl.border,main .rounded-2xl.border{border-color:#29402e;background-color:#0b140e}main input,main textarea,main select{border-color:#2b4430!important;background-color:#09110c!important;color:#eff9ed!important}main button{transition:filter .18s,border-color .18s}
 @media(max-width:640px){.verdant-hero,.verdant-hero-content{min-height:290px}.verdant-hero-content{padding:28px 22px}.verdant-hero h1{font-size:35px}.hero-shards{right:-35%;opacity:.55}.verdant-stats{gap:7px}.verdant-stat{display:block;padding:10px}.verdant-stat>span{width:27px;height:27px;font-size:13px}.verdant-stat strong{font-size:17px}.verdant-stat small{font-size:7px;line-height:1.35}.verdant-shelf{padding:13px 11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+/* VERDANT visual identity refresh — crystal artwork, no seasonal decorations */
+.verdant-hero{min-height:270px;background:#041009;border-color:#28754b;box-shadow:0 24px 70px -38px #28d87970}
+.verdant-hero-content{min-height:270px;padding:38px 48px}
+.verdant-hero-art{z-index:0}
+.verdant-hero-image{position:absolute;top:0;right:0;width:62%;height:100%;object-fit:cover;object-position:right 54%;opacity:.9;-webkit-mask-image:linear-gradient(90deg,transparent,#000 30%);mask-image:linear-gradient(90deg,transparent,#000 30%)}
+.verdant-hero:after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(90deg,#030a06 0%,#030a06e8 29%,#030a0645 64%,#030a0610 100%),linear-gradient(0deg,#030a0670,transparent 48%)}
+.verdant-hero-content{z-index:2}.verdant-hero h1{font-size:clamp(38px,5vw,66px);letter-spacing:-.06em}
+.verdant-primary-btn{border-radius:10px;background:linear-gradient(135deg,#8dffb7,#12b866 72%,#087b45);box-shadow:0 0 28px #23d97755;color:#03140a}
+.verdant-shelf{background:transparent;border:0;padding:0}
+.game-card{border-color:#1c6842;background:#06120b;box-shadow:0 10px 30px -22px #24dc8055}
+.game-card:hover{border-color:#56f29a;box-shadow:0 0 0 1px #38e88944,0 18px 42px -24px #36e88a}
+.game-card img{filter:saturate(1.12) contrast(1.06)}
+.verdant-stat{border-color:#1d6843;background:linear-gradient(140deg,#0b1d12,#050d08)}
+.verdant-stat>span{color:#53f49b;border-color:#36e88955;background:#1bce6818}
+.verdant-game-page{--game-accent:#35e889}
+.verdant-game-page .rounded-3xl.border,.verdant-game-page .rounded-2xl.border{border-color:#1c6541}
+.snow-cap:before,.snow-cap:after{content:none!important;display:none!important}
+@media(min-width:1024px){.verdant-hero,.verdant-hero-content{min-height:270px}}
+@media(max-width:640px){.verdant-hero,.verdant-hero-content{min-height:245px}.verdant-hero-content{padding:26px 22px}.verdant-hero-image{width:80%;object-position:right center;opacity:.55}}
 
 /* ===== Игровые анимации (слоты, экран большого выигрыша) — сохранены, без них ломаются игры ===== */
 .snow-cap { position: relative; }

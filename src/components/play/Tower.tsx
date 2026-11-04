@@ -94,7 +94,7 @@ export function TowerGame({ cfg }: { cfg: GameConfig }) {
       })}
       {round && !active && (
         <p className={`mt-2 text-center font-display text-[20px] font-bold ${round.status === "WON" ? "text-gold" : "text-danger"}`}>
-          {round.status === "WON" ? `${round.multiplier.toFixed(2)}× · +${points(round.payout)}` : "Снежная ловушка! Ставка сгорела"}
+          {round.status === "WON" ? `${round.multiplier.toFixed(2)}× · +${points(round.payout)}` : "Ловушка! Раунд завершён"}
         </p>
       )}
     </div>
