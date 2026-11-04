@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { anticipationFrom } from "@/lib/fair/slots";
-import { CRY, type CryResult, type CrySpin } from "@/lib/fair/slots2";
+import { CRY, playCrystal, type CryResult, type CrySpin } from "@/lib/fair/slots2";
 import { sfx } from "@/lib/sound";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
 import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
@@ -15,6 +15,10 @@ const NAMES: Record<string, string> = {
 };
 const PAYING = CRY.ladder;
 const randomSym = () => { const x = Math.random(); return x < 0.05 ? "orb" : x < 0.08 ? "star" : PAYING[Math.floor(Math.random() * PAYING.length)]!; };
+/** Демо-показ: зерно генератора, при котором бонус движка даёт ×1647 (найдено перебором). */
+const SHOWCASE_SEED = 811;
+const SHOWCASE_KEY = "vd_showcase_crystal";
+const mulberry32 = (a: number) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const START: string[][] = [["bauble_red", "castle", "bauble_blue"], ["key", "orb", "bauble_gold"], ["troika", "star", "bauble_green"], ["bauble_blue", "orb", "key"], ["bauble_gold", "troika", "bauble_red"]];
 
 export function CrySym({ s, big }: { s: string; big?: boolean }) {
@@ -66,6 +70,9 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
   const [info, setInfo] = useState(false);
   const [version, setVersion] = useState(0);
   const [slowFrom, setSlowFrom] = useState<number | null>(null);
+  const [demo, setDemo] = useState(false);
+  const [showcaseUsed, setShowcaseUsed] = useState(true);
+  useEffect(() => { try { setShowcaseUsed(localStorage.getItem(SHOWCASE_KEY) === "1"); } catch { setShowcaseUsed(false); } }, []);
   const stop = useRef<() => void>(() => {});
   const bigDone = useRef<() => void>(() => {});
   const turboRef = useRef(turbo); turboRef.current = turbo;
@@ -100,8 +107,16 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
     const res = r.round.result as unknown as CryResult;
     if (res.base) await showSpin(res.base, units, false);
     if (!res.bought) count(!!res.fs);
-    if (res.fs) {
-      const f = res.fs;
+    if (res.fs) await runBonus(res, units, r.round.payout);
+    else if (res.totalMult >= 10) await showBig(res.totalMult, r.round.payout);
+    setLastWin(r.round.payout);
+    setBalance(r.balance); setVersion((v) => v + 1); setPlaying(false);
+    return true;
+  }
+
+  /** Анимация бесплатных вращений (общая для настоящего раунда и демо-показа). */
+  async function runBonus(res: CryResult, units: bigint, payout: string, label?: string) {
+      const f = res.fs!;
       sfx("bonus"); setBanner(<Intro />); await sleep(2800); setBanner(null);
       let total = res.base ? winUnits(units, res.base.mult) : 0n; let left = CRY.freeSpins; let tick = 0;
       const stick = new Set<string>(); setSticky(new Set());
@@ -119,12 +134,23 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         if (s.mult >= 10) await showBig(s.mult, add.toString(), `Вращение ${i + 1}`, true);
         if (s.trigger) { sfx("bonus"); left += CRY.retrigger; setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-gold">+{CRY.retrigger} ВРАЩЕНИЙ!</motion.p>); await sleep(1400); setBanner(null); }
       }
-      await showBig(res.totalMult, r.round.payout, `Бонус: ${f.spins.length} вращений`);
+      await showBig(res.totalMult, payout, label ?? `Бонус: ${f.spins.length} вращений`);
       setFs(null); setSticky(new Set()); setOrbCells([]);
-    } else if (res.totalMult >= 10) await showBig(res.totalMult, r.round.payout);
-    setLastWin(r.round.payout);
-    setBalance(r.balance); setVersion((v) => v + 1); setPlaying(false);
-    return true;
+  }
+
+  /**
+   * Демо-показ для администратора: настоящий бонус движка «Хрустального шара» на ×1000+ (найденный поток
+   * случайных чисел SHOWCASE_SEED), но без ставки — баланс, история и лента не меняются, на экране пометка «Демо-показ».
+   * Кнопка срабатывает один раз (запоминается в браузере).
+   */
+  async function showcase() {
+    if (playing) return;
+    try { localStorage.setItem(SHOWCASE_KEY, "1"); } catch { /* приватный режим */ }
+    setShowcaseUsed(true); setDemo(true); setPlaying(true); setLastWin(null); setHl(null); setLines([]); setOrbCells([]);
+    const res = playCrystal(mulberry32(SHOWCASE_SEED), { buy: true });
+    const units = parsePoints(bet) ?? 100n;
+    await runBonus(res, units, winUnits(units, res.totalMult).toString(), `Демо-показ · ${res.fs!.spins.length} вращений`);
+    setLastWin(null); setDemo(false); setPlaying(false);
   }
 
   useEffect(() => {
@@ -135,6 +161,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
   }, [auto, playing, reqBusy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const busy = playing || reqBusy;
+  const isAdmin = user?.role === "ADMIN";
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
       <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #a78bfa" }}>
@@ -158,6 +185,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
               })}
             </motion.div>
           )}</AnimatePresence>
+          {demo && <p className="rounded-xl bg-gold/15 px-3 py-2 text-center text-[13px] font-bold text-gold ring-1 ring-gold/50" data-testid="showcase-badge">🎬 ДЕМО-ПОКАЗ · без ставки, баланс не меняется, раунд не записывается</p>}
           <BonusTotal state={fs} color="#c4b5fd" title="🔮 Бонус" sub={fs ? `Шаров на поле: ${sticky.size} · внутри: ${NAMES[CRY.ladder[Math.min(fs.level, 6)]!]}` : undefined} />
           <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#2a1b5e,#0f0b2e)] p-2 shadow-[inset_0_0_0_2px_rgb(196_181_253/0.55),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
@@ -169,6 +197,12 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
             <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} short={big?.short} onDone={() => bigDone.current()} />
           </div>
           <DryCounter dry={dry} prev={prev} avg={160} />
+          {isAdmin && !showcaseUsed && (
+            <button type="button" onClick={() => void showcase()} disabled={busy} data-testid="showcase"
+              className="rounded-xl bg-[linear-gradient(180deg,#a78bfa,#6d28d9)] px-4 py-2.5 text-[13.5px] font-bold text-white shadow-[0_0_24px_-6px_#a78bfa] hover:brightness-110 disabled:opacity-50">
+              🎬 Демо-показ бонуса ×1000+ <span className="font-normal opacity-80">(только админ, один раз, без ставки)</span>
+            </button>
+          )}
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={CRY.buyPrice}
               auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#6d28d9", "#a78bfa"]} lastWin={lastWin} />
