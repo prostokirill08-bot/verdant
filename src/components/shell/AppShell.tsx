@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh">
       {/* Боковая панель (компьютер) */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-white/[.07] bg-[#07110c]/90 px-3 py-5 backdrop-blur-2xl lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-[218px] shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/[.07] bg-[#061009]/95 px-3 py-5 backdrop-blur-2xl lg:flex">
         <div className="px-2"><Logo /></div>
         <nav className="grid gap-1">
           <NavLink href="/" active={path === "/"}>
@@ -63,13 +63,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z" /><path d="m9 12 2 2 4-4" /></svg>Честность
           </NavLink>
         </nav>
-        <div className="grid gap-1">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-1">
           <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/70">Игры</p>
           {GAME_SLUGS.map((s) => (
             <NavLink key={s} href={`/games/${s}`} active={path === `/games/${s}`} onClick={(e) => { if (e.metaKey || e.ctrlKey || path === `/games/${s}`) return; e.preventDefault(); openGame(s); }}>
-              <Image src={GAMES[s].cover} alt="" width={22} height={28} className="h-7 w-[22px] rounded-md object-cover ring-1 ring-white/10" />
-              <span className="truncate">{GAMES[s].name}</span>
-              {GAMES[s].badge === "Новинка" && <span className="ml-auto rounded-md bg-brand/20 px-1.5 text-[10px] font-bold uppercase text-gold">new</span>}
+              <Image src={GAMES[s].cover} alt="" width={22} height={28} className="h-7 w-[22px] shrink-0 rounded-md object-cover ring-1 ring-white/10" />
+              <span className="min-w-0 truncate">{GAMES[s].name}</span>
+              {GAMES[s].badge === "Новинка" && <span className="ml-auto shrink-0 rounded-md bg-brand/20 px-1.5 text-[10px] font-bold uppercase text-gold">new</span>}
             </NavLink>
           ))}
         </div>
@@ -89,9 +89,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Верхняя панель */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/[.07] bg-[#050b09]/85 px-4 backdrop-blur-2xl sm:px-6">
+        <header className="sticky top-0 z-30 flex h-[66px] items-center gap-2 border-b border-[#23452d]/60 bg-[#050b09]/90 px-4 backdrop-blur-2xl sm:px-6">
           
           <div className="lg:hidden"><Logo /></div>
+          <nav className="verdant-topnav mx-auto hidden items-center gap-1 rounded-full border border-[#2b432f] bg-[#0a140d] p-1 lg:flex" aria-label="Основная навигация">
+            {[["/", "ГЛАВНАЯ"], ["/games", "БИБЛИОТЕКА"], ["/bonuses", "БОНУСЫ"], ["/fair", "ЧЕСТНОСТЬ"]].map(([href,label]) => <Link key={href} href={href!} className={`rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[.1em] transition ${path === href ? "bg-[#8bea4e] text-[#091208]" : "text-[#9aab9d] hover:bg-white/[.05] hover:text-white"}`}>{label}</Link>)}
+          </nav>
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
             <span className={user ? "hidden sm:block" : ""}><OnlineBadge /></span>
             <KeysBadge />
@@ -137,11 +140,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {platform?.maintenance && <p className="border-b border-warn/30 bg-warn/10 px-4 py-2 text-center text-[13.5px] text-warn" role="status">Идут технические работы — ставки временно недоступны.</p>}
         {guest && (
           <p className="border-b border-gold/25 bg-gold/10 px-4 py-2 text-center text-[13px] text-gold" data-testid="guest-bar">
-            🎅 Гостевой режим: прогресс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
+            Гостевой режим: прогресс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
           </p>
         )}
         {platform?.announcement && <p className="border-b border-accent/20 bg-accent/10 px-4 py-2 text-center text-[13.5px] text-accent" role="status">{platform.announcement}</p>}
-        <main className="mx-auto w-full min-w-0 max-w-[1240px] flex-1 px-4 pb-28 pt-6 sm:px-6 lg:pb-12">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-[1600px] flex-1 px-4 pb-28 pt-5 sm:px-6 lg:px-7 lg:pb-12">{children}</main>
       </div>
 
       {/* Нижняя навигация (телефон) */}

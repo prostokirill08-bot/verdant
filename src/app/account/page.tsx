@@ -34,7 +34,7 @@ export default function AccountPage() {
   if (!s) return <div className="h-60 animate-pulse rounded-3xl bg-panel" />;
   const net = BigInt(s.stats.returned) - BigInt(s.stats.wagered);
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+    <div className="verdant-account grid gap-4 lg:grid-cols-[1.3fr_1fr]">
       <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden rounded-3xl border border-line bg-panel p-6">
         <div className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-accent/15 blur-3xl" aria-hidden />
         <div className="relative flex items-center gap-4">

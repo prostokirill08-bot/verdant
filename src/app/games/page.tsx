@@ -8,7 +8,7 @@ export const metadata = { title: "Каталог игр" };
 export default async function GamesPage({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
   const [{ cat }, games] = await Promise.all([searchParams, db.game.findMany({ orderBy: { sortOrder: "asc" } })]);
   return (
-    <div className="grid gap-6">
+    <div className="verdant-catalog grid gap-6">
       <div>
         <h1 className="font-display text-[28px] font-bold">Каталог <span className="text-gradient">игр</span></h1>
         <p className="mt-1 text-muted">Все игры работают на демо-рублях. Результат каждого раунда считает сервер.</p>

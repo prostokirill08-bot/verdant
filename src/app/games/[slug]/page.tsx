@@ -24,7 +24,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
   const cfg = { slug, title: game.title, minBet: game.minBet.toString(), maxBet: game.maxBet.toString(), edgeBp: game.houseEdgeBp, enabled: game.enabled };
   const slot = meta.category === "slots";
   return (
-    <div className="relative grid min-w-0 gap-5 overflow-x-clip [&>*]:min-w-0">
+    <div className="verdant-game-page relative grid min-w-0 gap-5 overflow-x-clip [&>*]:min-w-0">
       {/* Тематическое свечение страницы в цветах игры */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-8 h-[420px] opacity-50 blur-3xl" style={{ background: `radial-gradient(500px 260px at 20% 30%, ${meta.theme[0]}55, transparent 70%), radial-gradient(500px 260px at 85% 20%, ${meta.theme[1]}40, transparent 70%)` }} />
       <div className="relative flex flex-wrap items-center gap-4">

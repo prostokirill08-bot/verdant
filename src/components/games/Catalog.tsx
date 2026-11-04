@@ -20,12 +20,12 @@ export function Catalog({ games, initialCat }: { games: Item[]; initialCat?: str
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center gap-2">
         {TABS.map(([k, t, e]) => (
-          <button key={k} onClick={() => setCat(k)} className={`flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold transition-colors ${cat === k ? "bg-brand-gradient text-white shadow-[0_8px_24px_-10px_#e8263f]" : "bg-panel text-soft ring-1 ring-line hover:text-white"}`}>
+          <button key={k} onClick={() => setCat(k)} className={`flex h-10 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold transition-colors ${cat === k ? "bg-[#9bea50] text-[#071007] shadow-[0_8px_24px_-10px_#9bea50]" : "bg-[#0b1510] text-[#a5b8aa] ring-1 ring-[#263c2c] hover:text-white"}`}>
             <span aria-hidden>{e}</span>{t}
             <span className={`rounded-md px-1.5 text-[11px] font-bold ${cat === k ? "bg-white/20" : "bg-raised text-muted"}`}>{games.filter((g) => inTab(k, g.slug)).length}</span>
           </button>
         ))}
-        <label className="ml-auto flex h-10 w-full items-center gap-2 rounded-xl border border-line bg-panel px-3 focus-within:border-brand sm:w-64">
+        <label className="ml-auto flex h-10 w-full items-center gap-2 rounded-lg border border-[#263c2c] bg-[#0b1510] px-3 focus-within:border-[#8be94e] sm:w-64">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-muted" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
           <input id="game-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти игру" className="w-full bg-transparent text-[15px] outline-none placeholder:text-muted" />
         </label>
