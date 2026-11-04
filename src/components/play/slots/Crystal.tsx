@@ -15,9 +15,14 @@ const NAMES: Record<string, string> = {
 };
 const PAYING = CRY.ladder;
 const randomSym = () => { const x = Math.random(); return x < 0.05 ? "orb" : x < 0.08 ? "star" : PAYING[Math.floor(Math.random() * PAYING.length)]!; };
-/** Демо-показ: зерно генератора, при котором бонус движка даёт ×1647 (найдено перебором). */
-const SHOWCASE_SEED = 811;
-const SHOWCASE_KEY = "vd_showcase_crystal";
+/**
+ * Демо-показы для администратора: зёрна генератора, при которых настоящий бонус движка даёт нужный исход
+ * (найдены перебором): ×1647 и «шары на всё поле» — 15 ледяных дворцов, упор в максимальный выигрыш ×5000.
+ */
+const SHOWCASES = [
+  { id: "x1000", seed: 811, key: "vd_showcase_crystal", title: "Демо-показ бонуса ×1000+", label: "Демо-показ" },
+  { id: "full", seed: 20140805, key: "vd_showcase_crystal_full", title: "Демо: шары на всё поле", label: "Демо-показ · шары на всё поле" },
+] as const;
 const mulberry32 = (a: number) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const START: string[][] = [["bauble_red", "castle", "bauble_blue"], ["key", "orb", "bauble_gold"], ["troika", "star", "bauble_green"], ["bauble_blue", "orb", "key"], ["bauble_gold", "troika", "bauble_red"]];
 
@@ -71,8 +76,11 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
   const [version, setVersion] = useState(0);
   const [slowFrom, setSlowFrom] = useState<number | null>(null);
   const [demo, setDemo] = useState(false);
-  const [showcaseUsed, setShowcaseUsed] = useState(true);
-  useEffect(() => { try { setShowcaseUsed(localStorage.getItem(SHOWCASE_KEY) === "1"); } catch { setShowcaseUsed(false); } }, []);
+  const [showcaseUsed, setShowcaseUsed] = useState<Record<string, boolean>>({ x1000: true, full: true });
+  useEffect(() => {
+    const read = (k: string) => { try { return localStorage.getItem(k) === "1"; } catch { return false; } };
+    setShowcaseUsed(Object.fromEntries(SHOWCASES.map((s) => [s.id, read(s.key)])));
+  }, []);
   const stop = useRef<() => void>(() => {});
   const bigDone = useRef<() => void>(() => {});
   const turboRef = useRef(turbo); turboRef.current = turbo;
@@ -119,6 +127,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
       const f = res.fs!;
       sfx("bonus"); setBanner(<Intro />); await sleep(2800); setBanner(null);
       let total = res.base ? winUnits(units, res.base.mult) : 0n; let left = CRY.freeSpins; let tick = 0;
+      const cap = winUnits(units, CRY.maxWin); let fullShown = false;
       const stick = new Set<string>(); setSticky(new Set());
       for (let i = 0; i < f.spins.length; i++) {
         const s = f.spins[i]!; left--;
@@ -127,11 +136,23 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         await showSpin(s, units, true);
         for (const k of s.orbs) stick.add(k);
         setSticky(new Set(stick));
-        const add = winUnits(units, s.mult);
+        // Всё поле в шарах — отдельное торжество
+        if (s.orbs.length === CRY.reels * CRY.rows && !fullShown) {
+          fullShown = true; sfx("jackpot");
+          await t(1500);   // сначала даём рассмотреть поле из 15 одинаковых символов
+          setBanner(<motion.div initial={{ scale: 0.5 }} animate={{ scale: [0.5, 1.15, 1] }} className="grid gap-1 text-center"><p className="font-display text-[clamp(22px,6vw,36px)] font-bold text-[#e9d5ff]">ВСЁ ПОЛЕ В ШАРАХ!</p><p className="text-white/80">15 из 15 · внутри — {NAMES[s.reveal ?? "castle"]}</p></motion.div>);
+          await sleep(2200); setBanner(null);
+        }
+        // Выигрыш бонуса не больше максимального (×maxWin ставки) — как и выплата на сервере
+        const add0 = winUnits(units, s.mult); const add = total + add0 > cap ? cap - total : add0;
         if (add > 0n) { total += add; tick++; sfx("coin"); }
         setFs({ left, done: i + 1, total: total.toString(), add: add > 0n ? add.toString() : null, tick, level: s.level });
         setLastWin(total.toString());
-        if (s.mult >= 10) await showBig(s.mult, add.toString(), `Вращение ${i + 1}`, true);
+        if (s.mult >= 10) await showBig(s.mult, add0.toString(), `Вращение ${i + 1}`, true);
+        if (total >= cap) {
+          sfx("jackpot"); setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="px-4 text-center font-display text-[clamp(22px,6vw,34px)] font-bold text-gold">МАКСИМАЛЬНЫЙ ВЫИГРЫШ ×{CRY.maxWin.toLocaleString("ru-RU")}!</motion.p>);
+          await sleep(2200); setBanner(null); break;   // дальше крутить незачем — выплата уже на потолке
+        }
         if (s.trigger) { sfx("bonus"); left += CRY.retrigger; setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-gold">+{CRY.retrigger} ВРАЩЕНИЙ!</motion.p>); await sleep(1400); setBanner(null); }
       }
       await showBig(res.totalMult, payout, label ?? `Бонус: ${f.spins.length} вращений`);
@@ -139,17 +160,17 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
   }
 
   /**
-   * Демо-показ для администратора: настоящий бонус движка «Хрустального шара» на ×1000+ (найденный поток
-   * случайных чисел SHOWCASE_SEED), но без ставки — баланс, история и лента не меняются, на экране пометка «Демо-показ».
+   * Демо-показ для администратора: настоящий бонус движка «Хрустального шара» (найденный поток
+   * случайных чисел из SHOWCASES), но без ставки — баланс, история и лента не меняются, на экране пометка «Демо-показ».
    * Кнопка срабатывает один раз (запоминается в браузере).
    */
-  async function showcase() {
+  async function showcase(sc: (typeof SHOWCASES)[number]) {
     if (playing) return;
-    try { localStorage.setItem(SHOWCASE_KEY, "1"); } catch { /* приватный режим */ }
-    setShowcaseUsed(true); setDemo(true); setPlaying(true); setLastWin(null); setHl(null); setLines([]); setOrbCells([]);
-    const res = playCrystal(mulberry32(SHOWCASE_SEED), { buy: true });
+    try { localStorage.setItem(sc.key, "1"); } catch { /* приватный режим */ }
+    setShowcaseUsed((u) => ({ ...u, [sc.id]: true })); setDemo(true); setPlaying(true); setLastWin(null); setHl(null); setLines([]); setOrbCells([]);
+    const res = playCrystal(mulberry32(sc.seed), { buy: true });
     const units = parsePoints(bet) ?? 100n;
-    await runBonus(res, units, winUnits(units, res.totalMult).toString(), `Демо-показ · ${res.fs!.spins.length} вращений`);
+    await runBonus(res, units, winUnits(units, res.totalMult).toString(), sc.label);
     setLastWin(null); setDemo(false); setPlaying(false);
   }
 
@@ -197,12 +218,12 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
             <WinOverlay show={!!big} mult={big?.mult ?? 0} amount={big?.amount ?? "0"} label={big?.label} short={big?.short} onDone={() => bigDone.current()} />
           </div>
           <DryCounter dry={dry} prev={prev} avg={160} />
-          {isAdmin && !showcaseUsed && (
-            <button type="button" onClick={() => void showcase()} disabled={busy} data-testid="showcase"
+          {isAdmin && SHOWCASES.filter((sc) => !showcaseUsed[sc.id]).map((sc) => (
+            <button key={sc.id} type="button" onClick={() => void showcase(sc)} disabled={busy} data-testid={`showcase-${sc.id}`}
               className="rounded-xl bg-[linear-gradient(180deg,#a78bfa,#6d28d9)] px-4 py-2.5 text-[13.5px] font-bold text-white shadow-[0_0_24px_-6px_#a78bfa] hover:brightness-110 disabled:opacity-50">
-              🎬 Демо-показ бонуса ×1000+ <span className="font-normal opacity-80">(только админ, один раз, без ставки)</span>
+              🎬 {sc.title} <span className="font-normal opacity-80">(только админ, один раз, без ставки)</span>
             </button>
-          )}
+          ))}
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={CRY.buyPrice}
               auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#6d28d9", "#a78bfa"]} lastWin={lastWin} />
