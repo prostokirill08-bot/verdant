@@ -159,7 +159,7 @@ const TIERS = [
   { at: 10, title: "БОЛЬШОЙ ВЫИГРЫШ", c: ["#ffd166", "#fff6d0"] },
   { at: 25, title: "ОГРОМНЫЙ ВЫИГРЫШ", c: ["#ff6b8b", "#ffd166"] },
   { at: 50, title: "МЕГА ВЫИГРЫШ", c: ["#8fdcff", "#d8a8ff"] },
-  { at: 100, title: "ЭПИЧЕСКИЙ ВЫИГРЫШ", c: ["#3ee08f", "#ffd166"] },
+  { at: 100, title: "ЛЕГЕНДАРНЫЙ ВЫИГРЫШ", c: ["#3ee08f", "#ffd166"] },
 ] as const;
 const RAIN = ["🪙", "⭐", "❄️", "🎁", "✨", "🪙", "💰"];
 const fmt = (v: number) => v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
