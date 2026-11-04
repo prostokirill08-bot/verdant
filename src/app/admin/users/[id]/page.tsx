@@ -19,7 +19,7 @@ type Detail = {
   sessions: { id: string; ip: string | null; userAgent: string | null; createdAt: string }[];
   events: { id: string; action: string; ip: string | null; createdAt: string; meta: unknown }[];
 };
-const LEDGER: Record<string, string> = { BET: "Ставка", WIN: "Выигрыш", DEMO_GRANT: "Демо-рубли", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
+const LEDGER: Record<string, string> = { BET: "Ставка", WIN: "Выигрыш", DEPOSIT: "Пополнение", PROMO: "Приз акции", DEMO_GRANT: "Демо-рубли", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
 const RANK = { USER: 0, SUPPORT: 1, ADMIN: 2 } as const;
 
 export default function AdminUser({ params }: { params: Promise<{ id: string }> }) {

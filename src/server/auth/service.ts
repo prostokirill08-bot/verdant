@@ -34,7 +34,7 @@ export async function registerUser(p: { email: string; username: string; passwor
   }
 }
 
-/** Демо-гость: аккаунт без почты и пароля, чтобы сразу попробовать игры. Стартовые демо-рубли — как при регистрации. */
+/** Демо-гость: аккаунт без почты и пароля, чтобы сразу попробовать игры. Стартовые деньги — по настройке startGrant (по умолчанию 0: баланс пополняется в кассе). */
 export async function createGuest(ip: string) {
   for (let i = 0; i < 3; i++) {
     const id = randomToken(4).replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase().padEnd(6, "0");

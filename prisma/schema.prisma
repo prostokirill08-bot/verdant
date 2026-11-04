@@ -28,6 +28,7 @@ enum LedgerType {
   REFUND        // возврат ставки (отмена раунда)
   ADMIN_ADJUST  // ручная корректировка администратором
   PROMO         // призы акций: сундук со снежными ключами, турнир недели
+  DEPOSIT       // пополнение через демо-кассу (реальные деньги не участвуют)
 }
 
 enum RoundStatus {
@@ -63,6 +64,21 @@ model User {
   meters        SlotMeter[]
   promo         PromoState?
   promoWins     PromoWin[]
+  deposits      Deposit[]
+}
+
+/** Пополнение через демо-кассу. Деньги не списываются: запись нужна для истории, лимитов и отчёта в админке. */
+model Deposit {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    BigInt                       // копейки
+  method    String                       // card | sbp | wallet — только вид оформления
+  key       String   @unique             // ключ идемпотентности: повторный клик не пополнит дважды
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model Session {

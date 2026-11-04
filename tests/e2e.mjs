@@ -30,18 +30,43 @@ async function newPlayer() {
   const c = new Client(); const u = "t" + randomUUID().slice(0, 10).replace(/-/g, "");
   const r = await c.req("/api/auth/register", { email: `${u}@test.local`, username: u, password: "Passw0rd1", adult: true });
   if (r.s !== 200) throw new Error("register failed: " + JSON.stringify(r.j));
+  // Стартовых денег нет — пополняем через демо-кассу
+  const d = await c.req("/api/account/deposit", { amount: "1000", method: "sbp", key: key() });
+  if (d.s !== 200) throw new Error("deposit failed: " + JSON.stringify(d.j));
   c.username = u; c.email = `${u}@test.local`; return c;
 }
 
 // ---------- Аутентификация ----------
 console.log("— Аутентификация");
 const p = await newPlayer();
-ok("регистрация и стартовый баланс", (await p.balance()) > 0n);
+ok("регистрация + пополнение", (await p.balance()) === 100000n);
+{ // Стартовых денег нет; касса: лимиты, идемпотентность, история
+  const c = new Client(); await c.req("/api/auth/guest", {});   // гость — чтобы не упираться в лимит регистраций
+  ok("касса: новый аккаунт с балансом 0", (await c.balance()) === 0n);
+  ok("касса: меньше 300 ₽ → 400", (await c.req("/api/account/deposit", { amount: "299.99", method: "card", key: key() })).s === 400);
+  ok("касса: больше 300 000 ₽ → 400", (await c.req("/api/account/deposit", { amount: "300000.01", method: "card", key: key() })).s === 400);
+  ok("касса: неизвестный способ → 400", (await c.req("/api/account/deposit", { amount: "500", method: "crypto", key: key() })).s === 400);
+  ok("касса: без входа → 401", (await new Client().req("/api/account/deposit", { amount: "500", method: "card", key: key() })).s === 401);
+  const k = key();
+  const d1 = await c.req("/api/account/deposit", { amount: "300", method: "card", key: k });
+  const d2 = await c.req("/api/account/deposit", { amount: "300", method: "card", key: k });
+  ok("касса: 300 ₽ зачислены, повтор не зачисляет", d1.s === 200 && d2.j.duplicate === true && (await c.balance()) === 30000n);
+  ok("касса: 300 000 ₽ за раз", (await c.req("/api/account/deposit", { amount: "300000", method: "sbp", key: key() })).s === 200);
+  await c.req("/api/account/deposit", { amount: "300000", method: "sbp", key: key() });
+  await c.req("/api/account/deposit", { amount: "300000", method: "sbp", key: key() });
+  const over = await c.req("/api/account/deposit", { amount: "100000", method: "sbp", key: key() });
+  ok("касса: суточный лимит 1 000 000 ₽", over.s === 400 && over.j.code === "deposit_limit", JSON.stringify(over.j));
+  const info = (await c.req("/api/account/deposit")).j;
+  ok("касса: история и остаток лимита", info.items?.length === 4 && info.dayUsed === "90030000");
+  const led = (await c.req("/api/account/ledger?type=DEPOSIT")).j;
+  ok("касса: записи в журнале", led.items?.length === 4 && led.items.every((i) => i.type === "DEPOSIT"));
+  ok("касса: баланс сходится с журналом", (await c.req("/api/account/verify")).j.ok === true);
+}
 { // «Демо» без регистрации: гость с демо-рублями, у кого уже есть сессия — новый гость не создаётся
   const g = new Client(); const r1 = await g.req("/api/auth/guest", {});
   const me = (await g.req("/api/auth/me")).j;
   const r2 = await g.req("/api/auth/guest", {});
-  ok("демо-гость: вход без регистрации", r1.s === 200 && me.user?.email.endsWith("@guest.local") && BigInt(me.balance) > 0n && r2.j.existing === true);
+  ok("демо-гость: вход без регистрации", r1.s === 200 && me.user?.email.endsWith("@guest.local") && BigInt(me.balance) === 0n && r2.j.existing === true);
 }
 ok("повторный email → 409", (await new Client().req("/api/auth/register", { email: p.email, username: p.username + "x", password: "Passw0rd1", adult: true })).s === 409);
 ok("слабый пароль → 400", (await new Client().req("/api/auth/register", { email: "w" + p.email, username: "w" + p.username, password: "short", adult: true })).s === 400);
@@ -219,11 +244,12 @@ if (TG) {
   const t = new Client();
   r = await t.req("/api/auth/telegram", { initData });
   const me = (await t.req("/api/auth/me")).j;
-  ok("telegram: вход по initData создаёт аккаунт", r.s === 200 && r.j.created === true && me.user?.email === `tg_${tgId}@telegram.local` && BigInt(me.balance) > 0n, JSON.stringify(r.j));
+  ok("telegram: вход по initData создаёт аккаунт", r.s === 200 && r.j.created === true && me.user?.email === `tg_${tgId}@telegram.local` && BigInt(me.balance) === 0n, JSON.stringify(r.j));
   ok("telegram: короткий ник заменён на tg_<id>", me.user?.username === `tg_${tgId}`.slice(0, 20), me.user?.username);
   ok("telegram: повторный вход — тот же аккаунт", (await t.req("/api/auth/telegram", { initData })).j.same === true);
   const t2 = new Client(); await t2.req("/api/auth/telegram", { initData });
   ok("telegram: с другого устройства — тот же аккаунт", (await t2.req("/api/auth/me")).j.user?.publicId === me.user?.publicId);
+  await t.req("/api/account/deposit", { amount: "300", method: "sbp", key: key() });
   ok("telegram: можно играть", (await t.req("/api/games/dice/bet", { amount: "1", params: { target: 50, over: true }, key: key() })).s === 200);
   ok("telegram: поддельная подпись → 401", (await new Client().req("/api/auth/telegram", { initData: initData.replace(String(tgId), String(tgId + 1)) })).s === 401);
   // Привязка: вошёл в обычный аккаунт внутри Telegram → Telegram привязывается к нему

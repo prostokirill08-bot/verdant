@@ -103,9 +103,11 @@ export function betError(value: string, cfg: GameConfig, balance: string): strin
 
 /** Главная кнопка игры. Без входа ведёт на страницу входа. */
 export function PlayButton({ children, onClick, disabled, loading, variant = "primary" }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; loading?: boolean; variant?: "primary" | "danger" | "secondary" }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, balance } = useAuth();
   const path = usePathname();
   if (!authLoading && !user) return <Link href={`/login?next=${encodeURIComponent(path)}`} className="block"><Button size="lg" className="w-full">Войти, чтобы играть</Button></Link>;
+  // Пустой баланс (меньше минимальной ставки 0,10 ₽) и нет идущего раунда — ведём в кассу
+  if (!authLoading && user && BigInt(balance || "0") < 10n && !loading && variant === "primary" && disabled) return <Link href="/deposit" className="block" data-testid="play-deposit"><Button size="lg" className="w-full">Пополнить баланс</Button></Link>;
   return <Button size="lg" variant={variant} className="w-full" onClick={() => { haptic("tap"); onClick(); }} disabled={disabled || authLoading} loading={loading}>{children}</Button>;
 }
 

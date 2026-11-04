@@ -74,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="grid gap-1">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/70">Аккаунт</p>
             <NavLink href="/account" active={path === "/account"}>Кабинет</NavLink>
+            <NavLink href="/deposit" active={path === "/deposit"}>Пополнить баланс</NavLink>
             <NavLink href="/account/history" active={path === "/account/history"}>История операций</NavLink>
             <NavLink href="/account/settings" active={path === "/account/settings"}>Настройки</NavLink>
             {user.role !== "USER" && <NavLink href="/admin" active={path.startsWith("/admin")}>Админ-панель</NavLink>}
@@ -93,13 +94,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <KeysBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
-                <Link href="/account" className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3" title="Баланс">
-                  <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
-                  <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
-                  <span className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white" aria-hidden>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="M12 5v14M5 12h14" /></svg>
-                  </span>
-                </Link>
+                <div className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3">
+                  <Link href="/account/history" className="flex min-w-0 items-center gap-2" title="Баланс">
+                    <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
+                    <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
+                  </Link>
+                  <Link href="/deposit" className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white hover:brightness-110" aria-label="Пополнить баланс" title="Пополнить" data-testid="deposit-plus">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+                  </Link>
+                </div>
                 <div className="relative">
                   <button onClick={() => setMenu((v) => !v)} className="rounded-full focus-visible:outline-2 focus-visible:outline-accent" aria-haspopup="menu" aria-expanded={menu} aria-label="Меню аккаунта">
                     <Avatar name={user.username} avatar={user.avatar} />
@@ -109,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <motion.div role="menu" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
                         className="absolute right-0 top-12 w-56 rounded-2xl border border-line bg-panel p-1.5 shadow-2xl">
                         <div className="px-3 py-2"><p className="font-semibold">{user.username}</p><p className="font-mono text-[12px] text-muted">{user.publicId}</p></div>
-                        {[["/account", "Кабинет"], ["/account/history", "История операций"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
+                        {[["/account", "Кабинет"], ["/deposit", "Пополнить баланс"], ["/account/history", "История операций"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
                           <Link key={h} href={h!} onClick={() => setMenu(false)} role="menuitem" className="block rounded-xl px-3 py-2 text-[14px] text-soft hover:bg-raised hover:text-white">{t}</Link>
                         ))}
                         <button onClick={logout} role="menuitem" className="w-full rounded-xl px-3 py-2 text-left text-[14px] text-danger hover:bg-raised">Выйти</button>

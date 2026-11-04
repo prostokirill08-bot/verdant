@@ -23,7 +23,7 @@ export default function RegisterPage() {
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
   return (
-    <AuthCard title="Регистрация" subtitle="1 000 демо-рублей сразу после регистрации">
+    <AuthCard title="Регистрация" subtitle="После регистрации — пополнение от 300 ₽ в демо-кассе">
       <form onSubmit={submit} className="grid gap-4" noValidate>
         <Field id="email" label="Email" type="email" value={f.email} onChange={set("email")} autoComplete="email" required />
         <Field id="username" label="Ник" value={f.username} onChange={set("username")} autoComplete="username" hint="3–20 символов: латиница, цифры, _" required />
