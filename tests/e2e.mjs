@@ -69,6 +69,10 @@ ok("регистрация + пополнение", (await p.balance()) === 1000
   const r2 = await g.req("/api/auth/guest", {});
   ok("демо-гость: вход без регистрации", r1.s === 200 && me.user?.email.endsWith("@guest.local") && BigInt(me.balance) === 0n && r2.j.existing === true);
 }
+{ // Наплыв: 10 одновременных регистраций — все успешны (раньше конфликт транзакций давал 500)
+  const rs = await Promise.all(Array.from({ length: 10 }, () => { const c = new Client(); const u = "r" + randomUUID().slice(0, 10).replace(/-/g, ""); return c.req("/api/auth/register", { email: `${u}@test.local`, username: u, password: "Passw0rd1", adult: true }); }));
+  ok("10 одновременных регистраций", rs.every((x) => x.s === 200), rs.map((x) => x.s).join(","));
+}
 ok("повторный email → 409", (await new Client().req("/api/auth/register", { email: p.email, username: p.username + "x", password: "Passw0rd1", adult: true })).s === 409);
 ok("слабый пароль → 400", (await new Client().req("/api/auth/register", { email: "w" + p.email, username: "w" + p.username, password: "short", adult: true })).s === 400);
 ok("без CSRF → 403", (await fetch(B + "/api/account/bonus", { method: "POST", headers: { cookie: `vd_session=${p.jar.vd_session}`, origin: B } })).status === 403);

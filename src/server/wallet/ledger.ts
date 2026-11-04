@@ -29,12 +29,19 @@ export async function applyEntry(tx: Tx, p: { userId: string; type: LedgerType; 
 }
 
 /** Транзакция с уровнем изоляции Serializable и повтором при конфликте. */
-export async function withTx<T>(fn: (tx: Tx) => Promise<T>, attempts = 3): Promise<T> {
+/**
+ * Serializable-транзакция с повтором при конфликте (P2034). retryUnique — повторять ли и при нарушении
+ * уникальности (P2002): для регистрации это бессмысленно (почта/ник заняты), а конфликт параллельных
+ * регистраций нужно повторять — иначе одновременный наплыв игроков получает ошибку 500.
+ */
+export async function withTx<T>(fn: (tx: Tx) => Promise<T>, attempts = 3, retryUnique = true): Promise<T> {
   for (let i = 1; ; i++) {
     try { return await db.$transaction(fn, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10000 }); }
     catch (e) {
-      const retry = e instanceof Prisma.PrismaClientKnownRequestError && (e.code === "P2034" || e.code === "P2002");
+      const code = e instanceof Prisma.PrismaClientKnownRequestError ? e.code : "";
+      const retry = code === "P2034" || (retryUnique && code === "P2002");
       if (!retry || i >= attempts) throw e;
+      await new Promise((r) => setTimeout(r, 15 * i + Math.random() * 40));   // разводим повторы во времени
     }
   }
 }

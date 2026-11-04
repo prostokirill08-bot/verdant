@@ -23,7 +23,7 @@ export async function registerUser(p: { email: string; username: string; passwor
       if (settings.startGrant > 0) await applyEntry(tx, { userId: u.id, type: "DEMO_GRANT", amount: BigInt(settings.startGrant), idempotencyKey: `signup:${u.id}`, note: "Стартовые демо-рубли" });
       await createSeedPair(tx, u.id);
       return u;
-    }, 1); // занятый email/ник повторять бессмысленно
+    }, 6, false); // конфликт параллельных регистраций — повторяем; занятый email/ник — нет
     await audit("auth.register", { actorId: user.id, ip });
     return user;
   } catch (e) {
