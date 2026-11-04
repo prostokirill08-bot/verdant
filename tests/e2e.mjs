@@ -173,6 +173,13 @@ console.log("— Карточные игры и гонка");
   ok("акции: сводка", pr.s === 200 && BigInt(pr.j.jackpot.pool) >= 2500000n && pr.j.keys.need === 4 && Array.isArray(pr.j.tournament.top));
   ok("акции: открыть сундук без ключей → 400", (await p.req("/api/promo/chest", {})).s === 400);
   ok("акции: гость видит сводку без входа", (await new Client().req("/api/promo")).s === 200);
+  { // Шанс ключа пропорционален ставке: ставка от 2 000 ₽ даёт ключ наверняка
+    const kp = new Client(); await kp.req("/api/auth/guest", {});
+    await kp.req("/api/account/deposit", { amount: "3000", method: "sbp", key: key() });
+    const k0 = (await kp.req("/api/promo/keys")).j.keys;
+    await kp.req("/api/games/dice/bet", { amount: "2000", params: { target: 50, over: true }, key: key() });
+    ok("ключи: ставка 2 000 ₽ — ключ гарантирован", (await kp.req("/api/promo/keys")).j.keys === k0 + 1 && pr.j.keys.perWager === "200000");
+  }
 }
 
 if (!SKIP_CRASH) {

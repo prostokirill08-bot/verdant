@@ -5,13 +5,16 @@ import { GUEST_DOMAIN } from "@/lib/guest";
 import { weekBounds } from "@/lib/week";
 import { publicUser, PUBLIC_USER_SELECT } from "../security/privacy";
 import { applyEntry, withUserTx } from "../wallet/ledger";
-import { JACKPOT_BASE, jackpotPool, KEY_MIN_BET, KEY_ODDS, KEYS_NEEDED, takeJackpot } from "./keys";
+import { JACKPOT_BASE, jackpotPool, KEY_MIN_BET, KEY_PER_WAGER, KEYS_NEEDED, takeJackpot } from "./keys";
 
 // ---------- Сундук со снежными ключами ----------
-/** Призы сундука (в копейках) и их веса. «grand» — весь накопленный джекпот. */
+/**
+ * Призы сундука (в копейках) и их веса из 1000. «grand» — весь накопленный джекпот (0,3%).
+ * Средний сундук ≈ 60 ₽ + доля джекпота ≈ 135 ₽ при 25 000 ₽; ключ ≈ 34 ₽ на 2 000 ₽ ставок → ~1,7% оборота.
+ */
 export const CHEST_PRIZES: { amount: bigint | "grand"; weight: number }[] = [
-  { amount: 5_000n, weight: 30 }, { amount: 10_000n, weight: 25 }, { amount: 25_000n, weight: 20 },
-  { amount: 50_000n, weight: 13 }, { amount: 100_000n, weight: 8 }, { amount: 250_000n, weight: 3 }, { amount: "grand", weight: 1 },
+  { amount: 1_000n, weight: 350 }, { amount: 2_500n, weight: 280 }, { amount: 5_000n, weight: 200 },
+  { amount: 10_000n, weight: 100 }, { amount: 25_000n, weight: 50 }, { amount: 100_000n, weight: 17 }, { amount: "grand", weight: 3 },
 ];
 const WEIGHT = CHEST_PRIZES.reduce((s, p) => s + p.weight, 0);
 
@@ -90,7 +93,7 @@ export async function promoSummary(userId?: string) {
     best = r._max.multiplier ? Number(r._max.multiplier) : null;
   }
   return {
-    keys: { have: st?.keys ?? 0, need: KEYS_NEEDED, odds: KEY_ODDS, minBet: KEY_MIN_BET, opened: st?.opened ?? 0 },
+    keys: { have: st?.keys ?? 0, need: KEYS_NEEDED, perWager: KEY_PER_WAGER, minBet: KEY_MIN_BET, opened: st?.opened ?? 0 },
     jackpot: { pool, base: JACKPOT_BASE },
     chest: CHEST_PRIZES.map((p) => ({ amount: p.amount === "grand" ? "grand" : p.amount, chance: p.weight / WEIGHT })),
     tournament: { ...tour, top: tour.top.map(({ userId: _u, ...r }) => r), me: userId ? { place: meRow?.place ?? null, best: meRow?.mult ?? best } : null },

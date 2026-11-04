@@ -13,7 +13,7 @@ import { points, timeAgo } from "@/lib/format";
 import { GAMES, isGameSlug } from "@/lib/games";
 
 type Summary = {
-  keys: { have: number; need: number; odds: number; minBet: string; opened: number };
+  keys: { have: number; need: number; perWager: string; minBet: string; opened: number };
   jackpot: { pool: string; base: string };
   chest: { amount: string; chance: number }[];
   tournament: { week: string; startsAt: string; endsAt: string; prizes: string[]; top: { place: number; user: string; avatar: string; mult: number; game: string; prize: string }[]; me: { place: number | null; best: number | null } | null };
@@ -69,7 +69,7 @@ export function BonusesPage() {
           <div className="grid content-start gap-3">
             <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#8fdcff]">🔑 Акция · снежные ключи</p>
             <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Сундук Деда Мороза</h2>
-            <p className="max-w-lg text-[15px] text-white/80">Ключ выпадает случайно за любую ставку от {k ? points(k.minBet) : "1 ₽"} в любой игре — в среднем раз в {k?.odds ?? 40} ставок. Собери {k?.need ?? 4} ключа и открой сундук: внутри приз или весь джекпот.</p>
+            <p className="max-w-lg text-[15px] text-white/80">Ключ выпадает за ставки в любой игре — в среднем 1 ключ на каждые {k ? points(k.perWager) : "2 000 ₽"} ставок: чем больше ставка, тем выше шанс. Собери {k?.need ?? 4} ключа и открой сундук: внутри приз или весь джекпот.</p>
             <div className="mt-1 w-fit rounded-2xl bg-black/40 px-4 py-3 ring-1 ring-gold/40">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold/80">Джекпот сундука</p>
               <p className="font-display text-[clamp(28px,6vw,44px)] font-bold text-gold [text-shadow:0_0_24px_#ffb02e80]" data-testid="jackpot">{data ? <Ticker value={BigInt(data.jackpot.pool)} /> : "…"}</p>
