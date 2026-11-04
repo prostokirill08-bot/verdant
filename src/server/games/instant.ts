@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AVA, CRY, SAL, playAvalanche, playCrystal, playSalute } from "@/lib/fair/slots2";
 import {
   diceMultiplier, diceRoll, diceWin, limboResult, plinkoPath, PLINKO_TABLE, roulettePayout, rouletteNumber, rouletteColor,
   type PlinkoRows, type RouletteBetKind,
@@ -145,6 +146,9 @@ function slot(price: number, play: (rng: Rng, o: { buy?: boolean }) => { totalMu
 }
 const atlas = slot(ATLAS.buyPrice, playAtlas);
 const neonGarden = slot(NEON.buyPrice, playNeon);
+const avalanche = slot(AVA.buyPrice, playAvalanche);
+const salute = slot(SAL.buyPrice, playSalute);
+const crystal = slot(CRY.buyPrice, playCrystal);
 
 /** «Мастерская Санты»: монеты наполняют сундуки, состояние сундуков хранится между спинами. */
 const workshop: InstantGame<Record<string, never>> = {
@@ -157,6 +161,6 @@ const workshop: InstantGame<Record<string, never>> = {
   },
 };
 
-export const INSTANT_GAMES = { workshop, dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno, baccarat, sledrace } as Record<string, InstantGame<unknown>>;
-export type InstantSlug = "workshop" | "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno" | "baccarat" | "sledrace";
+export const INSTANT_GAMES = { avalanche, salute, crystal, workshop, dice, limbo, plinko, roulette, atlas, "neon-garden": neonGarden, coinflip, wheel, keno, baccarat, sledrace } as Record<string, InstantGame<unknown>>;
+export type InstantSlug = "avalanche" | "salute" | "crystal" | "workshop" | "dice" | "limbo" | "plinko" | "roulette" | "atlas" | "neon-garden" | "coinflip" | "wheel" | "keno" | "baccarat" | "sledrace";
 export const isInstant = (s: string): s is InstantSlug => s in INSTANT_GAMES;

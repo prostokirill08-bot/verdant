@@ -1,5 +1,5 @@
 "use client";
-import { sfx } from "@/lib/sound";
+import { sfx, type Sfx } from "@/lib/sound";
 import { SoundToggle } from "@/components/ui/SoundToggle";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -16,9 +16,11 @@ const LINE_COLORS = ["#fbbf24", "#35f08c", "#22d3ee", "#f472b6", "#a78bfa", "#fb
  * Сетка барабанов. При смене spinKey каждый барабан «прокручивается» и останавливается с задержкой слева направо.
  * slowFrom — «интрига»: с этого барабана и правее вращение затягивается и барабаны подсвечиваются в ожидании бонуса.
  */
-export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight, lines, linePatterns, overlay, onStopped, cellClass = "", slowFrom = null }: {
+export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight, lines, linePatterns, overlay, onStopped, cellClass = "", slowFrom = null, sound }: {
   grid: T[][]; rows: number; spinKey: number; turbo: boolean; filler: () => T; render: (cell: T, i: { reel: number; row: number; dim: boolean; hot: boolean }) => React.ReactNode;
   highlight?: Set<string> | null; lines?: LineWin[]; linePatterns?: number[][]; overlay?: React.ReactNode; onStopped?: () => void; cellClass?: string; slowFrom?: number | null;
+  /** Свои звуки слота: раскрутка и остановка барабана. */
+  sound?: { spin?: Sfx; stop?: Sfx };
 }) {
   const reels = grid.length;
   const F = turbo ? 6 : 14;
@@ -27,7 +29,7 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
   const strips = useMemo(() => grid.map((col, reel) => (spinKey ? [...col, ...Array.from({ length: fill(reel) }, filler)] : col)), [spinKey, grid, F, slowFrom]); // eslint-disable-line react-hooks/exhaustive-deps
   const done = useRef(0);
   const [stopped, setStopped] = useState<number[]>([]);
-  useEffect(() => { done.current = 0; setStopped([]); if (spinKey) sfx("spin"); }, [spinKey]);
+  useEffect(() => { done.current = 0; setStopped([]); if (spinKey) sfx(sound?.spin ?? "spin"); }, [spinKey]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="relative grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: `repeat(${reels}, minmax(0, 1fr))` }}>
       {strips.map((strip, reel) => {
@@ -40,7 +42,7 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
               initial={spinKey ? { y: `${-(fill(reel) / strip.length) * 100}%` } : false}
               animate={{ y: "0%" }}
               transition={{ duration: (turbo ? 0.35 : 0.75) + reel * (turbo ? 0.08 : 0.18) + extra(reel) * (turbo ? 0.8 : 1.4), ease: extra(reel) ? [0.3, 0.55, 0.3, 1] : [0.25, 0.9, 0.35, 1.04] }}
-              onAnimationComplete={() => { if (!spinKey) return; sfx(extra(reel) ? "gem" : "reel", { i: reel }); setStopped((s) => [...s, reel]); if (++done.current === reels) onStopped?.(); }}>
+              onAnimationComplete={() => { if (!spinKey) return; sfx(extra(reel) ? "gem" : sound?.stop ?? "reel", { i: reel, pitch: 1 + reel * 0.08 }); setStopped((s) => [...s, reel]); if (++done.current === reels) onStopped?.(); }}>
               {strip.map((cell, row) => {
                 const id = `${reel}:${row}`; const hot = !!highlight?.has(id) && row < rows; const dim = !!highlight && highlight.size > 0 && !hot;
                 return (

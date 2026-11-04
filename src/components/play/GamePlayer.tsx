@@ -7,6 +7,9 @@ import { PlinkoGame } from "./Plinko";
 import { RouletteGame } from "./Roulette";
 import type { GameConfig } from "./kit";
 import { AtlasGame } from "./slots/Atlas";
+import { AvalancheGame } from "./slots/Avalanche";
+import { SaluteGame } from "./slots/Salute";
+import { CrystalGame } from "./slots/Crystal";
 import { CoinflipGame } from "./Coinflip";
 import { HiloGame } from "./Hilo";
 import { KenoGame } from "./Keno";
@@ -22,6 +25,9 @@ import { SledRaceGame } from "./SledRace";
 export function GamePlayer({ cfg }: { cfg: GameConfig }) {
   switch (cfg.slug) {
     case "atlas": return <AtlasGame cfg={cfg} />;
+    case "avalanche": return <AvalancheGame cfg={cfg} />;
+    case "salute": return <SaluteGame cfg={cfg} />;
+    case "crystal": return <CrystalGame cfg={cfg} />;
     case "neon-garden": return <NeonGame cfg={cfg} />;
     case "workshop": return <WorkshopGame cfg={cfg} />;
     case "blackjack": return <BlackjackGame cfg={cfg} />;

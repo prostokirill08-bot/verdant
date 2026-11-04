@@ -57,7 +57,7 @@ export async function handleMessage(m: Message) {
     const game = arg && (GAME_SLUGS as readonly string[]).includes(arg) ? arg : null;
     await call("sendMessage", {
       chat_id: m.chat.id,
-      text: `Привет${name ? `, ${name}` : ""}! 🎄\n\nЭто Verdant — 18 новогодних игр, сундук со снежными ключами и турнир недели. Вход — через Telegram, ничего вводить не нужно. Баланс пополняется в демо-кассе — от 300 ₽.\n\nДемо-проект: реальных денег здесь нет.`,
+      text: `Привет${name ? `, ${name}` : ""}! 🎄\n\nЭто Verdant — 21 новогодняя игра, сундук со снежными ключами и турнир недели. Вход — через Telegram, ничего вводить не нужно. Баланс пополняется в демо-кассе — от 300 ₽.\n\nДемо-проект: реальных денег здесь нет.`,
       reply_markup: { inline_keyboard: [[open(game ? "▶️ Открыть игру" : "🎮 Играть", game ? `/games/${game}` : "")], [open("🎁 Бонусы и турнир", "/bonuses")]] },
     });
   } else if (cmd === "/games") {

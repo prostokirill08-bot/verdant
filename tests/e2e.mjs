@@ -104,6 +104,28 @@ ok("слот «Неоновый сад»: покупка бонуса", (await p
   const m = (await p.req("/api/games/workshop/meters")).j.chests?.map((c) => c.have).join(",");
   ok("слот «Мастерская Санты»: сундуки между спинами", last?.result.base.grid.length === 5 && m === last.result.after.map((x) => x.have).join(",") && last.params.meters !== undefined);
 }
+{ // Новые слоты: обычное вращение и покупка бонуса; списание и выплата сходятся с журналом
+  const sp = await newPlayer(); await sp.req("/api/account/deposit", { amount: "5000", method: "sbp", key: key() });
+  let a = await sp.req("/api/games/avalanche/bet", { amount: "1", params: { buy: false }, key: key() });
+  ok("слот «Снежная лавина»: поле 6×5 и каскады", a.s === 200 && a.j.round.result.base.steps[0].grid.length === 6 && a.j.round.result.base.steps[0].grid[0].length === 5);
+  a = await sp.req("/api/games/avalanche/bet", { amount: "1", params: { buy: true }, key: key() });
+  const av = a.j.round?.result?.fs?.spins ?? [];
+  ok("«Лавина»: бонус, множитель растёт", a.s === 200 && a.j.round.bet === "10000" && av.length >= 10 && av.at(-1).xAfter >= 1, JSON.stringify(a.j).slice(0, 200));
+  let s = await sp.req("/api/games/salute/bet", { amount: "1", params: { buy: false }, key: key() });
+  ok("слот «Новогодний салют»: 5×4", s.s === 200 && s.j.round.result.base.grid.length === 5 && s.j.round.result.base.grid[0].length === 4);
+  s = await sp.req("/api/games/salute/bet", { amount: "1", params: { buy: true }, key: key() });
+  const ss = s.j.round?.result?.fs?.spins ?? [];
+  // ракеты шагают: ракета из вращения k на следующем вращении стоит на ряд выше (или улетела)
+  const walkOk = ss.every((x, k) => k === 0 || ss[k - 1].rockets.every((r) => x.rockets.some((y) => y.id === r.id && y.row === r.row - 1) || x.burst.some((y) => y.id === r.id)));
+  ok("«Салют»: бонус, ракеты поднимаются на ряд и взрываются", s.s === 200 && ss.length >= 8 && walkOk);
+  let c = await sp.req("/api/games/crystal/bet", { amount: "1", params: { buy: false }, key: key() });
+  ok("слот «Хрустальный шар»: 5×3", c.s === 200 && c.j.round.result.base.grid.length === 5);
+  c = await sp.req("/api/games/crystal/bet", { amount: "1", params: { buy: true }, key: key() });
+  const cs = c.j.round?.result?.fs?.spins ?? [];
+  const stickOk = cs.every((x, k) => k === 0 || cs[k - 1].orbs.every((o) => x.orbs.includes(o)));
+  ok("«Хрустальный шар»: шары липнут, символ дорожает", c.s === 200 && cs.length >= 10 && stickOk && cs.every((x, k) => x.level === k));
+  ok("новые слоты: баланс сходится с журналом", (await sp.req("/api/account/verify")).j.ok === true);
+}
 r = await p.req("/api/tower/start", { amount: "1", level: "hard", key: key() });
 ok("tower: старт без раскрытия ловушек", r.s === 200 && !r.j.round.state.traps);
 r = await p.req("/api/tower/pick", { tile: 0 });

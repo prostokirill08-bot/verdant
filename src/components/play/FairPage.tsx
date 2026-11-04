@@ -1,4 +1,5 @@
 "use client";
+import { playAvalanche, playCrystal, playSalute } from "@/lib/fair/slots2";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -104,9 +105,11 @@ function Verifier() {
     if (!s.trim()) return;
     if (!window.crypto?.subtle) { setErr("Браузер не поддерживает WebCrypto (нужен HTTPS)"); return; }
     const edge = Number(p.edgeBp) || 0; const nonce = Number(n) || 0;
-    const slot = game === "atlas" || game === "neon-garden";
+    const SLOT_PLAY = { atlas: playAtlas, "neon-garden": playNeon, avalanche: playAvalanche, salute: playSalute, crystal: playCrystal } as const;
+    const slot = game in SLOT_PLAY;
     const EXTRA: Record<string, number> = { coinflip: X.COIN_MAX_FLIPS, wheel: 1, keno: 10, tower: X.TOWER_FLOATS, hilo: X.HILO_MAX_CARDS, blackjack: K.BJ_FLOATS, videopoker: K.VP_FLOATS, baccarat: K.BAC_FLOATS, sledrace: K.SLED_FLOATS };
-    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
+    // каскады «Лавины» и длинные бонусы берут больше чисел — с запасом
+    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS * (game === "atlas" || game === "neon-garden" ? 1 : 4) : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
     const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, need);
     if (game === "workshop") {
       // Нужны ставка и состояние сундуков до спина — они подставляются из ссылки «Проверить»
@@ -119,9 +122,12 @@ function Verifier() {
       setOut({ hashOk: await sha256Hex(s.trim()), lines }); return;
     }
     if (slot) {
-      const r = (game === "atlas" ? playAtlas : playNeon)(rngFromArray(fs), { buy: p.buy === "true" });
+      const r = SLOT_PLAY[game as keyof typeof SLOT_PLAY](rngFromArray(fs), { buy: p.buy === "true" });
       const lines: [string, string][] = [["Итоговый множитель", `${r.totalMult}×`]];
-      if (r.fs) lines.push(["Бонус", `${r.fs.spins.length} бесплатных вращений${"special" in r.fs ? `, особый символ: ${r.fs.special}` : `, выигрыши ×${r.fs.x}`}`]);
+      if (r.fs) {
+        const f = r.fs as { spins: unknown[]; special?: string; x?: number };
+        lines.push(["Бонус", `${f.spins.length} бесплатных вращений${f.special ? `, особый символ: ${f.special}` : f.x ? `, выигрыши ×${f.x}` : ""}`]);
+      }
       if (r.base) lines.push(["Выигрыш обычного вращения", `${r.base.mult}×`]);
       setOut({ hashOk: await sha256Hex(s.trim()), lines }); return;
     }
@@ -183,7 +189,7 @@ function Verifier() {
           <label className="grid gap-1"><Label>Ряды</Label><select value={p.rows} onChange={set("rows")} className={inp}>{O.PLINKO_ROWS.map((r) => <option key={r}>{r}</option>)}</select></label>
           <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}>{O.PLINKO_RISKS.map((r) => <option key={r} value={r}>{r === "low" ? "низкий" : r === "medium" ? "средний" : "высокий"}</option>)}</select></label>
         </>}
-        {(game === "atlas" || game === "neon-garden") && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
+        {["atlas", "neon-garden", "avalanche", "salute", "crystal"].includes(game) && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
         {game === "workshop" && <>
           <label className="grid gap-1"><Label>Ставка, коп.</Label><input value={p.bet ?? "100"} onChange={set("bet")} className={inp} /></label>
           <label className="grid gap-1"><Label>Сундуки до спина</Label><input value={p.meters ?? ""} onChange={set("meters")} className={inp} placeholder="3|0|12|5|1" /></label>

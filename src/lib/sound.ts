@@ -10,7 +10,9 @@
 
 export type Sfx =
   | "tap" | "bet" | "chip" | "spin" | "reel" | "tick" | "win" | "bigwin" | "megawin" | "lose" | "bonus" | "coin" | "coins"
-  | "card" | "flip" | "gem" | "boom" | "cashout" | "key" | "chest" | "jackpot" | "dice" | "pop" | "bells" | "whoosh" | "count" | "launch";
+  | "card" | "flip" | "gem" | "boom" | "cashout" | "key" | "chest" | "jackpot" | "dice" | "pop" | "bells" | "whoosh" | "count" | "launch"
+  // темы новых слотов: «Снежная лавина», «Новогодний салют», «Хрустальный шар»
+  | "ice" | "rumble" | "chime" | "drop" | "whistle" | "firework" | "glass" | "harp" | "upgrade";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -117,12 +119,32 @@ const RECIPES: Record<Sfx, (o: { i?: number; pitch?: number }) => void> = {
   pop: ({ pitch = 1 }) => tone({ f: 600 * pitch, to: 1200 * pitch, d: 0.08, g: 0.12, type: "sine" }),
   bells: () => { for (let k = 0; k < 8; k++) { noise({ t: k * 0.11, d: 0.08, f: 7000, q: 8, g: 0.08 }); bell(NOTE(93 + (k % 2) * 2), k * 0.11, 0.04, 0.2); } },
   whoosh: () => noise({ d: 0.35, f: 300, to: 3000, q: 0.7, g: 0.12 }),
+  // Лёд раскалывается: короткий хруст + россыпь высоких «осколков»
+  ice: () => { noise({ d: 0.12, f: 5200, q: 1.5, g: 0.22, type: "highpass" }); for (let k = 0; k < 5; k++) tone({ f: 2600 + Math.random() * 3200, t: 0.02 + k * 0.025, d: 0.18, g: 0.05 }); },
+  // Гул лавины: низкий шум нарастает и стихает
+  rumble: () => { noise({ d: 1.6, f: 160, to: 60, q: 0.8, g: 0.35, type: "lowpass" }); tone({ f: 55, to: 38, d: 1.4, g: 0.18, type: "triangle" }); },
+  // Множитель растёт: ледяной перезвон, чем выше pitch — тем выше нота
+  chime: ({ pitch = 1 }) => { bell(1318 * pitch, 0, 0.16, 0.7); bell(1975 * pitch, 0.06, 0.1, 0.6); },
+  drop: ({ i = 0 }) => tone({ f: 260 - i * 18, to: 140, d: 0.09, g: 0.12, type: "sine", pan: -0.7 + i * 0.28 }),
+  // Ракета: свист вверх
+  whistle: () => { tone({ f: 700, to: 2600, d: 0.55, g: 0.07, type: "sine" }); noise({ d: 0.5, f: 2000, to: 5000, q: 6, g: 0.05 }); },
+  // Салют: хлопок и треск искр
+  firework: () => {
+    tone({ f: 140, to: 40, d: 0.4, g: 0.35 }); noise({ d: 0.35, f: 1200, to: 200, q: 0.7, g: 0.3, type: "lowpass" });
+    for (let k = 0; k < 14; k++) noise({ t: 0.15 + Math.random() * 0.6, d: 0.03, f: 3000 + Math.random() * 4000, q: 4, g: 0.08 });
+  },
+  // Стекло хрустального шара
+  glass: ({ pitch = 1 }) => { tone({ f: 2093 * pitch, d: 0.6, g: 0.1 }); tone({ f: 3136 * pitch, d: 0.4, g: 0.06 }); tone({ f: 4699 * pitch, d: 0.25, g: 0.03 }); },
+  // Арфа: быстрый глиссандо вверх (раскрытие шаров)
+  harp: () => { [60, 64, 67, 71, 72, 76, 79, 83, 84].forEach((n, k) => tone({ f: NOTE(n + 12), t: k * 0.035, d: 0.5, g: 0.07, type: "triangle" })); },
+  // Улучшение символа в бонусе
+  upgrade: ({ pitch = 1 }) => { tone({ f: 523 * pitch, to: 1046 * pitch, d: 0.25, g: 0.1, type: "triangle" }); bell(1568 * pitch, 0.2, 0.14, 0.6); },
   launch: () => { noise({ d: 0.8, f: 200, to: 1500, q: 0.6, g: 0.15, type: "lowpass" }); tone({ f: 80, to: 220, d: 0.8, g: 0.12, type: "sawtooth" }); },
 };
 RECIPES.coins = () => { for (let k = 0; k < 7; k++) setTimeout(() => RECIPES.coin({ pitch: 0.9 + Math.random() * 0.3 }), k * 55); };
 
 /** Минимальный интервал между одинаковыми звуками, мс (чтобы тики не сливались в шум). */
-const GAP: Partial<Record<Sfx, number>> = { tick: 35, count: 45, card: 40, chip: 30, pop: 30, coin: 25, gem: 40, reel: 20 };
+const GAP: Partial<Record<Sfx, number>> = { tick: 35, count: 45, card: 40, chip: 30, pop: 30, coin: 25, gem: 40, reel: 20, ice: 40, drop: 15, glass: 40 };
 
 export function sfx(name: Sfx, o: { i?: number; pitch?: number; delay?: number } = {}) {
   if (!enabled || typeof window === "undefined") return;
