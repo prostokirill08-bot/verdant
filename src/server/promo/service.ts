@@ -3,6 +3,7 @@ import { db } from "../db";
 import { HttpError } from "../http";
 import { GUEST_DOMAIN } from "@/lib/guest";
 import { weekBounds } from "@/lib/week";
+import { publicUser, PUBLIC_USER_SELECT } from "../security/privacy";
 import { applyEntry, withUserTx } from "../wallet/ledger";
 import { JACKPOT_BASE, jackpotPool, KEY_MIN_BET, KEY_ODDS, KEYS_NEEDED, takeJackpot } from "./keys";
 
@@ -37,16 +38,16 @@ const DAY = 24 * 3600 * 1000;
 
 type Row = { place: number; userId: string; user: string; avatar: string; mult: number; game: string; prize: bigint };
 async function leaderboard(start: Date, end: Date, take = 10): Promise<Row[]> {
-  const where = { status: "WON" as const, betAmount: { gte: KEY_MIN_BET }, settledAt: { gte: start, lt: end }, user: { email: { not: { endsWith: `@${GUEST_DOMAIN}` } } } };
+  const where = { status: "WON" as const, betAmount: { gte: KEY_MIN_BET }, settledAt: { gte: start, lt: end }, user: { role: "USER" as const, email: { not: { endsWith: `@${GUEST_DOMAIN}` } } } };   // сотрудники в турнире не участвуют
   const top = await db.round.groupBy({ by: ["userId"], where, _max: { multiplier: true }, orderBy: { _max: { multiplier: "desc" } }, take });
   if (!top.length) return [];
   const [users, rounds] = await Promise.all([
-    db.user.findMany({ where: { id: { in: top.map((t) => t.userId) } }, select: { id: true, username: true, avatar: true } }),
+    db.user.findMany({ where: { id: { in: top.map((t) => t.userId) } }, select: { id: true, ...PUBLIC_USER_SELECT } }),
     Promise.all(top.map((t) => db.round.findFirst({ where: { ...where, userId: t.userId, multiplier: t._max.multiplier ?? 0 }, select: { gameSlug: true }, orderBy: { settledAt: "asc" } }))),
   ]);
   return top.map((t, i) => {
     const u = users.find((x) => x.id === t.userId);
-    return { place: i + 1, userId: t.userId, user: u?.username ?? "—", avatar: u?.avatar ?? "orbit", mult: Number(t._max.multiplier ?? 0), game: rounds[i]?.gameSlug ?? "", prize: TOURNAMENT_PRIZES[i] ?? 0n };
+    return { place: i + 1, userId: t.userId, ...(u ? publicUser(u) : { user: "—", avatar: "orbit" }), mult: Number(t._max.multiplier ?? 0), game: rounds[i]?.gameSlug ?? "", prize: TOURNAMENT_PRIZES[i] ?? 0n };
   });
 }
 
@@ -79,7 +80,7 @@ export async function payTournament(now = Date.now()) {
 export async function promoSummary(userId?: string) {
   const [pool, tour, wins, st] = await Promise.all([
     jackpotPool(), currentTournament(),
-    db.promoWin.findMany({ orderBy: { createdAt: "desc" }, take: 12, select: { id: true, kind: true, amount: true, place: true, createdAt: true, user: { select: { username: true, avatar: true } } } }),
+    db.promoWin.findMany({ orderBy: { createdAt: "desc" }, take: 12, select: { id: true, kind: true, amount: true, place: true, createdAt: true, user: { select: PUBLIC_USER_SELECT } } }),
     userId ? db.promoState.findUnique({ where: { userId } }) : null,
   ]);
   const meRow = userId ? tour.top.find((r) => r.userId === userId) : undefined;
@@ -93,7 +94,7 @@ export async function promoSummary(userId?: string) {
     jackpot: { pool, base: JACKPOT_BASE },
     chest: CHEST_PRIZES.map((p) => ({ amount: p.amount === "grand" ? "grand" : p.amount, chance: p.weight / WEIGHT })),
     tournament: { ...tour, top: tour.top.map(({ userId: _u, ...r }) => r), me: userId ? { place: meRow?.place ?? null, best: meRow?.mult ?? best } : null },
-    wins: wins.map((w) => ({ id: w.id, kind: w.kind, amount: w.amount, place: w.place, at: w.createdAt, user: w.user.username, avatar: w.user.avatar })),
+    wins: wins.map((w) => ({ id: w.id, kind: w.kind, amount: w.amount, place: w.place, at: w.createdAt, ...publicUser(w.user) })),
   };
 }
 

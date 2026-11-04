@@ -7,14 +7,13 @@ import { isGuestEmail, TELEGRAM_DOMAIN } from "@/lib/guest";
 import type { SessionUser } from "../auth/session";
 import type { TgUser } from "./initData";
 
-/** Ник из Telegram под наши правила (латиница, цифры, _; 3–20). Кириллицу и пустые имена заменяем на tg_<id>. */
-function nickFor(u: TgUser): string[] {
-  const clean = (s?: string) => (s ?? "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 20);
-  const base = clean(u.username) || clean(u.first_name);
-  const out: string[] = [];
-  if (base.length >= 3) out.push(base, `${base.slice(0, 15)}_${String(u.id).slice(-4)}`);
-  out.push(`tg_${u.id}`.slice(0, 20), `tg_${randomToken(6).replace(/[^a-z0-9]/gi, "").slice(0, 8).toLowerCase()}`);
-  return out;
+/**
+ * Ник нового игрока из Telegram — случайный (player_xxxxxx). Username и имя из Telegram намеренно не используются:
+ * иначе по нику в публичных лентах можно было бы найти человека в Telegram. Ник можно сменить в настройках.
+ */
+function nickFor(_u: TgUser): string[] {
+  const rnd = () => `player_${randomToken(8).replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase()}`;
+  return [rnd(), rnd(), rnd()];
 }
 
 /**

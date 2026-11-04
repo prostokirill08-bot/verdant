@@ -48,6 +48,7 @@ model User {
   status        UserStatus @default(ACTIVE)
   avatar        String     @default("orbit")  // ключ встроенного аватара
   telegramId    BigInt?    @unique            // вход через Telegram Mini App
+  hidden        Boolean    @default(false)    // анонимный режим: ник не показывается в публичных лентах
   failedLogins  Int        @default(0)
   lockedUntil   DateTime?
   lastLoginAt   DateTime?

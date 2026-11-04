@@ -4,6 +4,7 @@ import { HttpError } from "../http";
 import { hashPassword, verifyPassword } from "../security/password";
 import { publicId, randomToken, sha256 } from "../security/tokens";
 import { audit } from "../security/audit";
+import { rateLimit } from "../security/rateLimit";
 import { applyEntry, withTx } from "../wallet/ledger";
 import { getPlatform } from "../settings";
 import { createSeedPair } from "../games/fair";
@@ -28,7 +29,8 @@ export async function registerUser(p: { email: string; username: string; passwor
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       const field = String((e.meta?.target as string[] | undefined)?.join(",") ?? "");
-      throw new HttpError(409, field.includes("email") ? "Этот email уже зарегистрирован" : "Этот ник уже занят", "taken");
+      // Ник публичный — его занятость можно сообщить. Про почту не уточняем: так нельзя проверить, есть ли у человека аккаунт
+      throw new HttpError(409, field.includes("email") ? "Не получилось зарегистрироваться с этими данными. Если аккаунт уже есть — войди или восстанови пароль" : "Этот ник уже занят", "taken");
     }
     throw e;
   }
@@ -52,7 +54,13 @@ export async function checkLogin(login: string, password: string, ip: string) {
   const user = await db.user.findFirst({ where: l.includes("@") ? { email: l } : { username: { equals: login, mode: "insensitive" } } });
   // одинаковое сообщение — не раскрываем, существует ли аккаунт
   const fail = new HttpError(401, "Неверный логин или пароль", "bad_credentials");
-  if (!user) { await verifyPassword(password, "scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAA"); throw fail; }
+  if (!user) {
+    // Несуществующий логин ведёт себя как существующий: те же время ответа и блокировка после 5 попыток —
+    // так перебором нельзя узнать, зарегистрирован ли человек
+    const lim = await rateLimit(`nologin:${sha256(l)}`, MAX_FAILS, LOCK_MS / 1000);
+    if (!lim.ok) throw new HttpError(423, "Слишком много неудачных попыток. Попробуй через 15 минут.", "locked");
+    await verifyPassword(password, "scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAA"); throw fail;
+  }
   if (user.lockedUntil && user.lockedUntil > new Date()) throw new HttpError(423, "Слишком много неудачных попыток. Попробуй через 15 минут.", "locked");
   if (!(await verifyPassword(password, user.passwordHash))) {
     const fails = user.failedLogins + 1;
@@ -75,7 +83,10 @@ export async function requestReset(email: string, ip: string) {
   const token = randomToken(32);
   await db.passwordReset.create({ data: { userId: user.id, tokenHash: sha256(token), expiresAt: new Date(Date.now() + RESET_TTL) } });
   const link = `${appUrl()}/reset-password?token=${token}`;
-  console.info(`[mail] Ссылка восстановления для ${email}: ${link}`);
+  // Почтовый сервис не подключён. Ссылку пишем в журнал только при локальной разработке:
+  // в продакшене журнал хостинга не должен содержать ни почту игрока, ни действующую ссылку сброса.
+  if (process.env.NODE_ENV !== "production") console.info(`[mail] Ссылка восстановления: ${link}`);
+  else console.info("[mail] запрошено восстановление пароля (почтовый сервис не подключён)");
   await audit("auth.reset_requested", { actorId: user.id, ip });
 }
 

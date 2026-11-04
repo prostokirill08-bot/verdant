@@ -20,12 +20,21 @@ const config: NextConfig = {
   reactStrictMode: true,
   async headers() {
     return [{
+      // Личные разделы не индексируются поисковиками
+      source: "/:dir(admin|account|deposit|api)/:path*",
+      headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+    }, {
       source: "/:path*",
       headers: [
         { key: "Content-Security-Policy", value: csp },
         { key: "X-Content-Type-Options", value: "nosniff" },
-        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        // Адрес страницы не уходит на другие сайты (ни путь, ни параметры)
+        { key: "Referrer-Policy", value: "no-referrer" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), browsing-topics=(), interest-cohort=()" },
+        { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+        { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+        { key: "X-DNS-Prefetch-Control", value: "off" },
+        { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
       ],
     }];
   },

@@ -3,13 +3,27 @@ import { ZodError, type ZodType, type ZodTypeDef } from "zod";
 import type { Role } from "@prisma/client";
 import { getSession, type SessionUser } from "./auth/session";
 import { rateLimit } from "./security/rateLimit";
+import { ipTag } from "./security/privacy";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string, public code = "error") { super(message); }
 }
 
-export const clientIp = (req: NextRequest) =>
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
+/**
+ * Откуда брать адрес клиента. Первый элемент X-Forwarded-For клиент может подставить сам и так обойти лимиты
+ * (перебор паролей). Поэтому сначала — заголовки, которые выставляет прокси хостинга (Cloudflare перед Render
+ * перезаписывает их), и только без них — X-Forwarded-For.
+ */
+const IP_HEADERS = ["cf-connecting-ip", "true-client-ip", "x-real-ip"] as const;
+export function ipSource(req: NextRequest): string {
+  return IP_HEADERS.find((h) => req.headers.get(h)) ?? (req.headers.get("x-forwarded-for") ? "x-forwarded-for" : "none");
+}
+/** Метка IP (HMAC), а не сам адрес: настоящие IP нигде не хранятся — ни в БД, ни в ключах лимитов. */
+export const clientIp = (req: NextRequest) => {
+  const src = ipSource(req);
+  const raw = src === "none" ? "local" : src === "x-forwarded-for" ? req.headers.get(src)!.split(",")[0]!.trim() : req.headers.get(src)!.trim();
+  return ipTag(raw || "local");
+};
 
 type Ctx = { req: NextRequest; ip: string; user: SessionUser | null; params: Record<string, string> };
 type Opts = {
@@ -39,7 +53,7 @@ export function route(opts: Opts, handler: (ctx: Ctx) => Promise<unknown>) {
       if (opts.auth) {
         if (!user) throw new HttpError(401, "Нужно войти в аккаунт", "unauthorized");
         if (user.status === "BLOCKED") throw new HttpError(403, "Аккаунт заблокирован", "blocked");
-        if (typeof opts.auth === "string" && ROLE_RANK[user.role] < ROLE_RANK[opts.auth]) throw new HttpError(403, "Недостаточно прав", "forbidden");
+        if (typeof opts.auth === "string" && ROLE_RANK[user.role] < ROLE_RANK[opts.auth]) throw new HttpError(404, "Не найдено", "not_found");   // не подсказываем, что раздел существует
       }
       if (mutating && user && opts.csrf !== false) {
         if (req.headers.get("x-csrf-token") !== user.csrfToken) throw new HttpError(403, "Сессия устарела, обнови страницу", "csrf");

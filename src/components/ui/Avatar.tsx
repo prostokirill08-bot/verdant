@@ -6,6 +6,12 @@ export const AVATARS = {
 export type AvatarKey = keyof typeof AVATARS;
 
 export function Avatar({ name, avatar, size = 36 }: { name: string; avatar: string; size?: number }) {
+  // Скрытый игрок (анонимный режим или сотрудник): без инициала
+  if (avatar === "hidden") return (
+    <span className="inline-grid shrink-0 place-items-center rounded-full bg-[#2a3358] text-white/60" style={{ width: size, height: size }} aria-hidden>
+      <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="currentColor"><path d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4zm0 2c-4.4 0-8 2.2-8 5v1.4h16V19c0-2.8-3.6-5-8-5z" /></svg>
+    </span>
+  );
   const [a, b] = AVATARS[(avatar in AVATARS ? avatar : "orbit") as AvatarKey];
   return (
     <span className="relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold text-white"

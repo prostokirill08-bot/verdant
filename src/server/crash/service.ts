@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publicUser, PUBLIC_USER_SELECT } from "../security/privacy";
 import { crashMultiplierAt, crashTimeFor } from "@/lib/fair/outcomes";
 import { db } from "../db";
 import { HttpError } from "../http";
@@ -28,12 +29,12 @@ export async function crashSnapshot() {
   ]);
   const last = history[0];
   const round = cur ?? (last && last.crashedAt && Date.now() - last.crashedAt.getTime() < PAUSE_MS + 2000 ? await db.crashRound.findUnique({ where: { id: last.id } }) : null);
-  const bets = round ? await db.round.findMany({ where: { crashId: round.id }, orderBy: { betAmount: "desc" }, take: 100, include: { user: { select: { username: true, avatar: true } } } }) : [];
+  const bets = round ? await db.round.findMany({ where: { crashId: round.id }, orderBy: { betAmount: "desc" }, take: 100, include: { user: { select: PUBLIC_USER_SELECT } } }) : [];
   return {
     serverNow: Date.now(),
     round: round ? publicRound(round) : null,
     bets: bets.map((b) => ({
-      id: b.id, user: b.user.username, avatar: b.user.avatar, amount: b.betAmount.toString(), auto: (b.params as CrashParams).autoCashout,
+      id: b.id, ...publicUser(b.user), amount: b.betAmount.toString(), auto: (b.params as CrashParams).autoCashout,
       status: b.status, multiplier: Number(b.multiplier), payout: b.payout.toString(),
     })),
     history: history.map((h) => ({ id: h.id, crashPoint: Number(h.crashPoint), serverSeed: h.serverSeed, serverSeedHash: h.serverSeedHash })),
@@ -63,8 +64,8 @@ export async function placeCrashBet(userId: string, input: z.infer<typeof crashB
     return { roundId: round.id, balance: entry.balanceAfter, fresh: true };
   });
   if (res.fresh) {
-    const u = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { username: true, avatar: true } });
-    await publish({ t: "bet", bet: { id: res.roundId, user: u.username, avatar: u.avatar, amount: input.amount.toString(), auto: input.autoCashout ?? null } });
+    const u = await db.user.findUniqueOrThrow({ where: { id: userId }, select: PUBLIC_USER_SELECT });
+    await publish({ t: "bet", bet: { id: res.roundId, ...publicUser(u), amount: input.amount.toString(), auto: input.autoCashout ?? null } });
   }
   return { roundId: res.roundId, balance: res.balance };
 }
@@ -74,14 +75,14 @@ export async function settleCrashBet(roundId: string, multiplier: number) {
   const bet = await db.round.findUnique({ where: { id: roundId }, select: { userId: true } });
   if (!bet) return null;
   const res = await withUserTx(bet.userId, async (tx) => {
-    const r = await tx.round.findUnique({ where: { id: roundId }, include: { user: { select: { username: true } } } });
+    const r = await tx.round.findUnique({ where: { id: roundId }, include: { user: { select: PUBLIC_USER_SELECT } } });
     if (!r || r.status !== "ACTIVE") return null;
     const payout = (r.betAmount * BigInt(Math.round(multiplier * 100))) / 100n;
     // Условное обновление: если цикл уже записал обвал (LOST), выплаты не будет
     const upd = await tx.round.updateMany({ where: { id: r.id, status: "ACTIVE" }, data: { status: "WON", payout, multiplier, result: { cashout: multiplier }, settledAt: new Date() } });
     if (upd.count === 0) return null;
     const { entry } = await applyEntry(tx, { userId: r.userId, type: "WIN", amount: payout, idempotencyKey: `win:${r.id}`, roundId: r.id, note: "Crash" });
-    return { payout, balance: entry.balanceAfter, user: r.user.username };
+    return { payout, balance: entry.balanceAfter, user: publicUser(r.user).user };
   });
   if (res) await publish({ t: "cashout", cashout: { id: roundId, user: res.user, multiplier, payout: res.payout.toString() } });
   return res;

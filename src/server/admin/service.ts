@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { maskEmail } from "../security/privacy";
 import type { Prisma, Role, UserStatus } from "@prisma/client";
 import { db } from "../db";
 import { HttpError } from "../http";
@@ -46,19 +47,20 @@ export const usersQuery = z.object({
   q: z.string().trim().max(100).optional(), status: z.enum(["ACTIVE", "BLOCKED"]).optional(), role: z.enum(["USER", "SUPPORT", "ADMIN"]).optional(),
   cursor: z.string().max(40).optional(),
 });
-export async function listUsers(p: z.infer<typeof usersQuery>) {
+export async function listUsers(p: z.infer<typeof usersQuery>, viewer: Role = "ADMIN") {
   const where: Prisma.UserWhereInput = {
     ...(p.status ? { status: p.status } : {}), ...(p.role ? { role: p.role } : {}),
-    ...(p.q ? { OR: [{ email: { contains: p.q, mode: "insensitive" } }, { username: { contains: p.q, mode: "insensitive" } }, { publicId: { contains: p.q.toUpperCase() } }] } : {}),
+    // Поддержка ищет только по нику и ID: перебором почт нельзя выяснить, кто зарегистрирован
+    ...(p.q ? { OR: [...(viewer === "ADMIN" ? [{ email: { contains: p.q, mode: "insensitive" as const } }] : []), { username: { contains: p.q, mode: "insensitive" } }, { publicId: { contains: p.q.toUpperCase() } }] } : {}),
   };
   const rows = await db.user.findMany({
     where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 26, ...(p.cursor ? { cursor: { id: p.cursor }, skip: 1 } : {}),
     select: { id: true, publicId: true, email: true, username: true, role: true, status: true, avatar: true, createdAt: true, lastLoginAt: true, wallet: { select: { balance: true } } },
   });
-  return { users: rows.slice(0, 25).map(({ wallet, ...u }) => ({ ...u, balance: wallet?.balance ?? 0n })), nextCursor: rows.length > 25 ? rows[24]!.id : null };
+  return { users: rows.slice(0, 25).map(({ wallet, ...u }) => ({ ...u, email: viewer === "ADMIN" ? u.email : maskEmail(u.email), balance: wallet?.balance ?? 0n })), nextCursor: rows.length > 25 ? rows[24]!.id : null };
 }
 
-export async function userDetail(id: string) {
+export async function userDetail(id: string, viewer: Role = "ADMIN") {
   const u = await db.user.findUnique({
     where: { id },
     select: { id: true, publicId: true, email: true, username: true, role: true, status: true, avatar: true, createdAt: true, lastLoginAt: true, failedLogins: true, lockedUntil: true },
@@ -73,7 +75,7 @@ export async function userDetail(id: string) {
     db.auditLog.findMany({ where: { OR: [{ actorId: id }, { targetId: id }] }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
   return {
-    user: u, wallet: check,
+    user: viewer === "ADMIN" ? u : { ...u, email: maskEmail(u.email) }, wallet: check,
     stats: { rounds: stats._count, wagered: stats._sum.betAmount ?? 0n, payout: stats._sum.payout ?? 0n },
     ledger, rounds: rounds.map((r) => ({ ...r, multiplier: Number(r.multiplier) })),
     sessions: sessions.map((s) => ({ ...s, id: s.id.slice(0, 12) })), events,

@@ -4,12 +4,12 @@ import { signInitData, verifyInitData } from "./initData";
 
 const TOKEN = "123456:TEST-token-for-unit-tests";
 const now = Date.now();
-const fields = (extra: Record<string, string> = {}) => ({ auth_date: String(Math.floor(now / 1000)), query_id: "AAF", user: JSON.stringify({ id: 777001, first_name: "Кирилл", username: "kris_test" }), ...extra });
+const fields = (extra: Record<string, string> = {}) => ({ auth_date: String(Math.floor(now / 1000)), query_id: "AAF", user: JSON.stringify({ id: 777001, first_name: "Игрок", username: "player_test" }), ...extra });
 
 test("telegram initData: правильная подпись принимается", () => {
   const d = verifyInitData(signInitData(fields({ start_param: "blackjack" }), TOKEN), TOKEN, 3600, now);
   assert.equal(d?.user.id, 777001);
-  assert.equal(d?.user.username, "kris_test");
+  assert.equal(d?.user.username, "player_test");
   assert.equal(d?.startParam, "blackjack");
 });
 

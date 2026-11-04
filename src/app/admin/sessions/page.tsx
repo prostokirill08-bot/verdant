@@ -9,13 +9,8 @@ import { timeAgo } from "@/lib/format";
 
 type S = { ref: string; ip: string | null; userAgent: string | null; createdAt: string; expiresAt: string; user: { id: string; username: string; publicId: string; role: string; avatar: string } };
 
-/** Краткое имя устройства из User-Agent. */
-function device(ua: string | null) {
-  if (!ua) return "—";
-  const os = /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows" : /Mac OS/.test(ua) ? "macOS" : /Linux/.test(ua) ? "Linux" : "";
-  const br = /Edg\//.test(ua) ? "Edge" : /YaBrowser/.test(ua) ? "Яндекс" : /Chrome\//.test(ua) ? "Chrome" : /Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : ua.slice(0, 24);
-  return [br, os].filter(Boolean).join(" · ");
-}
+/** Сервер хранит только тип устройства («Chrome · Android»), без полной строки браузера. */
+const device = (ua: string | null) => ua || "—";
 
 export default function AdminSessions() {
   const { data, error, reload } = useAdminData<{ sessions: S[] }>("/api/admin/sessions");

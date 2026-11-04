@@ -4,6 +4,7 @@ import type { Role, UserStatus } from "@prisma/client";
 import { db } from "../db";
 import { randomToken, sha256 } from "../security/tokens";
 import { isHttps } from "../config";
+import { deviceLabel } from "../security/privacy";
 
 export const SESSION_COOKIE = "vd_session";
 export const CSRF_COOKIE = "vd_csrf";
@@ -24,7 +25,7 @@ const secure = isHttps();
  */
 export async function createSession(userId: string, ip: string, userAgent: string | null, opts: { embedded?: boolean } = {}) {
   const token = randomToken(32), csrfToken = randomToken(24);
-  await db.session.create({ data: { id: sha256(token), userId, csrfToken, ip, userAgent: userAgent?.slice(0, 300), expiresAt: new Date(Date.now() + TTL_MS) } });
+  await db.session.create({ data: { id: sha256(token), userId, csrfToken, ip, userAgent: deviceLabel(userAgent), expiresAt: new Date(Date.now() + TTL_MS) } });
   const jar = await cookies();
   const embed = opts.embedded && secure ? { sameSite: "none" as const, partitioned: true } : null;
   jar.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: TTL_MS / 1000, ...embed });

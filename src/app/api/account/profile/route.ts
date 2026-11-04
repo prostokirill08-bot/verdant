@@ -9,7 +9,7 @@ import { AVATARS } from "@/components/ui/Avatar";
 
 export const GET = route({ auth: true }, async ({ user }) => accountSummary(user!.id));
 
-const schema = z.object({ username: usernameSchema.optional(), avatar: z.enum(Object.keys(AVATARS) as [string, ...string[]]).optional() });
+const schema = z.object({ username: usernameSchema.optional(), avatar: z.enum(Object.keys(AVATARS) as [string, ...string[]]).optional(), hidden: z.boolean().optional() });
 export const PATCH = route({ auth: true, rate: { key: "profile", limit: 20, window: 300 } }, async ({ req, user, ip }) => {
   const p = await body(req, schema);
   try { await db.user.update({ where: { id: user!.id }, data: p }); }

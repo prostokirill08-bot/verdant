@@ -15,10 +15,11 @@ const floatAt = (seed, msg) => { const h = createHmac("sha256", seed).update(msg
 /** Клиент со своими cookie — как отдельный браузер. */
 class Client {
   jar = {};
+  ip = `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;   // каждый «браузер» — свой адрес
   async req(path, body, method) {
     const r = await fetch(B + path, {
       method: method ?? (body ? "POST" : "GET"),
-      headers: { cookie: Object.entries(this.jar).map(([k, v]) => `${k}=${v}`).join("; "), "content-type": "application/json", origin: B, "x-csrf-token": decodeURIComponent(this.jar.vd_csrf ?? "") },
+      headers: { "x-forwarded-for": this.ip, cookie: Object.entries(this.jar).map(([k, v]) => `${k}=${v}`).join("; "), "content-type": "application/json", origin: B, "x-csrf-token": decodeURIComponent(this.jar.vd_csrf ?? "") },
       body: body ? JSON.stringify(body) : undefined,
     });
     for (const c of r.headers.getSetCookie()) { const [kv] = c.split(";"); const i = kv.indexOf("="); const v = kv.slice(i + 1); if (v) this.jar[kv.slice(0, i)] = v; else delete this.jar[kv.slice(0, i)]; }
@@ -109,7 +110,11 @@ ok("hilo: старт", r.s === 200 && r.j.round.state.revealed.length === 1);
 ok("hilo: забрать без хода → 400", (await p.req("/api/hilo/cashout", {})).s === 400);
 r = await p.req("/api/hilo/guess", { guess: r.j.round.odds.higher >= 0.5 ? "higher" : "lower" });
 ok("hilo: ход", r.s === 200);
-if (r.j.round.status === "ACTIVE" && r.j.round.current > 1) ok("hilo: забрать", (await p.req("/api/hilo/cashout", {})).j.round?.status === "WON");
+// Доигрываем раунд до конца: множитель после хода может быть ровно 1× — тогда забирать ещё нечего, ходим дальше
+for (let i = 0; i < 20 && r.j.round?.status === "ACTIVE"; i++) {
+  if (r.j.round.current > 1) { r = await p.req("/api/hilo/cashout", {}); ok("hilo: забрать", r.j.round?.status === "WON"); break; }
+  r = await p.req("/api/hilo/guess", { guess: r.j.round.odds.higher >= 0.5 ? "higher" : "lower" });
+}
 ok("ставка больше баланса → 400", (await p.req("/api/games/dice/bet", { amount: "9999", params: { target: 50, over: true }, key: key() })).s === 400);
 ok("неверные параметры → 400", (await p.req("/api/games/dice/bet", { amount: "1", params: { target: 1, over: true }, key: key() })).s === 400);
 const before = await p.balance();
@@ -123,7 +128,7 @@ r = await p.req("/api/mines/reveal", { tile: 0 });
 ok("mines: клетка открыта", r.s === 200 && ["ACTIVE", "LOST", "WON"].includes(r.j.round.status));
 if (r.j.round.status === "ACTIVE") { const c = await p.req("/api/mines/cashout", {}); if (c.s !== 200) console.log("  mines cashout:", c.s, JSON.stringify(c.j)); }
 r = await p.req("/api/fair"); const hash = r.j.current.serverSeedHash;
-r = await p.req("/api/fair", { clientSeed: "e2e-seed" });
+r = await p.req("/api/fair", { clientSeed: "e2e-seed" }); if (!r.j.revealed) console.log("  fair rotate:", r.s, JSON.stringify(r.j));
 ok("смена пары раскрывает сид с верным хэшем", createHash("sha256").update(r.j.revealed[0].serverSeed).digest("hex") === hash);
 const last = (await p.req("/api/games/dice/rounds?scope=mine")).j.rounds[0];
 ok("раунд dice пересчитывается по раскрытому сиду", Math.floor(floatAt(last.fair.serverSeed, `${last.fair.clientSeed}:${last.nonce}:0`) * 10001) / 100 === last.result.roll);
@@ -188,7 +193,7 @@ ok("баланс сходится с журналом после всех игр
 
 // ---------- Админ-панель ----------
 console.log("— Админ-панель");
-ok("игрок не видит админ-API", (await p.req("/api/admin/stats")).s === 403);
+ok("игрок не видит админ-API (404, будто его нет)", (await p.req("/api/admin/stats")).s === 404);
 ok("страница /admin для игрока — 404", (await fetch(B + "/admin", { headers: { cookie: `vd_session=${p.jar.vd_session}` } })).status === 404);
 if (!ADMIN.password) { console.log("ADMIN_PASSWORD не задан — проверки админки пропущены"); }
 else {
@@ -213,8 +218,15 @@ else {
   ok("снова вход", (await p.req("/api/auth/login", { login: p.email, password: "Passw0rd1" })).s === 200);
   ok("назначить поддержку", (await a.req(`/api/admin/users/${id}/role`, { role: "SUPPORT" })).s === 200);
   ok("поддержка видит статистику", (await p.req("/api/admin/stats")).s === 200);
-  ok("поддержка не меняет настройки", (await p.req("/api/admin/settings", { maintenance: true }, "PATCH")).s === 403);
-  ok("поддержка не меняет баланс", (await p.req(`/api/admin/users/${id}/balance`, { direction: "credit", amount: "1", reason: "тест", key: key() })).s === 403);
+  ok("поддержка не меняет настройки", (await p.req("/api/admin/settings", { maintenance: true }, "PATCH")).s === 404);
+  ok("поддержка не меняет баланс", (await p.req(`/api/admin/users/${id}/balance`, { direction: "credit", amount: "1", reason: "тест", key: key() })).s === 404);
+  { // Поддержка видит почту только замаскированной и не ищет по почте
+    const sup = (await p.req(`/api/admin/users/${id}`)).j.user?.email ?? "";
+    const byMail = (await p.req(`/api/admin/users?q=${encodeURIComponent(p.email)}`)).j.users ?? [];
+    ok("поддержка: почта скрыта (k***@…)", /^.\*\*\*@/.test(sup) && sup !== p.email, sup);
+    ok("поддержка: поиск по почте не работает", byMail.length === 0);
+    ok("админ видит почту полностью", (await a.req(`/api/admin/users/${id}`)).j.user?.email === p.email);
+  }
   ok("поддержка не блокирует админа", (await p.req(`/api/admin/users/${adminId}/status`, { status: "BLOCKED", reason: "тест e2e" })).s === 403);
   await a.req(`/api/admin/users/${id}/role`, { role: "USER" });
   ok("выключение игры", (await a.req("/api/admin/games/limbo", { enabled: false }, "PATCH")).s === 200);
@@ -240,12 +252,12 @@ if (TG) {
   console.log("— Telegram");
   const sign = (f) => { const chk = Object.entries(f).map(([k, v]) => `${k}=${v}`).sort().join("\n"); const sec = createHmac("sha256", "WebAppData").update(TG).digest(); return new URLSearchParams({ ...f, hash: createHmac("sha256", sec).update(chk).digest("hex") }).toString(); };
   const tgId = 900000000 + Math.floor(Math.random() * 99999999);
-  const initData = sign({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: tgId, first_name: "Кирилл", username: "kq" }) });
+  const initData = sign({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: tgId, first_name: "Игрок", username: "kq" }) });
   const t = new Client();
   r = await t.req("/api/auth/telegram", { initData });
   const me = (await t.req("/api/auth/me")).j;
   ok("telegram: вход по initData создаёт аккаунт", r.s === 200 && r.j.created === true && me.user?.email === `tg_${tgId}@telegram.local` && BigInt(me.balance) === 0n, JSON.stringify(r.j));
-  ok("telegram: короткий ник заменён на tg_<id>", me.user?.username === `tg_${tgId}`.slice(0, 20), me.user?.username);
+  ok("telegram: ник случайный, без данных Telegram", /^player_[a-z0-9]{6}$/.test(me.user?.username ?? ""), me.user?.username);
   ok("telegram: повторный вход — тот же аккаунт", (await t.req("/api/auth/telegram", { initData })).j.same === true);
   const t2 = new Client(); await t2.req("/api/auth/telegram", { initData });
   ok("telegram: с другого устройства — тот же аккаунт", (await t2.req("/api/auth/me")).j.user?.publicId === me.user?.publicId);
@@ -254,12 +266,41 @@ if (TG) {
   ok("telegram: поддельная подпись → 401", (await new Client().req("/api/auth/telegram", { initData: initData.replace(String(tgId), String(tgId + 1)) })).s === 401);
   // Привязка: вошёл в обычный аккаунт внутри Telegram → Telegram привязывается к нему
   const pl = await newPlayer(); const id2 = tgId + 1;
-  await pl.req("/api/auth/telegram", { initData: sign({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: id2, first_name: "Kirill" }) }) });
+  await pl.req("/api/auth/telegram", { initData: sign({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: id2, first_name: "Player" }) }) });
   ok("telegram: привязка к обычному аккаунту", (await pl.req("/api/auth/me")).j.user?.username === pl.username);
   const wh = createHash("sha256").update(`verdant-webhook:${TG}`).digest("hex").slice(0, 48);
   const hook = (secret) => fetch(B + "/api/telegram/webhook", { method: "POST", headers: { "content-type": "application/json", ...(secret ? { "x-telegram-bot-api-secret-token": secret } : {}) }, body: JSON.stringify({ update_id: 1, message: { chat: { id: 1, type: "private" }, text: "/start" } }) }).then((x) => x.status);
   ok("telegram: вебхук без секрета → 401", (await hook("")) === 401 && (await hook("x".repeat(48))) === 401);
   ok("telegram: вебхук с секретом → 200", (await hook(wh)) === 200);
+}
+
+// ---------- Приватность ----------
+console.log("— Приватность");
+{
+  // Анонимный режим: ник не появляется в публичных лентах
+  const h = await newPlayer();
+  await h.req("/api/account/profile", { hidden: true }, "PATCH");
+  let won = null;
+  for (let i = 0; i < 40 && !won; i++) { const x = await h.req("/api/games/dice/bet", { amount: "1", params: { target: 5, over: true }, key: key() }); if (x.j.round?.status === "WON") won = x.j.round; }
+  const feed = JSON.stringify((await new Client().req("/api/feed/wins")).j) + JSON.stringify((await new Client().req("/api/games/dice/rounds")).j);
+  ok("анонимный режим: ника нет в лентах", !!won && !feed.includes(h.username) && feed.includes("Скрытый игрок"));
+  ok("анонимный режим: в своей истории ник виден", (await h.req(`/api/rounds/${won?.id}`)).j.round?.user === h.username);
+  ok("чужой раунд анонимного игрока — без ника", (await new Client().req(`/api/rounds/${won?.id}`)).j.round?.user === "Скрытый игрок");
+  // Свои сеансы — без IP
+  const ss = (await h.req("/api/account/sessions")).j.sessions ?? [];
+  ok("сеансы: IP не отдаётся", ss.length > 0 && ss.every((s) => !("ip" in s)));
+  // Перебор логинов: несуществующий логин блокируется так же, как существующий
+  const ghost = "nobody_" + randomUUID().slice(0, 8) + "@test.local"; let last = 0;
+  for (let i = 0; i < 6; i++) last = (await new Client().req("/api/auth/login", { login: ghost, password: "Wrong1234" })).s;
+  ok("перебор: несуществующий логин тоже «заблокирован» (423)", last === 423);
+  // Удаление аккаунта
+  ok("удаление: без ника не удаляет", (await h.req("/api/account/delete", { confirm: "x", password: "Passw0rd1" })).s === 400);
+  ok("удаление: неверный пароль → 400", (await h.req("/api/account/delete", { confirm: h.username, password: "Wrong1234" })).s === 400);
+  ok("удаление аккаунта", (await h.req("/api/account/delete", { confirm: h.username, password: "Passw0rd1" })).s === 200 && (await h.req("/api/auth/me")).j.user === null);
+  ok("удалённый не входит", (await new Client().req("/api/auth/login", { login: h.email, password: "Passw0rd1" })).s === 401);
+  // Заголовки безопасности
+  const hd = (await fetch(B + "/")).headers;
+  ok("заголовки: no-referrer, HSTS, без X-Powered-By", hd.get("referrer-policy") === "no-referrer" && /max-age=/.test(hd.get("strict-transport-security") ?? "") && !hd.get("x-powered-by"));
 }
 
 const h = await fetch(B + "/api/health").then((x) => x.json());
