@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -32,6 +33,7 @@ export function DiceGame({ cfg }: { cfg: GameConfig }) {
     if (!r) return;
     const x = r.round.result as { roll: number; win: boolean };
     const item = { roll: x.roll, win: x.win, id: r.round.id };
+    sfx("dice"); winSfx(x.win ? r.round.multiplier : 0, 180);
     setLast(item); setRecent((p) => [item, ...p].slice(0, 12)); setVersion((v) => v + 1);
   }
   const setChance = (c: number) => { const t = Math.min(98, Math.max(2, over ? 100 - c : c)); setTarget(Math.round(t * 100) / 100); };

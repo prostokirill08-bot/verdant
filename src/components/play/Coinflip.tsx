@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -52,12 +53,14 @@ export function CoinflipGame({ cfg }: { cfg: GameConfig }) {
     const x = r.round.result as { sides: Side[]; win: boolean };
     // Монета подбрасывается по очереди; серия обрывается на первом промахе
     for (let i = 0; i < x.sides.length; i++) {
-      setSpinning(i); await new Promise((res) => setTimeout(res, 650));
+      setSpinning(i); sfx("flip"); await new Promise((res) => setTimeout(res, 650));
       setFace(x.sides[i]!); setShown((p) => [...p, x.sides[i]!]); setSpinning(null);
+      if (x.sides[i] === side && i < x.sides.length - 1) sfx("coin", { pitch: 1 + i * 0.1 });
       await new Promise((res) => setTimeout(res, 250));
       if (x.sides[i] !== side) break;
     }
     setLast({ win: x.win, payout: r.round.payout }); setBalance(r.balance); setVersion((v) => v + 1);
+    winSfx(x.win ? r.round.multiplier : 0);
   }
 
   const playing = busy || spinning !== null;

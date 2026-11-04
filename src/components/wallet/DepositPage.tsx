@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -46,7 +47,7 @@ export function DepositPage() {
     try {
       const r = await api<{ balance: string; deposit: { amount: string } }>("/api/account/deposit", { body: { amount: amount.replace(",", "."), method, key } });
       await new Promise((ok) => setTimeout(ok, Math.max(0, 1400 - (Date.now() - started))));   // «банк обрабатывает»
-      setBalance(r.balance); setDone({ amount: r.deposit.amount, balance: r.balance }); setStep("done"); haptic("win");
+      setBalance(r.balance); setDone({ amount: r.deposit.amount, balance: r.balance }); setStep("done"); haptic("win"); sfx("cashout"); sfx("coins", { delay: 200 });
       setKey(newKey()); void load();
     } catch (e) {
       setStep("form"); setError(e instanceof ApiError ? e.message : "Не удалось пополнить, попробуй ещё раз"); haptic("lose");

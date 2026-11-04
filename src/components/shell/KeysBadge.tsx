@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,7 +16,7 @@ export function KeysBadge() {
     if (!user) return;
     const t = setTimeout(() => {
       api<{ keys: number; need: number }>("/api/promo/keys").then((k) => {
-        if (prev.current !== null && k.keys > prev.current) { setToast(k.keys); setTimeout(() => setToast(null), 3500); }
+        if (prev.current !== null && k.keys > prev.current) { setToast(k.keys); sfx("key"); setTimeout(() => setToast(null), 3500); }
         prev.current = k.keys; setKeys(k);
       }).catch(() => {});
     }, 500);

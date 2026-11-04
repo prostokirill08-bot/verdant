@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -67,8 +68,11 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
     const cells = winCells(s.wins, ATLAS.lines);
     if (s.scatter.mult > 0 || s.retrigger) s.grid.forEach((col, reel) => col.forEach((x, row) => x === "book" && cells.add(`${reel}:${row}`)));
     setLines(s.wins); setHl(cells.size ? cells : null);
+    if (s.mult > 0 && s.mult < 10) sfx(s.mult >= 3 ? "bigwin" : "win");   // от ×10 звучит большой выигрыш
+    if (s.scatter.mult > 0 && !s.retrigger) sfx("gem");
     if (special && s.expand) {
       await sleep(turboRef.current ? 250 : 500);
+      sfx("whoosh");
       setExpand({ sym: special, reels: s.expand.reels });
       await sleep(turboRef.current ? 600 : 1200);
     }
@@ -88,7 +92,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
     if (!res.bought) count(!!res.fs);   // счётчик спинов без бонуса
     if (res.fs) {
       const f = res.fs;
-      setBanner(<Intro special={f.special} count={ATLAS.freeSpins} />); await sleep(2600); setBanner(null);
+      sfx("bonus"); setBanner(<Intro special={f.special} count={ATLAS.freeSpins} />); await sleep(2600); setBanner(null);
       // Сумма бонуса считается сразу: выигрыш запускающего спина + каждый бесплатный спин
       const cap = winUnits(units, ATLAS.maxWin); const special = f.special;
       let total = res.base ? winUnits(units, res.base.mult) : 0n; let left = ATLAS.freeSpins; let tick = 0;
@@ -103,7 +107,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
         setLastWin(total.toString());
         if (s.mult >= 10) await showBig(s.mult, add.toString(), `Бесплатное вращение ${i + 1}`, true);   // крупный выигрыш внутри бонуса
         if (add > 0n) await sleep(turboRef.current ? 250 : 500);
-        if (s.retrigger) { left += ATLAS.freeSpins; setFs({ special, left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<Retrigger />); await sleep(1500); setBanner(null); }
+        if (s.retrigger) { sfx("bonus"); left += ATLAS.freeSpins; setFs({ special, left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<Retrigger />); await sleep(1500); setBanner(null); }
       }
       setFs({ special, left: 0, done: f.spins.length, total: r.round.payout, add: null, tick });
       await showBig(res.totalMult, r.round.payout, `Бонус: ${f.spins.length} вращений`);

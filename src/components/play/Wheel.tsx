@@ -1,4 +1,5 @@
 "use client";
+import { sfx, spinTicks, winSfx } from "@/lib/sound";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -35,7 +36,8 @@ export function WheelGame({ cfg }: { cfg: GameConfig }) {
     setSpinning(true);
     const base = angle - (angle % 360);
     setAngle(base + 360 * 5 - x.segment * SEG - (Math.random() - 0.5) * SEG * 0.7);
-    setTimeout(() => { setSpinning(false); setResult({ seg: x.segment, m: x.multiplier, payout: r.round.payout }); setBalance(r.balance); setVersion((v) => v + 1); }, 4300);
+    sfx("whoosh"); spinTicks(5 * 20 + x.segment, 4100);
+    setTimeout(() => { setSpinning(false); setResult({ seg: x.segment, m: x.multiplier, payout: r.round.payout }); setBalance(r.balance); setVersion((v) => v + 1); winSfx(x.multiplier); }, 4300);
   }
 
   const controls = (

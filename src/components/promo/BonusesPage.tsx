@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -185,7 +186,13 @@ export function BonusesPage() {
 function ChestReveal({ opened, onClose }: { opened: Opened | null; onClose: () => void }) {
   const [mounted, setMounted] = useState(false); const [stage, setStage] = useState(0);
   useEffect(() => setMounted(true), []);
-  useEffect(() => { if (!opened) return; setStage(0); const a = setTimeout(() => setStage(1), 1500); return () => clearTimeout(a); }, [opened]);
+  useEffect(() => {
+    if (!opened) return; setStage(0);
+    // тряска сундука — скрип и барабанная дробь, затем приз: джекпот, крупный или обычный
+    sfx("chest"); for (let k = 0; k < 6; k++) sfx("tick", { delay: 200 + k * 200, pitch: 0.5 + k * 0.08 });
+    const a = setTimeout(() => { setStage(1); if (opened.grand) sfx("jackpot"); else if (Number(opened.prize) >= 25_000) sfx("bigwin"); else sfx("coins"); }, 1500);
+    return () => clearTimeout(a);
+  }, [opened]);
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence>

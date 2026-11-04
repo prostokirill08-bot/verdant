@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -24,7 +25,7 @@ export default function AccountPage() {
 
   async function bonus() {
     setBusy(true); setMsg("");
-    try { const r = await api<{ balance: string }>("/api/account/bonus", { method: "POST" }); setBalance(r.balance); setMsg(`Начислено ${points(s!.bonus.amount)}`); await load(); }
+    try { const r = await api<{ balance: string }>("/api/account/bonus", { method: "POST" }); setBalance(r.balance); sfx("coins"); setMsg(`Начислено ${points(s!.bonus.amount)}`); await load(); }
     catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   }
   async function verify() { try { setCheck(await api("/api/account/verify")); } catch (e) { setMsg((e as Error).message); } }

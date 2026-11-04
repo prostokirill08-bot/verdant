@@ -1,4 +1,5 @@
 "use client";
+import { sfx, spinTicks } from "@/lib/sound";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -297,6 +298,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
   function showWins(s: WsSpin) {
     const cells = winCells(s.wins, WS.lines);
     setLines(s.wins); setHl(cells.size ? cells : null);
+    if (s.mult > 0 && s.mult < 10) sfx(s.mult >= 3 ? "bigwin" : "win");
   }
 
   /** Монеты слетают с барабанов в свои сундуки; сундук наполняется по мере прилёта. */
@@ -317,6 +319,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
           setFlying((f) => f.filter((z) => z.id !== fid));
           // Прилёт: +1 монета; «счастливая» монета наполняет сундук до краёв
           const m = view[c.chest]!; const v = shown[c.chest]!;
+          sfx(c.fills ? "chest" : "coin", { pitch: 0.9 + c.chest * 0.08 });   // монета падает в сундук; «счастливая» — открывает его
           if (!m.done) {
             m.have++;
             shown[c.chest] = { ...v, have: m.have, full: c.fills, bump: (v.bump ?? 0) + 1 };
@@ -343,7 +346,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       if (s.sticky) setSticky(new Set(s.sticky));
       showWins(s);
       const add = Math.floor(tr.stake * s.mult);
-      if (add > 0) { total += add; tick++; }
+      if (add > 0) { total += add; tick++; sfx("coin"); }
       setFs((f) => f && { ...f, total: String(Math.round(total)), add: add > 0 ? String(add) : null, tick });
       await t(add > 0 ? 700 : 200);
     }
@@ -355,11 +358,13 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
     const top = stageRef.current?.getBoundingClientRect().top ?? 0;
     if (top < 60 || top > window.innerHeight * 0.5) stageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     setSpill({ chest: tr.chest, key: Date.now() });
+    sfx("chest"); sfx("coins", { delay: 350 });
     await sleep(turboRef.current ? 1300 : 2000);
     // Заставка бонуса уходит сама через пару секунд (можно пропустить нажатием)
     await new Promise<void>((res) => {
       const go = () => { clearTimeout(tm); setBanner(null); res(); };
       const tm = setTimeout(go, turboRef.current ? 1500 : 2400);
+      sfx("bonus");
       setBanner(<div onClick={go} className="grid cursor-pointer place-items-center"><Intro t={tr} /></div>);
     });
     setSpill(null);
@@ -374,6 +379,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
         pickRes.current = null;
         if (opened[i] !== null) { k--; continue; }
         opened[i] = f.boxes[k]!; total += Math.floor(tr.stake * f.boxes[k]!);
+        sfx("pop"); sfx(f.boxes[k]! >= 10 ? "bigwin" : "coin", { delay: 120 });
         setFeat({ kind: "gifts", boxes: f.boxes.map((v, j) => (opened[j] !== null ? opened[j]! : v)), opened: [...opened], picks: f.picks, reveal: false });
         setFs({ left: f.picks - k - 1, done: k + 1, total: String(total), add: String(Math.floor(tr.stake * f.boxes[k]!)), tick: k + 1, title: "🎁 Подарки", sub: `Открыто ${k + 1} из ${f.picks}`, color: st.color });
         await t(600);
@@ -394,10 +400,11 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
         const fresh = keys.filter((x) => !prevKeys.includes(x)); prevKeys = keys;
         const sum = Object.values(step.cells).reduce((s, v) => s + v, 0);
         setFeat({ kind: "bells", cells: step.cells, respins: step.respins, fresh, full: false });
+        if (k === 0) sfx("bells"); else if (fresh.length) fresh.forEach((_, j) => sfx("gem", { pitch: 1 + j * 0.12, delay: j * 90 }));
         setFs({ left: step.respins, done: k, total: String(Math.floor(tr.stake * sum)), add: fresh.length && k > 0 ? String(Math.floor(tr.stake * fresh.reduce((s, x) => s + step.cells[x]!, 0))) : null, tick: k, title: "🔔 Колокольчики", sub: `Перекрутов: ${step.respins} · колокольчиков ${keys.length}/${WS.reels * WS.rows}`, color: st.color });
         await t(k === 0 ? 700 : fresh.length ? 600 : 250);
       }
-      if (f.full) { setBanner(<p className="font-display text-[28px] font-bold text-gold">ВСЁ ПОЛЕ! +×{WS.bellGrand}</p>); await sleep(1500); setBanner(null); }
+      if (f.full) { sfx("jackpot"); setBanner(<p className="font-display text-[28px] font-bold text-gold">ВСЁ ПОЛЕ! +×{WS.bellGrand}</p>); await sleep(1500); setBanner(null); }
     } else if (f.kind === "wheel") {
       setFeat({ kind: "wheel", angle: 0, spinning: false, segment: null });
       setFs({ left: 0, done: 0, total: "0", add: null, tick: 0, title: "🎡 Колесо", sub: "Крути колесо!", color: st.color });
@@ -405,7 +412,9 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       setFs((x) => x && { ...x, sub: "Колесо крутится…" });
       const seg = 360 / WS.wheel.length;
       setFeat({ kind: "wheel", angle: 360 * 6 - f.segment * seg - (Math.random() - 0.5) * seg * 0.6, spinning: true, segment: f.segment });
+      spinTicks(6 * WS.wheel.length + f.segment, 4300);
       await sleep(4400);
+      sfx("bigwin");
       setFeat({ kind: "wheel", angle: 360 * 6 - f.segment * seg, spinning: false, segment: f.segment });
       setFs({ left: 0, done: 1, total: String(tr.payout), add: String(tr.payout), tick: 1, title: "🎡 Колесо", sub: `Выпало ×${WS.wheel[f.segment]}`, color: st.color });
       await t(900);

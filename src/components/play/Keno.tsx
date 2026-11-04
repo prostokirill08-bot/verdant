@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -30,8 +31,8 @@ export function KenoGame({ cfg }: { cfg: GameConfig }) {
     if (!r) return;
     const x = r.round.result as { drawn: number[]; hits: number[] };
     setRevealing(true);
-    for (const n of x.drawn) { setDrawn((d) => [...d, n]); await new Promise((res) => setTimeout(res, 170)); }
-    setRevealing(false); setResult({ hits: x.hits.length, m: r.round.multiplier, payout: r.round.payout }); setBalance(r.balance); setVersion((v) => v + 1);
+    for (const n of x.drawn) { setDrawn((d) => [...d, n]); sfx(x.hits.includes(n) ? "gem" : "pop", { pitch: x.hits.includes(n) ? 1 + x.hits.indexOf(n) * 0.1 : 1 }); await new Promise((res) => setTimeout(res, 170)); }
+    setRevealing(false); winSfx(r.round.multiplier); setResult({ hits: x.hits.length, m: r.round.multiplier, payout: r.round.payout }); setBalance(r.balance); setVersion((v) => v + 1);
   }
 
   const controls = (

@@ -10,6 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { points, timeAgo } from "@/lib/format";
 import { GAMES, type GameSlug } from "@/lib/games";
 import { haptic } from "@/lib/telegram";
+import { sfx } from "@/lib/sound";
 import Image from "next/image";
 
 export type GameConfig = { slug: GameSlug; title: string; minBet: string; maxBet: string; edgeBp: number; enabled: boolean };
@@ -108,7 +109,7 @@ export function PlayButton({ children, onClick, disabled, loading, variant = "pr
   if (!authLoading && !user) return <Link href={`/login?next=${encodeURIComponent(path)}`} className="block"><Button size="lg" className="w-full">Войти, чтобы играть</Button></Link>;
   // Пустой баланс (меньше минимальной ставки 0,10 ₽) и нет идущего раунда — ведём в кассу
   if (!authLoading && user && BigInt(balance || "0") < 10n && !loading && variant === "primary" && disabled) return <Link href="/deposit" className="block" data-testid="play-deposit"><Button size="lg" className="w-full">Пополнить баланс</Button></Link>;
-  return <Button size="lg" variant={variant} className="w-full" onClick={() => { haptic("tap"); onClick(); }} disabled={disabled || authLoading} loading={loading}>{children}</Button>;
+  return <Button size="lg" variant={variant} className="w-full" onClick={() => { haptic("tap"); sfx("bet"); onClick(); }} disabled={disabled || authLoading} loading={loading}>{children}</Button>;
 }
 
 export function ErrorLine({ text }: { text: string }) {

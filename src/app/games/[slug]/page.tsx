@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { SoundChip } from "@/components/ui/SoundToggle";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
@@ -39,6 +40,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
           <span className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-soft ring-1 ring-line">Ставка {points(game.minBet)} – {points(game.maxBet)}</span>
           <span className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-soft ring-1 ring-line">RTP {rtpLabel(slug, game.houseEdgeBp)}</span>
           <Link href="/fair" className="rounded-lg bg-panel/80 px-2.5 py-1.5 text-accent ring-1 ring-line hover:ring-accent/50">🛡️ Честность</Link>
+          <SoundChip />
         </div>
       </div>
       {!game.enabled && <p className="relative rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-[14px] text-warn">Игра временно отключена администратором. Историю раундов можно посмотреть ниже.</p>}

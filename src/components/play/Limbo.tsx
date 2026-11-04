@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, animate, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -31,12 +32,12 @@ export function LimboGame({ cfg }: { cfg: GameConfig }) {
     const r = await run<Res>("/api/games/limbo/bet", { amount, params: { target: Math.round(t * 100) / 100 }, key: newKey() }, { deferBalance: true });
     if (!r) return;
     const x = r.round.result as { value: number; win: boolean };
-    setRolling(true); setLast(null);
+    setRolling(true); setLast(null); sfx("launch");
     // Число «разгоняется» от 1.00 до результата, затем показываем итог
     anim.current = animate(1, x.value, {
       duration: Math.min(0.35 + Math.log10(x.value) * 0.35, 1.1), ease: [0.2, 0.7, 0.3, 1], onUpdate: setShown,
       onComplete: () => {
-        setShown(x.value); setRolling(false); setBalance(r.balance);
+        setShown(x.value); setRolling(false); setBalance(r.balance); winSfx(x.win ? r.round.multiplier : 0);
         const item = { value: x.value, win: x.win, id: r.round.id };
         setLast(item); setRecent((p) => [item, ...p].slice(0, 12)); setVersion((v) => v + 1);
       },

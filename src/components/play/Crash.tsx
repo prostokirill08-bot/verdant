@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import NextImage from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -72,8 +73,25 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const label = useRef<HTMLSpanElement>(null);
 
-  const mine = user ? bets.find((b) => b.user === user.username) : undefined;
+  // Своя ставка — по её ID (ник в публичном списке может быть скрыт); старый способ по нику — запасной
+  const [myBetId, setMyBetId] = useState<string | null>(null);
+  useEffect(() => { if (user) api<{ myBetId: string | null }>("/api/crash/state").then((s) => s.myBetId && setMyBetId(s.myBetId)).catch(() => {}); }, [user]);
+  const mine = user ? bets.find((b) => b.id === myBetId) ?? bets.find((b) => b.user === user.username) : undefined;
   const status = round?.status;
+  const myActiveRef = useRef(false); myActiveRef.current = mine?.status === "ACTIVE";
+
+  // Звуки: старт и обвал — только когда в раунде есть моя ставка; мой вывод — звон монет
+  const prevStatus = useRef(status);
+  useEffect(() => {
+    const was = prevStatus.current; prevStatus.current = status;
+    if (!mine || was === status) return;
+    if (status === "RUNNING") sfx("launch");
+    if (status === "CRASHED" && mine.status !== "WON") sfx("boom");
+  }, [status, mine]);
+  const soundedWin = useRef("");
+  useEffect(() => {
+    if (mine?.status === "WON" && soundedWin.current !== mine.id) { soundedWin.current = mine.id; sfx("cashout"); winSfx(mine.multiplier ?? 1, 150); }
+  }, [mine]);
   const autoNum = Number(auto.replace(",", "."));
   const autoOk = !autoOn || (Number.isFinite(autoNum) && autoNum >= 1.01 && autoNum <= 10000);
 
@@ -101,7 +119,7 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
 
   // Отрисовка графика: множитель e^(k·t) от момента старта по серверным часам
   useEffect(() => {
-    let raf = 0;
+    let raf = 0; let lastStep = 0;
     const draw = () => {
       raf = requestAnimationFrame(draw);
       const c = canvas.current; if (!c) return;
@@ -144,6 +162,8 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
       if (sleigh.current?.complete) drawSleigh(ctx, tx, ty, crashed ? ang + 0.9 : ang, crashed, w);
       else { ctx.beginPath(); ctx.arc(tx, ty, 7, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); }
       if (label.current) label.current.textContent = `${m.toFixed(2)}×`;
+      // Пока моя ставка в игре — тик на каждые +0,25×, всё выше по тону
+      if (!crashed && myActiveRef.current) { const step = Math.floor((m - 1) * 4); if (step > lastStep) { lastStep = step; sfx("tick", { pitch: Math.min(2.2, 0.6 + Math.log2(m) * 0.5) }); } }
     };
     draw();
     return () => cancelAnimationFrame(raf);
@@ -151,7 +171,7 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
 
   async function placeBet() {
     const r = await run<{ roundId: string; balance: string }>("/api/crash/bet", { amount, autoCashout: autoOn ? Math.round(autoNum * 100) / 100 : null, key: newKey() });
-    if (r) setBalance(r.balance);
+    if (r) { setBalance(r.balance); setMyBetId(r.roundId); sfx("chip"); }
   }
   async function cashout() {
     const r = await run<{ multiplier: number; payout: string; balance: string }>("/api/crash/cashout", {});

@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { sfx, winSfx } from "@/lib/sound";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PLINKO_TABLE, plinkoRtp, type PlinkoRisk, type PlinkoRows } from "@/lib/fair/outcomes";
@@ -48,6 +49,7 @@ export function PlinkoGame({ cfg }: { cfg: GameConfig }) {
   }
   function landed(b: Ball) {
     setBalls((list) => list.filter((x) => x.id !== b.id));
+    if (b.mult >= 1) winSfx(b.mult); else sfx("pop", { pitch: 0.8 });
     setBalance(b.balance);
     setHit((h) => ({ bucket: b.bucket, n: (h?.n ?? 0) + 1 }));
     setRecent((p) => [{ id: b.id, mult: b.mult }, ...p].slice(0, 10));
@@ -115,6 +117,12 @@ function BallPath({ ball, s, top, rows, onDone }: { ball: Ball; s: number; top: 
     const times = xs.map((_, i) => i / (xs.length - 1));
     return { xs, ys, times };
   }, [ball.path, rows, s, top]);
+  // Стук о колышки: по одному тику на ряд, в такт падению шарика
+  useEffect(() => {
+    const d = (0.16 * rows + 0.3) * 1000; const n = 2 * rows + 1;
+    const ts = Array.from({ length: rows }, (_, i) => setTimeout(() => sfx("tick", { pitch: 0.7 + Math.random() * 0.5 }), ((2 * i + 1) / n) * d));
+    return () => ts.forEach(clearTimeout);
+  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <motion.circle r={s * 0.17} fill="url(#ball)" initial={{ cx: xs[0], cy: ys[0] }} animate={{ cx: xs, cy: ys }}
       transition={{ duration: 0.16 * rows + 0.3, times, ease: "linear" }} onAnimationComplete={onDone} />

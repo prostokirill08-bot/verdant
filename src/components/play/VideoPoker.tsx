@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -30,13 +31,17 @@ export function VideoPokerGame({ cfg }: { cfg: GameConfig }) {
   const bet = round ? BigInt(round.bet) : 0n;
   async function start() {
     const r = await run<Res>("/api/videopoker/start", { amount, key: newKey() });
-    if (r) { setRound(r.round); setHeld([false, false, false, false, false]); setDeal((d) => d + 1); scrollToStage(); }
+    if (r) { setRound(r.round); setHeld([false, false, false, false, false]); setDeal((d) => d + 1); scrollToStage(); for (let i = 0; i < 5; i++) sfx("card", { delay: i * 80 }); }
   }
   async function draw() {
     const r = await run<Res>("/api/videopoker/draw", { held });
-    if (r) { setRound(r.round); setVersion((v) => v + 1); }
+    if (r) {
+      setRound(r.round); setVersion((v) => v + 1);
+      held.forEach((h, i) => { if (!h) sfx("card", { delay: i * 80 }); });
+      winSfx(r.round.eval.mult, 650);
+    }
   }
-  const toggle = (i: number) => active && !busy && setHeld((h) => h.map((x, k) => (k === i ? !x : x)));
+  const toggle = (i: number) => { if (!active || busy) return; sfx("tap"); setHeld((h) => h.map((x, k) => (k === i ? !x : x))); };
   const combo = round?.eval;
   const win = round && !active && BigInt(round.payout) > 0n;
 

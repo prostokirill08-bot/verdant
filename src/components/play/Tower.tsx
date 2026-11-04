@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -33,8 +34,14 @@ export function TowerGame({ cfg }: { cfg: GameConfig }) {
   const floorNow = active ? picked.length : -1;
 
   async function start() { const r = await run<Res>("/api/tower/start", { amount, level, key: newKey() }); if (r) setRound(r.round); }
-  async function pick(tile: number) { const r = await run<Res>("/api/tower/pick", { tile }); if (r) { setRound(r.round); if (r.round.status !== "ACTIVE") setVersion((v) => v + 1); } }
-  async function cashout() { const r = await run<Res>("/api/tower/cashout", {}); if (r) { setRound(r.round); setVersion((v) => v + 1); } }
+  async function pick(tile: number) {
+    const r = await run<Res>("/api/tower/pick", { tile });
+    if (!r) return;
+    const st = r.round.status;
+    if (st === "LOST") sfx("boom"); else { sfx("gem", { pitch: 1 + (r.round.multiplier > 1 ? Math.log2(r.round.multiplier) * 0.15 : 0) }); if (st === "WON") { sfx("cashout", { delay: 150 }); winSfx(r.round.multiplier, 350); } }
+    setRound(r.round); if (st !== "ACTIVE") setVersion((v) => v + 1);
+  }
+  async function cashout() { const r = await run<Res>("/api/tower/cashout", {}); if (r) { sfx("cashout"); winSfx(r.round.multiplier, 200); setRound(r.round); setVersion((v) => v + 1); } }
 
   const bet = active ? BigInt(round!.bet) : 0n;
   const controls = (

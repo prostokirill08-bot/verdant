@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -69,6 +70,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
     const cells = winCells(s.wins, NEON.lines);
     if (s.scatter.count >= 3) s.grid.forEach((col, reel) => col.forEach((x, row) => x.sym === "bonus" && cells.add(`${reel}:${row}`)));
     setLines(s.wins); setHl(cells.size ? cells : null);
+    if (s.mult > 0 && s.mult < 10) sfx(s.mult >= 3 ? "bigwin" : "win");
     if (s.mult > 0 && !inBonus) setLastWin(winUnits(units, s.mult).toString());   // в бонусе показываем общую сумму
     await t(s.mult > 0 || s.retrigger ? 1000 : 250);
   }
@@ -84,7 +86,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
     if (!res.bought) count(!!res.fs);   // счётчик спинов без бонуса
     if (res.fs) {
       const f = res.fs;
-      setBanner(<Intro count={NEON.freeSpins} x={f.x} />); await sleep(2600); setBanner(null);
+      sfx("bonus"); setBanner(<Intro count={NEON.freeSpins} x={f.x} />); await sleep(2600); setBanner(null);
       // Сумма бонуса считается сразу: выигрыш запускающего спина + каждый бесплатный спин
       const cap = winUnits(units, NEON.maxWin);
       let total = res.base ? winUnits(units, res.base.mult) : 0n; let left = NEON.freeSpins; let tick = 0;
@@ -99,7 +101,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
         setLastWin(total.toString());
         if (s.mult >= 10) await showBig(s.mult, add.toString(), `Бесплатное вращение ${i + 1}`, true);   // крупный выигрыш внутри бонуса
         if (add > 0n) await t(500);
-        if (s.retrigger) { left += NEON.freeSpins; setFs({ left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<p className="font-display text-[28px] font-bold text-gold">+{NEON.freeSpins} ВРАЩЕНИЙ!</p>); await sleep(1500); setBanner(null); }
+        if (s.retrigger) { sfx("bonus"); left += NEON.freeSpins; setFs({ left, done: i + 1, total: total.toString(), add: null, tick }); setBanner(<p className="font-display text-[28px] font-bold text-gold">+{NEON.freeSpins} ВРАЩЕНИЙ!</p>); await sleep(1500); setBanner(null); }
       }
       setFs({ left: 0, done: f.spins.length, total: r.round.payout, add: null, tick });
       await showBig(res.totalMult, r.round.payout, `Бонус: ${f.spins.length} вращений`);

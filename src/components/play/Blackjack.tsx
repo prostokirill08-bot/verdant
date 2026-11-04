@@ -1,4 +1,5 @@
 "use client";
+import { sfx } from "@/lib/sound";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -34,11 +35,34 @@ export function BlackjackGame({ cfg }: { cfg: GameConfig }) {
   const t = round?.table; const active = round?.status === "ACTIVE";
   const base = t ? BigInt(t.base) : 0n; const canPay = base <= BigInt(balance);
 
-  async function deal() { fresh.current = true; const r = await run<Res>("/api/blackjack/start", { amount, key: newKey() }); if (r) { setRound(r.round); scrollToStage(); if (r.round.status !== "ACTIVE") setVersion((v) => v + 1); } }
+  async function deal() {
+    fresh.current = true; const r = await run<Res>("/api/blackjack/start", { amount, key: newKey() });
+    if (!r) return;
+    setRound(r.round); scrollToStage();
+    for (let i = 0; i < 4; i++) sfx("card", { delay: i * 200 });
+    if (r.round.status !== "ACTIVE") { setVersion((v) => v + 1); bjResult(r.round, 1500); }
+  }
+  /** Звук итога раздачи: блэкджек — фанфары, победа, ничья (возврат) или проигрыш. */
+  function bjResult(rd: BjRound, delay: number) {
+    const o = rd.table.outcomes ?? []; const pay = Number(rd.payout);
+    const stake = Number(rd.table.base) * rd.table.hands.reduce((s, h) => s + h.bet, 0);
+    setTimeout(() => (o.includes("blackjack") ? sfx("bigwin") : pay > stake ? sfx("win") : pay > 0 ? sfx("coin") : sfx("lose")), delay);
+  }
   async function move(action: "hit" | "stand" | "double" | "split") {
     fresh.current = false;
     const r = await run<Res>("/api/blackjack/move", { action });
-    if (r) { setRound(r.round); if (r.round.status !== "ACTIVE") setVersion((v) => v + 1); }
+    if (!r) return;
+    if (action === "split") { sfx("chip"); sfx("card", { delay: 150 }); sfx("card", { delay: 350 }); }
+    else if (action === "double") { sfx("chip"); sfx("card", { delay: 150 }); }
+    else if (action === "hit") sfx("card");
+    setRound(r.round);
+    if (r.round.status !== "ACTIVE") {
+      setVersion((v) => v + 1);
+      // карты, которые добрал дилер, «прилетают» по очереди
+      const extra = Math.max(0, r.round.table.dealer.length - 2);
+      for (let i = 0; i < extra; i++) sfx("card", { delay: 350 + i * 500 });
+      bjResult(r.round, extra * 500 + 700);
+    }
   }
   // Задержка появления карты: при раздаче — по очереди игрок/дилер, добор дилера — с паузой
   const pDelay = (i: number) => (fresh.current && i < 2 ? i * 0.4 : 0);

@@ -1,4 +1,6 @@
 "use client";
+import { sfx } from "@/lib/sound";
+import { SoundToggle } from "@/components/ui/SoundToggle";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,7 +27,7 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
   const strips = useMemo(() => grid.map((col, reel) => (spinKey ? [...col, ...Array.from({ length: fill(reel) }, filler)] : col)), [spinKey, grid, F, slowFrom]); // eslint-disable-line react-hooks/exhaustive-deps
   const done = useRef(0);
   const [stopped, setStopped] = useState<number[]>([]);
-  useEffect(() => { done.current = 0; setStopped([]); }, [spinKey]);
+  useEffect(() => { done.current = 0; setStopped([]); if (spinKey) sfx("spin"); }, [spinKey]);
   return (
     <div className="relative grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: `repeat(${reels}, minmax(0, 1fr))` }}>
       {strips.map((strip, reel) => {
@@ -38,7 +40,7 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
               initial={spinKey ? { y: `${-(fill(reel) / strip.length) * 100}%` } : false}
               animate={{ y: "0%" }}
               transition={{ duration: (turbo ? 0.35 : 0.75) + reel * (turbo ? 0.08 : 0.18) + extra(reel) * (turbo ? 0.8 : 1.4), ease: extra(reel) ? [0.3, 0.55, 0.3, 1] : [0.25, 0.9, 0.35, 1.04] }}
-              onAnimationComplete={() => { if (!spinKey) return; setStopped((s) => [...s, reel]); if (++done.current === reels) onStopped?.(); }}>
+              onAnimationComplete={() => { if (!spinKey) return; sfx(extra(reel) ? "gem" : "reel", { i: reel }); setStopped((s) => [...s, reel]); if (++done.current === reels) onStopped?.(); }}>
               {strip.map((cell, row) => {
                 const id = `${reel}:${row}`; const hot = !!highlight?.has(id) && row < rows; const dim = !!highlight && highlight.size > 0 && !hot;
                 return (
@@ -127,10 +129,11 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
           <p className={`truncate font-mono text-[14px] font-bold tabular sm:text-[18px] ${lastWin && BigInt(lastWin) > 0n ? "text-gold" : "text-white/50"}`}>{lastWin ? points(lastWin) : "—"}</p>
         </div>
       </div>
-      <div className={`grid gap-2 ${onBuy ? "grid-cols-4" : "grid-cols-3"}`}>
+      <div className={`grid gap-2 ${onBuy ? "grid-cols-[1fr_1fr_44px_1fr_1fr]" : "grid-cols-[1fr_1fr_44px_1fr]"}`}>
         {/* Автоигра бесконечная: крутит, пока не нажмёшь «Стоп» (или пока хватает рублей) */}
         <Pill onClick={() => setAuto(auto > 0 ? 0 : Infinity)} active={auto > 0} disabled={busy && auto === 0}>{auto > 0 ? "■ Стоп" : "∞ Авто"}</Pill>
         <Pill onClick={() => setTurbo(!turbo)} active={turbo}>⚡ Турбо</Pill>
+        <SoundToggle className="!size-11 !rounded-xl !bg-black/40" testId="sound-pill" />
         <Pill onClick={onInfo}>Выплаты</Pill>
         {onBuy && <Pill onClick={onBuy} disabled={busy || auto > 0 || !cfg.enabled || (!!user && buyCost > BigInt(balance))} gold><span className="block leading-tight">Бонус</span><span className="block truncate text-[10.5px] font-semibold leading-tight">{points(buyCost)}</span></Pill>}
       </div>
@@ -187,7 +190,8 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
   useEffect(() => {
     if (!show) { setTierIdx(0); setFinished(false); skip.current = false; return; }
     document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый снег под оверлеем
-    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0;
+    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0; let lastTick = 0;
+    sfx(short ? "win" : "bigwin");
     const tick = (t: number) => {
       const p = skip.current ? 1 : Math.min(1, (t - t0) / dur);
       const e = 1 - Math.pow(1 - p, 2);
@@ -198,12 +202,13 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
         if (multEl.current) multEl.current.textContent = (mult * e).toFixed(2);
       }
       const ti = tierOf(mult * e);
+      if (p < 1 && t - lastTick > 90) { lastTick = t; sfx("count", { pitch: 1 + e * 0.6 }); }   // «счётчик» набегающей суммы
       if (ti !== lastTier) {
-        lastTier = ti; setTierIdx(ti);
+        lastTier = ti; setTierIdx(ti); sfx(ti >= 3 ? "megawin" : "bigwin");
         try { navigator.vibrate?.(ti >= 3 ? [60, 40, 90] : 50); } catch {}
       }
       if (p < 1) raf = requestAnimationFrame(tick);
-      else { setFinished(true); to = setTimeout(() => done.current(), short ? 1100 : 2600); }
+      else { setFinished(true); sfx("coins"); to = setTimeout(() => done.current(), short ? 1100 : 2600); }
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); if (to) clearTimeout(to); document.documentElement.classList.remove("bigwin-open"); };

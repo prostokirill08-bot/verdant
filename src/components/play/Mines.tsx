@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -40,11 +41,16 @@ export function MinesGame({ cfg }: { cfg: GameConfig }) {
     setPending(tile);
     const r = await run<Res>("/api/mines/reveal", { tile });
     setPending(null);
-    if (r) { setRound(r.round); if (r.round.status !== "ACTIVE") setVersion((v) => v + 1); }
+    if (r) {
+      const st = r.round.status;
+      if (st === "LOST") sfx("boom");
+      else { sfx("gem", { pitch: 1 + revealed.size * 0.06 }); if (st === "WON") { sfx("cashout", { delay: 150 }); winSfx(r.round.multiplier, 350); } }
+      setRound(r.round); if (st !== "ACTIVE") setVersion((v) => v + 1);
+    }
   }
   async function cashout() {
     const r = await run<Res>("/api/mines/cashout", {});
-    if (r) { setRound(r.round); setVersion((v) => v + 1); }
+    if (r) { sfx("cashout"); winSfx(r.round.multiplier, 200); setRound(r.round); setVersion((v) => v + 1); }
   }
   function randomTile() {
     const free = Array.from({ length: MINES_TILES }, (_, i) => i).filter((i) => !revealed.has(i));

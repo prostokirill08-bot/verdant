@@ -1,4 +1,5 @@
 "use client";
+import { sfx, spinTicks, winSfx } from "@/lib/sound";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -35,7 +36,7 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
   function place(b: RouletteBetKind) {
     if (spinning) return;
     const k = keyOf(b);
-    setHistory((h) => [...h, bets]); setBets((p) => ({ ...p, [k]: (p[k] ?? 0n) + chip })); setResult(null);
+    setHistory((h) => [...h, bets]); setBets((p) => ({ ...p, [k]: (p[k] ?? 0n) + chip })); setResult(null); sfx("chip");
   }
   const undo = () => { const prev = history.at(-1); if (prev) { setBets(prev); setHistory((h) => h.slice(0, -1)); } };
   const clear = () => { if (total) { setHistory((h) => [...h, bets]); setBets({}); } };
@@ -51,9 +52,11 @@ export function RouletteGame({ cfg }: { cfg: GameConfig }) {
     const base = angle - (angle % 360);
     setSpinning(true); setResult(null);
     setAngle(base + 360 * 5 - idx * SECTOR - (Math.random() - 0.5) * SECTOR * 0.6);
+    sfx("whoosh"); spinTicks(5 * 37 + idx, 4000, 1.3);
     setTimeout(() => {
       setSpinning(false); setBalance(r.balance);
       setResult({ n, payout: BigInt(r.round.payout), id: r.round.id });
+      const staked = list.reduce((s, b) => s + Number(b.amount), 0); winSfx(staked ? (Number(r.round.payout) / 100) / staked : 0);
       setRecent((p) => [{ n, id: r.round.id }, ...p].slice(0, 14)); setVersion((v) => v + 1);
     }, 4200);
   }

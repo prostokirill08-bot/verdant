@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/Field";
 import { api } from "@/lib/api";
 import { isGuestEmail, isTelegramEmail } from "@/lib/guest";
 import { useRouter } from "next/navigation";
+import { SoundSettings } from "@/components/ui/SoundToggle";
 
 type Sess = { current: boolean; userAgent: string | null; createdAt: string };
 
@@ -75,6 +76,7 @@ export default function SettingsPage() {
           {pwMsg && <p className="text-[13.5px] text-soft">{pwMsg}</p>}
         </form>
       </Panel>}
+      <Panel title="Звук"><SoundSettings /></Panel>
       <Panel title="Приватность">
         <label className="flex cursor-pointer items-start justify-between gap-4" data-testid="privacy-hidden">
           <span><span className="block font-semibold">Анонимный режим</span><span className="mt-1 block text-[13.5px] text-muted">В ленте выигрышей, таблице турнира и ставках Crash вместо ника показывается «Скрытый игрок». Играть и получать призы это не мешает.</span></span>

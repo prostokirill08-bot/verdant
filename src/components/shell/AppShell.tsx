@@ -15,6 +15,8 @@ import { KeysBadge } from "./KeysBadge";
 import { useGameModal } from "@/components/games/GameModal";
 import { isGuestEmail } from "@/lib/guest";
 import { TelegramLink } from "./TelegramLink";
+import { SoundIcon, useSound } from "@/components/ui/SoundToggle";
+import { setSound } from "@/lib/sound";
 import { Logo } from "./Logo";
 
 function NavLink({ href, children, active, onClick }: { href: string; children: React.ReactNode; active: boolean; onClick?: (e: React.MouseEvent) => void }) {
@@ -32,6 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [menu, setMenu] = useState(false);
   const { open: openGame } = useGameModal();
   const guest = isGuestEmail(user?.email);
+  const sound = useSound();
   const [platform, setPlatform] = useState<{ announcement: string; maintenance: boolean } | null>(null);
   useEffect(() => { api<{ announcement: string; maintenance: boolean }>("/api/platform").then(setPlatform).catch(() => {}); }, [path]);
 
@@ -115,6 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         {[["/account", "Кабинет"], ["/deposit", "Пополнить баланс"], ["/account/history", "История операций"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
                           <Link key={h} href={h!} onClick={() => setMenu(false)} role="menuitem" className="block rounded-xl px-3 py-2 text-[14px] text-soft hover:bg-raised hover:text-white">{t}</Link>
                         ))}
+                        <button onClick={() => setSound(!sound.on)} role="menuitemcheckbox" aria-checked={sound.on} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[14px] text-soft hover:bg-raised hover:text-white">Звук <span className={`flex items-center gap-1.5 text-[12.5px] ${sound.on ? "text-accent" : "text-muted"}`}><SoundIcon on={sound.on} />{sound.on ? "вкл" : "выкл"}</span></button>
                         <button onClick={logout} role="menuitem" className="w-full rounded-xl px-3 py-2 text-left text-[14px] text-danger hover:bg-raised">Выйти</button>
                       </motion.div>
                     )}

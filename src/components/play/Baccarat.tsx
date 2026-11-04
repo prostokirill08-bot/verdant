@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -29,13 +30,17 @@ export function BaccaratGame({ cfg }: { cfg: GameConfig }) {
   const [version, setVersion] = useState(0);
   const total = bets.player + bets.banker + bets.tie;
 
-  const place = (s: Side) => { if (!playing) { setBets((b) => ({ ...b, [s]: b[s] + chip })); setRes(null); } };
+  const place = (s: Side) => { if (!playing) { sfx("chip"); setBets((b) => ({ ...b, [s]: b[s] + chip })); setRes(null); } };
   async function deal() {
     const r = await run<Res>("/api/games/baccarat/bet", { params: { player: unitsToInput(bets.player), banker: unitsToInput(bets.banker), tie: unitsToInput(bets.tie) }, key: newKey() }, { deferBalance: true });
     if (!r) return;
     const x = r.round.result as unknown as Result;
     scrollToStage(); setPlaying(true); setRes({ r: x, payout: BigInt(r.round.payout), id: r.round.id }); setLast(bets);
     const n = x.player.length + x.banker.length;
+    for (let i = 0; i < n; i++) sfx("card", { delay: i * 450 + 100 });
+    const staked = Number(bets.player + bets.banker + bets.tie);
+    const payout = Number(r.round.payout);
+    setTimeout(() => (payout > 0 && payout >= staked ? winSfx(payout / staked) : payout > 0 ? sfx("coin") : sfx("lose")), n * 450 + 400);
     setTimeout(() => { setPlaying(false); setBalance(r.balance); setHistory((h) => [x.winner, ...h].slice(0, 24)); setVersion((v) => v + 1); }, n * 450 + 900);
   }
   const revealAt = res ? (res.r.player.length + res.r.banker.length) * 0.45 + 0.3 : 0;

@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -42,9 +43,15 @@ export function HiloGame({ cfg }: { cfg: GameConfig }) {
   const cards = ((round?.state as { revealed?: Step[] })?.revealed) ?? (round?.result as { cards?: Step[] } | null)?.cards ?? [];
   const cur = cards[cards.length - 1];
 
-  async function start() { const r = await run<Res>("/api/hilo/start", { amount, key: newKey() }); if (r) setRound(r.round); }
-  async function guess(g: "higher" | "lower" | "skip") { const r = await run<Res>("/api/hilo/guess", { guess: g }); if (r) { setRound(r.round); if (r.round.status !== "ACTIVE") setVersion((v) => v + 1); } }
-  async function cashout() { const r = await run<Res>("/api/hilo/cashout", {}); if (r) { setRound(r.round); setVersion((v) => v + 1); } }
+  async function start() { const r = await run<Res>("/api/hilo/start", { amount, key: newKey() }); if (r) { sfx("card"); setRound(r.round); } }
+  async function guess(g: "higher" | "lower" | "skip") {
+    const r = await run<Res>("/api/hilo/guess", { guess: g });
+    if (!r) return;
+    sfx("flip");
+    if (g !== "skip") { if (r.round.status === "LOST") sfx("lose", { delay: 250 }); else sfx("coin", { delay: 200, pitch: Math.min(1.6, 0.9 + r.round.multiplier * 0.05) }); }
+    setRound(r.round); if (r.round.status !== "ACTIVE") setVersion((v) => v + 1);
+  }
+  async function cashout() { const r = await run<Res>("/api/hilo/cashout", {}); if (r) { sfx("cashout"); winSfx(r.round.multiplier, 200); setRound(r.round); setVersion((v) => v + 1); } }
 
   const bet = active ? BigInt(round!.bet) : 0n;
   const pct = (p: number) => `${(p * 100).toFixed(1)}%`;

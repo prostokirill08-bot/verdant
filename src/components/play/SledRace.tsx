@@ -1,4 +1,5 @@
 "use client";
+import { sfx, winSfx } from "@/lib/sound";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -36,6 +37,9 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
     if (!r) return;
     setRace({ r: r.round.result as unknown as Result, payout: BigInt(r.round.payout), id: r.round.id, seed: Math.floor(Math.random() * 1e5) });
     setRunning(true); scrollToStage();
+    sfx("whoosh"); const jingle = setInterval(() => sfx("bells"), 1000); sfx("bells");
+    setTimeout(() => clearInterval(jingle), RACE * 1000);
+    setTimeout(() => winSfx(r.round.multiplier), RACE * 1000 + 200);
     setTimeout(() => { setRunning(false); setBalance(r.balance); setVersion((v) => v + 1); }, (RACE + 1.4) * 1000);
   }
   const paths = useMemo(() => race ? SLEDS.map((_, i) => path(race.r.order.indexOf(i), race.seed + i * 977)) : null, [race]);
