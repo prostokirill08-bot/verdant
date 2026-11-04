@@ -21,7 +21,7 @@ import { Logo } from "./Logo";
 
 function NavLink({ href, children, active, onClick }: { href: string; children: React.ReactNode; active: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <Link href={href} onClick={onClick} className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-colors ${active ? "bg-raised text-white" : "text-muted hover:bg-raised/60 hover:text-white"}`}>
+    <Link href={href} onClick={onClick} className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-all ${active ? "border border-emerald-300/10 bg-emerald-400/[.11] text-[#b9f7d0] shadow-[inset_0_1px_0_#ffffff0a]" : "text-muted hover:bg-white/[.04] hover:text-white"}`}>
       {children}
     </Link>
   );
@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh">
       {/* Боковая панель (компьютер) */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-line bg-panel/80 px-3 py-5 backdrop-blur lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-white/[.07] bg-[#07110c]/90 px-3 py-5 backdrop-blur-2xl lg:flex">
         <div className="px-2"><Logo /></div>
         <nav className="grid gap-1">
           <NavLink href="/" active={path === "/"}>
@@ -84,25 +84,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="mt-auto"><TelegramLink variant="side" /></div>
-        <p className="px-3 text-[11.5px] leading-relaxed text-muted/70">🎄 С наступающим! Демо-платформа: только виртуальные демо-рубли — их нельзя купить или вывести.</p>
+        <p className="px-3 text-[11.5px] leading-relaxed text-muted/70">VERDANT · Игровая платформа на виртуальных демо-кредитах. Без денежных ставок и вывода.</p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Верхняя панель */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
-          <div className="garland absolute inset-x-0 -bottom-[14px]" aria-hidden />
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/[.07] bg-[#050b09]/85 px-4 backdrop-blur-2xl sm:px-6">
+          
           <div className="lg:hidden"><Logo /></div>
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
             <span className={user ? "hidden sm:block" : ""}><OnlineBadge /></span>
             <KeysBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
-                <div className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3">
+                <div className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-white/[.09] bg-white/[.035] pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3">
                   <Link href="/account/history" className="flex min-w-0 items-center gap-2" title="Баланс">
                     <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
                     <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
                   </Link>
-                  <Link href="/deposit" className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white hover:brightness-110" aria-label="Пополнить баланс" title="Пополнить" data-testid="deposit-plus">
+                  <Link href="/deposit" className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#42e39a,#168b58)] text-[#04150c] shadow-[0_4px_16px_-7px_#39d98a] hover:brightness-110" aria-label="Пополнить баланс" title="Пополнить" data-testid="deposit-plus">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
                   </Link>
                 </div>
@@ -113,7 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <AnimatePresence>
                     {menu && (
                       <motion.div role="menu" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
-                        className="absolute right-0 top-12 w-56 rounded-2xl border border-line bg-panel p-1.5 shadow-2xl">
+                        className="absolute right-0 top-12 w-56 rounded-2xl border border-white/10 bg-[#0b1811] p-1.5 shadow-2xl">
                         <div className="px-3 py-2"><p className="font-semibold">{user.username}</p><p className="font-mono text-[12px] text-muted">{user.publicId}</p></div>
                         {[["/account", "Кабинет"], ["/deposit", "Пополнить баланс"], ["/account/history", "История операций"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
                           <Link key={h} href={h!} onClick={() => setMenu(false)} role="menuitem" className="block rounded-xl px-3 py-2 text-[14px] text-soft hover:bg-raised hover:text-white">{t}</Link>
@@ -137,7 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {platform?.maintenance && <p className="border-b border-warn/30 bg-warn/10 px-4 py-2 text-center text-[13.5px] text-warn" role="status">Идут технические работы — ставки временно недоступны.</p>}
         {guest && (
           <p className="border-b border-gold/25 bg-gold/10 px-4 py-2 text-center text-[13px] text-gold" data-testid="guest-bar">
-            🎅 Демо-гость: баланс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
+            🎅 Гостевой режим: прогресс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
           </p>
         )}
         {platform?.announcement && <p className="border-b border-accent/20 bg-accent/10 px-4 py-2 text-center text-[13.5px] text-accent" role="status">{platform.announcement}</p>}
@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Нижняя навигация (телефон) */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Навигация">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/[.08] bg-[#07110c]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden" aria-label="Навигация">
         {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], ["/bonuses", "Бонусы", "M3 9h18v12H3zM12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/account/history" : "/register", user ? "История" : "Регистрация", "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
           const active = h === "/" ? path === "/" : path.startsWith(h);
           return (

@@ -1,86 +1,85 @@
 @import "tailwindcss";
 
-/* Verdant · Новогодняя тема: ночное зимнее небо, красный с золотом, ёлочный зелёный для выигрышей */
+/* VERDANT 2.0 — Emerald Premium design system */
 @theme {
-  --color-ink: #070b1f;        /* фон — ночное небо */
-  --color-panel: #0f1633;      /* панели */
-  --color-raised: #1a2349;     /* поля, кнопки, наведение */
-  --color-line: #28325f;       /* границы */
-  --color-accent: #3ee08f;     /* выигрыши — ёлочный зелёный */
-  --color-accent-strong: #7cf5b6;
-  --color-accent-ink: #03170c;
-  --color-brand: #e8263f;      /* праздничный красный */
-  --color-pink: #ff6b8b;
-  --color-cyan: #8fdcff;       /* лёд */
-  --color-gold: #ffd166;
-  --color-muted: #8e9ac7;
-  --color-soft: #dbe3ff;
-  --color-danger: #ff4d6d;
-  --color-warn: #ffd166;
-
+  --color-ink: #050b09;
+  --color-panel: #0a1511;
+  --color-raised: #10231a;
+  --color-line: #1c382a;
+  --color-accent: #39d98a;
+  --color-accent-strong: #8af0b8;
+  --color-accent-ink: #04150c;
+  --color-brand: #1ca66a;
+  --color-pink: #d78ba7;
+  --color-cyan: #8adbc3;
+  --color-gold: #d9bd78;
+  --color-muted: #91a99b;
+  --color-soft: #e5f3e9;
+  --color-danger: #ff7180;
+  --color-warn: #e8c77d;
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: var(--font-unbounded), var(--font-geist), sans-serif;
-
-  --radius-xl: 14px;
-  --radius-2xl: 20px;
-  --shadow-glow: 0 0 0 1px rgb(255 209 102 / 0.35), 0 8px 30px -8px rgb(232 38 63 / 0.5);
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --shadow-glow: 0 0 0 1px rgb(57 217 138 / .22), 0 12px 42px -14px rgb(28 166 106 / .32);
 }
 
 :root { color-scheme: dark; }
-html, body { background: var(--color-ink); color: #fff; }
+html, body { min-height: 100%; background: #050b09; color: #f2fff6; }
 body {
-  font-family: var(--font-sans); -webkit-font-smoothing: antialiased;
-  /* Звёздное небо и тёплое сияние снизу */
-  background-image:
-    radial-gradient(1.2px 1.2px at 20px 30px, #fff 99%, transparent), radial-gradient(1px 1px at 140px 80px, #cfe4ff 99%, transparent),
-    radial-gradient(1.4px 1.4px at 260px 20px, #fff 99%, transparent), radial-gradient(1px 1px at 330px 140px, #fff7d6 99%, transparent),
-    radial-gradient(1100px 600px at 15% -15%, rgb(56 88 200 / 0.35), transparent 60%),
-    radial-gradient(900px 500px at 100% 110%, rgb(232 38 63 / 0.16), transparent 60%);
-  background-size: 360px 180px, 360px 180px, 360px 180px, 360px 180px, auto, auto;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(900px 600px at 12% -10%, rgb(25 116 73 / .19), transparent 65%),
+    radial-gradient(700px 520px at 100% 20%, rgb(15 86 58 / .13), transparent 64%),
+    radial-gradient(800px 500px at 60% 110%, rgb(17 72 48 / .12), transparent 65%),
+    #050b09;
   background-attachment: fixed;
 }
+::selection { background: #39d98a; color: #04150c; }
+* { scrollbar-width: thin; scrollbar-color: #244b37 transparent; }
+.tabular { font-variant-numeric: tabular-nums; }
+.text-gradient {
+  background: linear-gradient(100deg, #e6fff0 0%, #83eab2 48%, #36c981 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.bg-brand-gradient { background: linear-gradient(135deg, #42e39a, #138653); }
+.btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+.btn-shine::after {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(110deg, transparent 25%, rgb(255 255 255 / .24) 50%, transparent 75%);
+  transform: translateX(-130%); animation: shine 4.5s ease-in-out infinite;
+}
+@keyframes shine { 0%, 72% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+@keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-9px) rotate(1deg); } }
+.animate-floaty { animation: floaty 7s ease-in-out infinite; }
+.glass-panel {
+  background: linear-gradient(145deg, rgb(16 38 27 / .82), rgb(7 19 13 / .82));
+  border: 1px solid rgb(113 190 143 / .16);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .045), 0 18px 60px -32px rgb(0 0 0 / .8);
+  backdrop-filter: blur(18px);
+}
+.emerald-glow { box-shadow: 0 0 36px rgb(44 204 126 / .12), inset 0 1px 0 rgb(255 255 255 / .06); }
+.game-card {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: linear-gradient(145deg, rgb(17 39 28 / .94), rgb(7 17 12 / .98));
+  border: 1px solid rgb(103 164 124 / .17);
+  transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+}
+.game-card:hover { transform: translateY(-4px); border-color: rgb(66 227 154 / .48); box-shadow: 0 18px 42px -24px rgb(38 205 125 / .48); }
+.game-card::after {
+  content: ""; position: absolute; inset: auto -15% -60% 25%; height: 75%;
+  background: radial-gradient(ellipse, rgb(44 204 126 / .15), transparent 68%);
+  pointer-events: none; z-index: -1;
+}
+.panel-border { border: 1px solid rgb(110 164 127 / .16); }
+.focus-ring:focus-visible { outline: 2px solid #65e6a0; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
 
-/* Снег: два слоя с разной скоростью. Только украшение — клики проходят сквозь. */
-body::before, body::after {
-  content: ""; position: fixed; inset: -200px 0 0; z-index: 40; pointer-events: none;
-  background-repeat: repeat;
-}
-body::before {
-  opacity: .55;
-  background-image:
-    radial-gradient(2.5px 2.5px at 30px 40px, #fff 98%, transparent), radial-gradient(2px 2px at 150px 120px, #eaf4ff 98%, transparent),
-    radial-gradient(3px 3px at 260px 60px, #fff 98%, transparent), radial-gradient(2px 2px at 380px 170px, #fff 98%, transparent);
-  background-size: 420px 220px;
-  animation: snow-fall 18s linear infinite;
-}
-body::after {
-  opacity: .35;
-  background-image:
-    radial-gradient(1.5px 1.5px at 70px 20px, #fff 98%, transparent), radial-gradient(1.2px 1.2px at 200px 90px, #fff 98%, transparent),
-    radial-gradient(1.5px 1.5px at 320px 150px, #dfefff 98%, transparent);
-  background-size: 360px 200px;
-  animation: snow-fall-slow 30s linear infinite;
-}
-@keyframes snow-fall { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(40px, 220px, 0); } }
-@keyframes snow-fall-slow { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-30px, 200px, 0); } }
-
-/* Гирлянда: ряд лампочек, мигают по очереди */
-.garland { position: relative; height: 14px; overflow: hidden; pointer-events: none; }
-.garland::before {
-  content: ""; position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 12px 8px, #ff4d5e 0 4px, transparent 5px),
-    radial-gradient(circle at 36px 8px, #ffd166 0 4px, transparent 5px),
-    radial-gradient(circle at 60px 8px, #3ee08f 0 4px, transparent 5px),
-    radial-gradient(circle at 84px 8px, #8fdcff 0 4px, transparent 5px);
-  background-size: 96px 14px;
-  filter: drop-shadow(0 0 4px rgb(255 209 102 / .9));
-  animation: twinkle 1.6s steps(2) infinite;
-}
-.garland::after { content: ""; position: absolute; left: 0; right: 0; top: 2px; height: 1px; background: rgb(255 255 255 / .18); }
-@keyframes twinkle { 50% { filter: drop-shadow(0 0 1px rgb(255 209 102 / .3)) brightness(.65); } }
-
+/* ===== Игровые анимации (слоты, экран большого выигрыша) — сохранены из прежней темы ===== */
 /* «Снежная шапка» на карточках */
 .snow-cap { position: relative; }
 .snow-cap::before {
@@ -92,18 +91,6 @@ body::after {
   border-radius: 10px 10px 2px 2px;
   filter: drop-shadow(0 2px 2px rgb(0 0 0 / .25));
 }
-
-.text-gradient { background: linear-gradient(90deg, #ffe7a3, #fff 45%, #ff8a9b 80%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.bg-brand-gradient { background: linear-gradient(135deg, #ff4d5e, #b5122f); }
-.btn-shine { position: relative; overflow: hidden; }
-.btn-shine::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%); transform: translateX(-120%); animation: shine 3.2s ease-in-out infinite; }
-@keyframes shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
-@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-.animate-floaty { animation: floaty 5s ease-in-out infinite; }
-.tabular { font-variant-numeric: tabular-nums; }
-
-* { scrollbar-width: thin; scrollbar-color: var(--color-raised) transparent; }
-::selection { background: #ffd166; color: #1a1300; }
 
 /* Выигрышный символ пульсирует (только transform), ожидание бонуса мигает (только opacity) */
 .cell-hot { will-change: transform; animation: cell-pulse .7s ease-in-out infinite; }
@@ -130,7 +117,6 @@ html.bigwin-open .cell-hot, html.bigwin-open .reel-wait { animation-play-state: 
 html.bigwin-open .chest-full, html.bigwin-open .gift-wobble { animation-play-state: paused; }
 
 /* ===== Крупный выигрыш: только transform/opacity — анимации идут на видеокарте ===== */
-html.bigwin-open body::before, html.bigwin-open body::after, html.bigwin-open .garland::before { animation-play-state: paused; visibility: hidden; }
 .bw-rays { position: absolute; left: 50%; top: 45%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; pointer-events: none; border-radius: 50%;
   will-change: transform; animation: bw-spin 16s linear infinite; }
 @keyframes bw-spin { to { transform: rotate(360deg); } }
@@ -148,7 +134,6 @@ html.bigwin-open body::before, html.bigwin-open body::after, html.bigwin-open .g
 .bw-pop { animation: bw-pop .5s cubic-bezier(.2, 1.4, .4, 1); }
 @keyframes bw-pop { from { transform: scale(.3) rotate(-8deg); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } to { transform: scale(1); } }
 
-@media (max-width: 640px) { body::before { opacity: .4; } body::after { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

@@ -9,11 +9,11 @@ export function GameRow({ title, emoji, href, games }: { title: string; emoji: s
   const box = useRef<HTMLDivElement>(null);
   const scroll = (d: number) => box.current?.scrollBy({ left: d * box.current.clientWidth * 0.85, behavior: "smooth" });
   if (!games.length) return null;
-  const arrow = "grid size-10 place-items-center rounded-xl bg-raised text-soft ring-1 ring-line transition-colors hover:text-white";
+  const arrow = "grid size-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-soft transition-colors hover:border-emerald-300/30 hover:bg-emerald-300/10 hover:text-white";
   return (
     <section>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 rounded-xl bg-panel px-3 py-1.5 font-display text-[18px] font-bold ring-1 ring-line sm:text-[20px]"><span aria-hidden>{emoji}</span>{title}</h2>
+        <h2 className="flex items-center gap-2 font-display text-[17px] font-bold tracking-tight text-[#e9fff0] sm:text-[19px]"><span aria-hidden>{emoji}</span>{title}</h2>
         <div className="flex items-center gap-1.5">
           {href && <Link href={href} className="mr-1 rounded-xl px-2 py-1.5 text-[13px] font-semibold text-soft hover:text-white">Все</Link>}
           <button type="button" onClick={() => scroll(-1)} className={`${arrow} hidden sm:grid`} aria-label="Назад"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m15 6-6 6 6 6" /></svg></button>
