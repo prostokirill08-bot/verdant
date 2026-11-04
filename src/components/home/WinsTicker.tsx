@@ -9,7 +9,7 @@ import { useGameModal } from "@/components/games/GameModal";
 
 type Win = { id: string; game: string; payout: string; multiplier: number; user: string };
 /** Уровень выигрыша по множителю — подпись и цвет в ленте. */
-const TIERS: [number, string, string][] = [[100, "Легендарный", "#ff5cf0"], [50, "Мега", "#ff5c7a"], [25, "Огромный", "#ff8a3d"], [10, "Большой", "#ffd166"], [3, "Отличный", "#3ee08f"], [0, "Выигрыш", "#8fdcff"]];
+const TIERS: [number, string, string][] = [[200, "Ультра", "#ff3df0"], [100, "Легендарный", "#ff5cf0"], [50, "Мега", "#ff5c7a"], [25, "Огромный", "#ff8a3d"], [10, "Большой", "#ffd166"], [3, "Отличный", "#3ee08f"], [0, "Выигрыш", "#8fdcff"]];
 const tier = (m: number) => TIERS.find(([x]) => m >= x)!;
 
 /** Бегущая лента последних выигрышей (обновляется раз в 15 секунд). */

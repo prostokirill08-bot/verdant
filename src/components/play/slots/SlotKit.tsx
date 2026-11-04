@@ -160,6 +160,7 @@ const TIERS = [
   { at: 25, title: "ОГРОМНЫЙ ВЫИГРЫШ", c: ["#ff6b8b", "#ffd166"] },
   { at: 50, title: "МЕГА ВЫИГРЫШ", c: ["#8fdcff", "#d8a8ff"] },
   { at: 100, title: "ЛЕГЕНДАРНЫЙ ВЫИГРЫШ", c: ["#3ee08f", "#ffd166"] },
+  { at: 200, title: "УЛЬТРА ВЫИГРЫШ", c: ["#ff5cf0", "#ffd166"] },
 ] as const;
 const RAIN = ["🪙", "⭐", "❄️", "🎁", "✨", "🪙", "💰"];
 const fmt = (v: number) => v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -186,7 +187,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
     // Слабее эффекты на телефонах и при «уменьшить движение»
     setLite(window.matchMedia("(max-width: 640px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches);
   }, []);
-  const dur = short ? 1500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
+  const dur = short ? 1500 : mult >= 200 ? 7500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
   const target = Number(amount) / 100;
 
   useEffect(() => {
@@ -206,7 +207,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
       const ti = tierOf(mult * e);
       if (p < 1 && t - lastTick > 90) { lastTick = t; sfx("count", { pitch: 1 + e * 0.6 }); }   // «счётчик» набегающей суммы
       if (ti !== lastTier) {
-        lastTier = ti; setTierIdx(ti); sfx(ti >= 3 ? "megawin" : "bigwin");
+        lastTier = ti; setTierIdx(ti); sfx(ti >= 5 ? "jackpot" : ti >= 3 ? "megawin" : "bigwin");   // ультра — фанфары с дождём монет
         try { navigator.vibrate?.(ti >= 3 ? [60, 40, 90] : 50); } catch {}
       }
       if (p < 1) raf = requestAnimationFrame(tick);
