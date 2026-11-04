@@ -51,7 +51,8 @@ export function route(opts: Opts, handler: (ctx: Ctx) => Promise<unknown>) {
       }
       const user = await getSession(req);
       if (opts.auth) {
-        if (!user) throw new HttpError(401, "Нужно войти в аккаунт", "unauthorized");
+        // Служебные разделы без входа тоже выглядят несуществующими
+        if (!user) throw typeof opts.auth === "string" ? new HttpError(404, "Не найдено", "not_found") : new HttpError(401, "Нужно войти в аккаунт", "unauthorized");
         if (user.status === "BLOCKED") throw new HttpError(403, "Аккаунт заблокирован", "blocked");
         if (typeof opts.auth === "string" && ROLE_RANK[user.role] < ROLE_RANK[opts.auth]) throw new HttpError(404, "Не найдено", "not_found");   // не подсказываем, что раздел существует
       }
