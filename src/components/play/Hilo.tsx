@@ -19,7 +19,6 @@ export function Card({ rank, suit, size = "lg" }: { rank: number; suit: number; 
   return (
     <div className={`relative grid place-items-center rounded-2xl bg-[linear-gradient(160deg,#ffffff,#eef5ff)] shadow-[0_18px_40px_-14px_rgb(0_0_0/0.7)] ${lg ? "h-[190px] w-[136px]" : "h-14 w-10 rounded-lg"} ${red ? "text-[#e11d48]" : "text-[#1e1b4b]"}`}>
       {/* Веточка остролиста в углу карты */}
-      {lg && <span aria-hidden className="absolute right-2 top-2 text-[18px]">🌿</span>}
       <span className={`absolute left-2 top-1.5 font-display font-bold leading-none ${lg ? "text-[22px]" : "text-[12px] left-1 top-1"}`}>{RANK_LABEL[rank]}<br />{SUITS[suit]}</span>
       <span className={lg ? "text-[64px]" : "text-[18px]"}>{SUITS[suit]}</span>
       {lg && <span className="absolute bottom-1.5 right-2 rotate-180 font-display text-[22px] font-bold leading-none">{RANK_LABEL[rank]}<br />{SUITS[suit]}</span>}
@@ -61,7 +60,7 @@ export function HiloGame({ cfg }: { cfg: GameConfig }) {
       {active && cur ? (
         <>
           <div className="grid gap-2">
-            <button type="button" onClick={() => guess("higher")} disabled={busy} className="flex h-12 items-center justify-between rounded-xl bg-[linear-gradient(180deg,#5ef0a6,#1f9d55)] px-4 font-semibold text-white disabled:opacity-50">
+            <button type="button" onClick={() => guess("higher")} disabled={busy} className="flex h-12 items-center justify-between rounded-xl bg-[linear-gradient(135deg,#a7f66b,#35c46e)] px-4 font-semibold text-[#06140a] disabled:opacity-50">
               <span>▲ {cur.rank === 13 ? "Король" : "Выше или равно"}</span><span className="font-mono text-[13px]">{pct(round!.odds.higher)} · {round!.odds.higherMult.toFixed(2)}×</span>
             </button>
             <button type="button" onClick={() => guess("lower")} disabled={busy} className="flex h-12 items-center justify-between rounded-xl bg-[linear-gradient(180deg,#ff8aa0,#e11d48)] px-4 font-semibold text-white disabled:opacity-50">
@@ -92,13 +91,13 @@ export function HiloGame({ cfg }: { cfg: GameConfig }) {
         </AnimatePresence>
       </div>
       {round && !active && (
-        <p className={`font-display text-[22px] font-bold ${round.status === "WON" ? "text-gold" : "text-danger"}`}>{round.status === "WON" ? `${round.multiplier.toFixed(2)}× · +${points(round.payout)}` : "Не угадал"}</p>
+        <p className={`font-display text-[22px] font-bold ${round.status === "WON" ? "text-accent" : "text-danger"}`}>{round.status === "WON" ? `${round.multiplier.toFixed(2)}× · +${points(round.payout)}` : "Не угадал"}</p>
       )}
       <div className="flex max-w-full gap-1.5 overflow-x-auto pb-1">
         {cards.map((c) => (
           <div key={c.i} className={`relative shrink-0 rounded-lg ${c.guess === "start" || c.guess === "skip" ? "opacity-70" : c.ok ? "ring-2 ring-accent" : "ring-2 ring-danger"}`}>
             <Card rank={c.rank} suit={c.suit} size="sm" />
-            {c.guess !== "start" && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded bg-ink px-1 text-[9px] font-bold text-soft">{c.guess === "higher" ? "▲" : c.guess === "lower" ? "▼" : "→"}</span>}
+            {c.guess !== "start" && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded bg-ink px-1 text-[10.5px] font-bold text-soft">{c.guess === "higher" ? "▲" : c.guess === "lower" ? "▼" : "→"}</span>}
           </div>
         ))}
       </div>

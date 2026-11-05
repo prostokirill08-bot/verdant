@@ -36,7 +36,7 @@ export const WS = {
   wheel: [5, 8, 10, 12, 15, 20, 25, 30, 40, 50, 100, 250],
   wheelWeights: [14, 14, 13, 12, 11, 9, 8, 7, 5, 4, 2, 1],
 };
-export const CHEST_NAMES: Record<ChestKind, string> = { gifts: "Подарки", frost: "Мороз", stars: "Звездопад", bells: "Колокольчики", wheel: "Колесо" };
+export const CHEST_NAMES: Record<ChestKind, string> = { gifts: "Тайники", frost: "Фиксация", stars: "Звездопад", bells: "Кристаллы", wheel: "Колесо" };
 
 export type WsCell = { sym: string; chest?: number };
 export type WsSpin = { grid: WsCell[][]; wins: LineWin[]; mult: number };

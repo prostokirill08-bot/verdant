@@ -13,10 +13,10 @@ const describe = (r: RoundView) => { const p = r.params as { rows: number; risk:
 const RISK: Record<PlinkoRisk, string> = { low: "низкий", medium: "средний", high: "высокий" };
 
 const W = 1000;
-const GARLAND = ["#ff4d5e", "#ffd166", "#3ee08f", "#8fdcff"];
+const PEG = "#d9ffe9";
 const label = (m: number, rows: number) => `${m}${rows < 16 ? "×" : ""}`;
 const labelSize = (m: number, rows: number, s: number) => Math.min(26, s * 0.3, (s * 0.84) / (label(m, rows).length * 0.62));
-const tone = (m: number) => (m >= 10 ? "#e8263f" : m >= 2 ? "#ffd166" : m >= 1 ? "#3ee08f" : "#2a3870");
+const tone = (m: number) => (m >= 10 ? "#ff6fb0" : m >= 2 ? "#f5d76e" : m >= 1 ? "#8bea4e" : "#16301f");
 
 export function PlinkoGame({ cfg }: { cfg: GameConfig }) {
   const { balance, setBalance } = useAuth();
@@ -79,10 +79,10 @@ export function PlinkoGame({ cfg }: { cfg: GameConfig }) {
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block w-full max-w-[640px]" role="img" aria-label="Доска Plinko">
         <defs>
-          <radialGradient id="ball" cx="35%" cy="30%"><stop offset="0" stopColor="#fff" /><stop offset=".35" stopColor="#ff6b7a" /><stop offset="1" stopColor="#9e0f2a" /></radialGradient>
+          <radialGradient id="ball" cx="35%" cy="30%"><stop offset="0" stopColor="#fff" /><stop offset=".35" stopColor="#a7f66b" /><stop offset="1" stopColor="#1f7a3e" /></radialGradient>
         </defs>
         {/* Штырьки — лампочки гирлянды */}
-        {pegs.map((p, i) => <g key={i}><circle cx={p.x} cy={p.y} r={s * 0.2} fill={GARLAND[i % GARLAND.length]} opacity={0.18} /><circle cx={p.x} cy={p.y} r={s * 0.095} fill={GARLAND[i % GARLAND.length]} /></g>)}
+        {pegs.map((p, i) => <g key={i}><circle cx={p.x} cy={p.y} r={s * 0.2} fill="#8bea4e" opacity={0.12} /><circle cx={p.x} cy={p.y} r={s * 0.09} fill={PEG} /></g>)}
         {table.map((m, b) => {
           const cx = W / 2 + (b - rows / 2) * s; const y = top + rows * s - s * 0.25;
           const active = hit?.bucket === b;

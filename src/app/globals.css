@@ -33,7 +33,7 @@ body{font-family:var(--font-sans);-webkit-font-smoothing:antialiased;background:
 .verdant-game-page>div:nth-of-type(2){border-radius:15px}.verdant-game-page .font-display{letter-spacing:-.035em}.verdant-catalog>div:first-child{border-bottom:1px solid #253a2a;padding-bottom:17px}.verdant-account>section{border-radius:15px!important;box-shadow:inset 0 1px #ffffff08,0 20px 55px -40px #000}
 /* account / settings / admin cards */
 main .rounded-3xl.border,main .rounded-2xl.border{border-color:#29402e;background-color:#0b140e}main input,main textarea,main select{border-color:#2b4430!important;background-color:#09110c!important;color:#eff9ed!important}main button{transition:filter .18s,border-color .18s}
-@media(max-width:640px){.verdant-hero,.verdant-hero-content{min-height:290px}.verdant-hero-content{padding:28px 22px}.verdant-hero h1{font-size:35px}.hero-shards{right:-35%;opacity:.55}.verdant-stats{gap:7px}.verdant-stat{display:block;padding:10px}.verdant-stat>span{width:27px;height:27px;font-size:13px}.verdant-stat strong{font-size:17px}.verdant-stat small{font-size:7px;line-height:1.35}.verdant-shelf{padding:13px 11px}}
+@media(max-width:640px){.verdant-hero,.verdant-hero-content{min-height:290px}.verdant-hero-content{padding:28px 22px}.verdant-hero h1{font-size:35px}.hero-shards{right:-35%;opacity:.55}.verdant-stats{gap:7px}.verdant-stat{display:block;padding:10px}.verdant-stat>span{width:27px;height:27px;font-size:13px}.verdant-stat strong{font-size:17px}.verdant-stat small{font-size:9.5px;line-height:1.35;letter-spacing:.04em}.verdant-shelf{padding:13px 11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 /* VERDANT visual identity refresh — crystal artwork, no seasonal decorations */
 .verdant-hero{min-height:270px;background:#041009;border-color:#28754b;box-shadow:0 24px 70px -38px #28d87970}
@@ -71,9 +71,9 @@ html.bigwin-open .cell-hot, html.bigwin-open .reel-wait { animation-play-state: 
 @keyframes gift-wobble { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(0); } }
 /* Монеты сыплются из сундука и с золотой горы: подлёт вверх, потом падение (transform/opacity) */
 .coin-spill { opacity: 0; will-change: transform, opacity; animation: coin-spill 1.5s cubic-bezier(.3, .2, .6, 1) forwards;
-  background: conic-gradient(from 30deg, #fff4b8, #e3a417, #ffe58f, #b9790a, #fff4b8); box-shadow: inset 0 0 0 2px #a86a00, 0 0 6px #ffd16699; }
+  border-radius: 2px !important; background: linear-gradient(135deg, #eaffd9, #8bea4e 45%, #1f9d55); box-shadow: 0 0 8px #8bea4eaa; }
 @keyframes coin-spill {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0) scale(.6); }
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(45deg) scale(.6); }
   8% { opacity: 1; }
   30% { transform: translate3d(calc(var(--dx) * .35), var(--up), 0) rotate(calc(var(--r) * .3)) scaleX(.5); }
   85% { opacity: 1; }

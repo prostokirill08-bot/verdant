@@ -9,7 +9,7 @@ import { BetAmount, betError, ErrorLine, GameLayout, Label, newKey, PlayButton, 
 
 type Result = { winner: number; order: number[]; pick: number; payoutMultiplier: number };
 type Res = { round: RoundView; balance: string };
-const describe = (r: RoundView) => { const x = r.result as Result | null; return x ? `Ставка: ${SLEDS[x.pick]!.emoji} · Первым: ${SLEDS[x.winner]!.emoji} ${SLEDS[x.winner]!.name}` : "—"; };
+const describe = (r: RoundView) => { const x = r.result as Result | null; return x ? `Ставка: ${SLEDS[x.pick]!.name} · Первым: ${SLEDS[x.winner]!.name}` : "—"; };
 const RACE = 4.2;     // секунд у победителя
 const FINISH = 86;    // финишная линия, % ширины трассы
 
@@ -53,7 +53,7 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
           {SLEDS.map((s, i) => (
             <button key={s.name} type="button" role="radio" aria-checked={pick === i} onClick={() => setPick(i)} disabled={running} data-testid={`sled-${i}`}
               className={`flex h-11 items-center gap-2.5 rounded-xl px-3 text-left transition-colors disabled:opacity-60 ${pick === i ? "bg-raised ring-2" : "bg-ink hover:bg-raised/60"}`} style={pick === i ? { ["--tw-ring-color" as string]: s.color } : undefined}>
-              <span className="text-[22px]" aria-hidden>{s.emoji}</span>
+              <Racer color={s.color} className="h-6 w-12 shrink-0" />
               <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{s.name}</span>
               <span className="text-[11.5px] text-muted">{Math.round(s.p * 100)}%</span>
               <span className="w-14 text-right font-mono text-[14px] font-bold" style={{ color: s.color }}>{sledMult(i, cfg.edgeBp).toFixed(2)}×</span>
@@ -68,9 +68,9 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
 
   const stage = (
     <div className="relative grid min-h-[440px] content-center gap-3 p-3 sm:p-6">
-      <div className="relative overflow-hidden rounded-3xl bg-[#071b11] bg-cover bg-[80%_center] p-2 pt-[clamp(70px,16vw,120px)] shadow-inner ring-1 ring-white/30" style={{ backgroundImage: "linear-gradient(180deg, transparent 0, transparent 22%, #071b11d9 45%), url(/img/verdant/bg/sledrace.webp)" }} data-testid="sled-track">
+      <div className="relative overflow-hidden rounded-3xl bg-[#071b11] bg-cover bg-[80%_center] p-2 pt-[clamp(70px,16vw,120px)] shadow-inner ring-1 ring-accent/30" style={{ backgroundImage: "radial-gradient(80% 60% at 50% 0%, #1d4a2a99, transparent 70%), repeating-linear-gradient(90deg, #8bea4e10 0 1px, transparent 1px 40px)" }} data-testid="sled-track">
         {/* Клетчатый финиш */}
-        <div aria-hidden className="absolute bottom-2 top-[clamp(70px,16vw,120px)] w-3 bg-[repeating-conic-gradient(#1e1b4b_0_25%,#fff_0_50%)] [background-size:12px_12px]" style={{ left: `calc(${FINISH}% + 30px)` }} />
+        <div aria-hidden className="absolute bottom-2 top-[clamp(70px,16vw,120px)] w-3 bg-[repeating-conic-gradient(#06100a_0_25%,#eaffd9_0_50%)] [background-size:12px_12px]" style={{ left: `calc(${FINISH}% + 30px)` }} />
         <div className="relative grid gap-1.5">
           {SLEDS.map((s, i) => {
             const p = paths?.[i]; const place = race ? race.r.order.indexOf(i) : -1;
@@ -80,8 +80,7 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
                 <motion.div key={race?.id ?? "idle"} className="absolute top-1/2 -translate-y-1/2" initial={{ left: "0%" }}
                   animate={p ? { left: p.left } : { left: "0%" }} transition={p ? { duration: p.duration, times: p.times, ease: "linear" } : undefined}>
                   <span className="relative flex items-end">
-                    <span className="text-[clamp(26px,6.5vw,36px)] leading-none [transform:scaleX(-1)]" aria-hidden>{s.emoji}</span>
-                    <span aria-hidden className="absolute -bottom-1 left-[-4px] h-2 w-[calc(100%+10px)] rounded-full" style={{ background: s.color, boxShadow: "0 2px 0 #00000040" }} />
+                    <Racer color={s.color} className="h-[clamp(22px,5.5vw,30px)] w-[clamp(46px,11vw,62px)]" />
                   </span>
                 </motion.div>
                 <AnimatePresence>
@@ -95,8 +94,8 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
       <div className="grid min-h-10 place-items-center">
         <AnimatePresence mode="wait">
           {race && !running && (
-            <motion.p key={race.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`font-display text-[20px] font-bold ${race.payout > 0n ? "text-gold" : "text-white/80"}`} data-testid="sled-result">
-              {race.payout > 0n ? `${SLEDS[race.r.winner]!.emoji} Первым приехал твой саночник! +${points(race.payout)}` : `Первым приехал ${SLEDS[race.r.winner]!.emoji} ${SLEDS[race.r.winner]!.name}`}
+            <motion.p key={race.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`font-display text-[20px] font-bold ${race.payout > 0n ? "text-accent" : "text-white/80"}`} data-testid="sled-result">
+              {race.payout > 0n ? `Первым финишировал твой болид! +${points(race.payout)}` : `Первым финишировал болид «${SLEDS[race.r.winner]!.name}»`}
             </motion.p>
           )}
           {running && <motion.p key="go" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-display text-[20px] font-bold text-white">Поехали! ➤</motion.p>}
@@ -106,4 +105,19 @@ export function SledRaceGame({ cfg }: { cfg: GameConfig }) {
   );
 
   return <GameLayout slug="sledrace" controls={controls} stage={stage} footer={<RoundsPanel slug="sledrace" version={version} describe={describe} />} />;
+}
+
+/** Неоновый болид (вектор), смотрит вправо — к финишу. */
+function Racer({ color, className = "" }: { color: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 64 30" className={className} style={{ filter: `drop-shadow(0 0 6px ${color}99)` }} aria-hidden>
+      <path d="M4 20 L10 12 L28 9 L40 10 L58 16 L60 21 L4 23 Z" fill={color} stroke="#06140a" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M24 10.5 L30 4.5 L40 5 L44 11 Z" fill="#06140a" stroke={color} strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M31 6.5 L39 6.8 L41.5 10.4 L29.5 10.2 Z" fill="#45c8f0" fillOpacity=".7" />
+      <path d="M10 16 H54" stroke="#fff" strokeOpacity=".5" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="15" cy="23" r="5" fill="#06140a" stroke={color} strokeWidth="1.6" /><circle cx="15" cy="23" r="1.8" fill={color} />
+      <circle cx="48" cy="23" r="5" fill="#06140a" stroke={color} strokeWidth="1.6" /><circle cx="48" cy="23" r="1.8" fill={color} />
+      <path d="M1 14 L8 14 M0 18 L5 18" stroke={color} strokeOpacity=".7" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
 }

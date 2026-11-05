@@ -1,4 +1,5 @@
 "use client";
+import { PAL, SlotSymbol, type SymDef } from "./NeonSymbols";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,21 +8,21 @@ import { anticipationFrom } from "@/lib/fair/slots";
 import { SAL, type Rocket, type SalResult, type SalSpin } from "@/lib/fair/slots2";
 import { sfx } from "@/lib/sound";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winUnits, type BonusState } from "./SlotKit";
+import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winUnits, type BonusState, SLOT_ACCENT, SLOT_FRAME, SLOT_STAGE, SLOT_STAGE_BG, SLOT_TITLE } from "./SlotKit";
 
-const NAMES: Record<string, string> = { deer: "Олень", snowman: "Снеговик", lantern: "Фонарик", bell: "Бубенец", popper: "Хлопушка", tangerine: "Мандарин", rocket: "Ракета", firebox: "Салют" };
+const NAMES: Record<string, string> = { deer: "Корона", snowman: "Звезда", lantern: "Пламя", bell: "Колокол", popper: "Молния", tangerine: "Сфера", rocket: "Ракета", firebox: "Бонус" };
+const DEFS: Record<string, SymDef> = {
+  tangerine: { glyph: "orb", color: PAL.orange }, popper: { glyph: "bolt", color: PAL.cyan }, bell: { glyph: "bell", color: PAL.gold }, lantern: { glyph: "flame", color: PAL.red },
+  snowman: { glyph: "star", color: PAL.violet, tier: "high" }, deer: { glyph: "crown", color: PAL.lime, tier: "high" },
+  rocket: { glyph: "rocket", color: PAL.pink, tier: "special", label: "WILD" }, firebox: { glyph: "burst", color: PAL.lime, tier: "special", label: "BONUS" },
+};
 const PAYING = ["tangerine", "popper", "bell", "lantern", "snowman", "deer"];
 const randomSym = () => { const x = Math.random(); return x < 0.04 ? "firebox" : x < 0.07 ? "rocket" : PAYING[Math.floor(Math.random() * PAYING.length)]!; };
 const START: string[][] = [["deer", "bell", "tangerine", "popper"], ["lantern", "rocket", "snowman", "bell"], ["firebox", "tangerine", "deer", "lantern"], ["popper", "snowman", "rocket", "tangerine"], ["bell", "lantern", "popper", "deer"]];
-const COLORS = ["#ffd166", "#ff5f6f", "#8fdcff", "#3ee08f", "#c084fc"];
+const COLORS = ["#8bea4e", "#35e889", "#45c8f0", "#ff6fb0", "#f5d76e"];
 
 export function SalSym({ s, big }: { s: string; big?: boolean }) {
-  return (
-    <>
-      <Image src={`/img/verdant/slots/salute/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="110px" className={`rounded-lg object-cover ${s === "firebox" ? "ring-2 ring-gold/70" : s === "rocket" ? "ring-2 ring-[#ff5f6f]/80" : ""}`} draggable={false} />
-      {s === "firebox" && !big && <BonusLabel />}
-    </>
-  );
+  return <SlotSymbol defs={DEFS} s={s} big={big} />;
 }
 
 const describe = (r: RoundView) => { const x = r.result as SalResult | null; if (!x) return "—"; return x.fs ? `Бонус: ${x.fs.spins.length} вращений${x.bought ? " (куплен)" : ""}` : x.base && x.base.mult > 0 ? `Выигрыш ${x.totalMult}×` : "Без выигрыша"; };
@@ -33,9 +34,9 @@ function RocketLayer({ rockets, bursts }: { rockets: Rocket[]; bursts: { id: num
       <AnimatePresence>
         {rockets.map((r) => (
           <motion.div key={r.id} layout transition={{ layout: { duration: 0.55, ease: [0.3, 0.7, 0.3, 1] } }} initial={{ scale: 0.3, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ opacity: 0, y: -60, scale: 0.6 }}
-            className="relative z-10 rounded-xl bg-[#1a0b1f] p-[5%] ring-2 ring-[#ff5f6f] shadow-[0_0_24px_#ff5f6f]" style={{ gridColumn: r.reel + 1, gridRow: r.row + 1 }} data-testid="rocket">
+            className="relative z-10 rounded-xl bg-[#14070f] p-[5%] ring-2 ring-[#ff6fb0] shadow-[0_0_24px_#ff6fb0]" style={{ gridColumn: r.reel + 1, gridRow: r.row + 1 }} data-testid="rocket">
             <div className="relative size-full"><SalSym s="rocket" big /></div>
-            {r.x > 1 && <span className="absolute -right-1 -top-1 rounded-lg bg-[linear-gradient(180deg,#fde68a,#f59e0b)] px-1.5 font-display text-[clamp(11px,2.6vw,16px)] font-bold text-[#3a2300] shadow">×{r.x}</span>}
+            {r.x > 1 && <span className="absolute -right-1 -top-1 rounded-lg bg-[linear-gradient(180deg,#c8ff9a,#4cc76a)] px-1.5 font-display text-[clamp(11px,2.6vw,16px)] font-bold text-[#3a2300] shadow">×{r.x}</span>}
           </motion.div>
         ))}
       </AnimatePresence>
@@ -135,7 +136,7 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
         setFs({ left, done: i + 1, total: total.toString(), add: add > 0n ? add.toString() : null, tick });
         setLastWin(total.toString());
         if (s.mult >= 10) await showBig(s.mult, add.toString(), `Вращение ${i + 1}`, true);
-        if (s.trigger) { sfx("bonus"); left += SAL.retrigger; setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-gold">+{SAL.retrigger} ВРАЩЕНИЯ!</motion.p>); await sleep(1400); setBanner(null); }
+        if (s.trigger) { sfx("bonus"); left += SAL.retrigger; setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-accent">+{SAL.retrigger} ВРАЩЕНИЯ!</motion.p>); await sleep(1400); setBanner(null); }
       }
       // Финальный залп: все оставшиеся ракеты взлетают
       const last = f.spins.at(-1)?.rockets ?? [];
@@ -158,18 +159,17 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
   const busy = playing || reqBusy;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #ff5f6f" }}>
-        <Image src="/img/verdant/bg/salute.webp" alt="" fill priority sizes="100vw" className="object-cover object-[78%_center]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a0614]/40 via-[#0b0716]/30 to-[#070b1f]/92" />
+      <div className={SLOT_STAGE}>
+        <div aria-hidden className={SLOT_STAGE_BG} />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
-          <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_14px_rgb(255_95_111/0.9)]">✦ NEON BURST</h2>
-          <BonusTotal state={fs} color="#ff8a9a" title="🎆 Салют" sub={fs ? `Ракет на поле: ${rockets.length}` : undefined} />
-          <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#3a0f2e,#120818)] p-2 shadow-[inset_0_0_0_2px_rgb(255_209_102/0.5),0_20px_50px_-20px_#000] sm:p-3">
+          <h2 className={SLOT_TITLE}>✦ NEON BURST</h2>
+          <BonusTotal state={fs} color="#ff6fb0" title="✦ Неоновый взрыв" sub={fs ? `Ракет на поле: ${rockets.length}` : undefined} />
+          <div className={SLOT_FRAME}>
             <Reels grid={grid} rows={4} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <SalSym s={c} />} highlight={hl} sound={{ spin: "spin", stop: "pop" }}
               overlay={<RocketLayer rockets={rockets} bursts={bursts} />} />
             <AnimatePresence>{winText && (
-              <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute inset-x-0 -bottom-1 z-10 mx-auto w-fit rounded-full bg-black/70 px-3 py-1 text-[12.5px] font-semibold text-gold ring-1 ring-gold/40">{winText}</motion.p>
+              <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute inset-x-0 -bottom-1 z-10 mx-auto w-fit rounded-full bg-black/70 px-3 py-1 text-[12.5px] font-semibold text-accent ring-1 ring-accent/40">{winText}</motion.p>
             )}</AnimatePresence>
             <AnimatePresence>{banner && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-30 grid place-items-center rounded-2xl bg-black/75">{banner}</motion.div>
@@ -179,7 +179,7 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
           <DryCounter dry={dry} prev={prev} avg={190} />
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={SAL.buyPrice}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#be123c", "#ff5f6f"]} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={SLOT_ACCENT} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>
@@ -197,11 +197,11 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><SalSym s="rocket" big /></span>
-          <p><b className="text-[#ff8a9a]">Ракета</b> — дикий символ на барабанах 2–5, заменяет любой символ. Ракета может прилететь с множителем ×2 или ×3 — он умножает все способы, проходящие через неё.</p>
+          <p><b className="text-[#ff6fb0]">Ракета WILD</b> — дикий символ на барабанах 2–5, заменяет любой символ. Ракета может прилететь с множителем ×2 или ×3 — он умножает все способы, проходящие через неё.</p>
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><SalSym s="firebox" big /></span>
-          <p><b className="text-gold">Салют</b>: 3, 4 или 5 в любом месте платят {SAL.scatterPays[3]}×, {SAL.scatterPays[4]}× или {SAL.scatterPays[5]}× ставки и дают <b>{SAL.freeSpins} бесплатных вращений</b>. В бонусе ракеты не исчезают: каждое вращение каждая ракета <b>поднимается на ряд вверх</b>, пока не вылетит за край и не взорвётся салютом. Множители ракет в бонусе — ×2, ×3, ×5 и ×10. 3 салюта — ещё +{SAL.retrigger}.</p>
+          <p><b className="text-accent">Взрыв BONUS</b>: 3, 4 или 5 в любом месте платят {SAL.scatterPays[3]}×, {SAL.scatterPays[4]}× или {SAL.scatterPays[5]}× ставки и дают <b>{SAL.freeSpins} бесплатных вращений</b>. В бонусе ракеты не исчезают: каждое вращение каждая ракета <b>поднимается на ряд вверх</b>, пока не вылетит за край и не взорвётся неоновой вспышкой. Множители ракет в бонусе — ×2, ×3, ×5 и ×10. 3 взрыва — ещё +{SAL.retrigger}.</p>
         </div>
         <p>«Купить бонус» — {SAL.buyPrice}× ставки. Максимальный выигрыш — {SAL.maxWin.toLocaleString("ru-RU")}× ставки. Расчётный RTP ≈ 95,5%. Каждый раунд проверяется на странице «Честность».</p>
       </InfoModal>
@@ -212,9 +212,9 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
 function Intro() {
   return (
     <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }} className="grid place-items-center gap-3 p-4 text-center">
-      <motion.div animate={{ y: [0, -14, 0] }} transition={{ duration: 1.2, repeat: Infinity }} className="relative size-24 rounded-2xl ring-4 ring-[#ff5f6f] shadow-[0_0_50px_#ff5f6f]"><SalSym s="rocket" big /></motion.div>
-      <p className="font-display text-[clamp(20px,5vw,34px)] font-bold text-gold">{SAL.freeSpins} БЕСПЛАТНЫХ ВРАЩЕНИЙ</p>
-      <p className="max-w-xs text-[13.5px] text-white/80">Ракеты остаются на поле и каждое вращение поднимаются на ряд — а у края взрываются салютом</p>
+      <motion.div animate={{ y: [0, -14, 0] }} transition={{ duration: 1.2, repeat: Infinity }} className="relative size-24 rounded-2xl ring-4 ring-[#ff6fb0] shadow-[0_0_50px_#ff6fb0]"><SalSym s="rocket" big /></motion.div>
+      <p className="font-display text-[clamp(20px,5vw,34px)] font-bold text-accent">{SAL.freeSpins} БЕСПЛАТНЫХ ВРАЩЕНИЙ</p>
+      <p className="max-w-xs text-[13.5px] text-white/80">Ракеты остаются на поле и каждое вращение поднимаются на ряд — а у края взрываются неоновой вспышкой</p>
     </motion.div>
   );
 }

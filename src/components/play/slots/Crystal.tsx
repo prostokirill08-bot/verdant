@@ -1,4 +1,5 @@
 "use client";
+import { PAL, SlotSymbol, type SymDef } from "./NeonSymbols";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,11 +8,16 @@ import { anticipationFrom } from "@/lib/fair/slots";
 import { CRY, playCrystal, type CryResult, type CrySpin } from "@/lib/fair/slots2";
 import { sfx } from "@/lib/sound";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
+import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin, SLOT_ACCENT, SLOT_FRAME, SLOT_STAGE, SLOT_STAGE_BG, SLOT_TITLE } from "./SlotKit";
 
 const NAMES: Record<string, string> = {
-  castle: "Ледяной дворец", troika: "Тройка", key: "Золотой ключ", bauble_gold: "Золотой шар", bauble_red: "Красный шар",
-  bauble_green: "Зелёный шар", bauble_blue: "Синий шар", orb: "Crystal Vault", star: "Звезда",
+  castle: "Корона", troika: "Бриллиант", key: "Ключ", bauble_gold: "Золотой кристалл", bauble_red: "Рубин",
+  bauble_green: "Изумруд", bauble_blue: "Сапфир", orb: "Загадка", star: "Звезда",
+};
+const DEFS: Record<string, SymDef> = {
+  bauble_blue: { glyph: "gem", color: PAL.cyan }, bauble_green: { glyph: "gem", color: PAL.emerald }, bauble_red: { glyph: "gem", color: PAL.red }, bauble_gold: { glyph: "gem", color: PAL.gold },
+  key: { glyph: "key", color: PAL.mint, tier: "high" }, troika: { glyph: "diamond", color: PAL.violet, tier: "high" }, castle: { glyph: "crown", color: PAL.lime, tier: "high" },
+  orb: { glyph: "question", color: PAL.violet, tier: "special" }, star: { glyph: "star", color: PAL.lime, tier: "special", label: "BONUS" },
 };
 const PAYING = CRY.ladder;
 const randomSym = () => { const x = Math.random(); return x < 0.05 ? "orb" : x < 0.08 ? "star" : PAYING[Math.floor(Math.random() * PAYING.length)]!; };
@@ -21,18 +27,13 @@ const randomSym = () => { const x = Math.random(); return x < 0.05 ? "orb" : x <
  */
 const SHOWCASES = [
   { id: "x1000", seed: 811, key: "vd_showcase_crystal", title: "Демо-показ бонуса ×1000+", label: "Демо-показ" },
-  { id: "full", seed: 20140805, key: "vd_showcase_crystal_full", title: "Демо: шары на всё поле", label: "Демо-показ · шары на всё поле" },
+  { id: "full", seed: 20140805, key: "vd_showcase_crystal_full", title: "Демо: сферы на всё поле", label: "Демо-показ · сферы на всё поле" },
 ] as const;
 const mulberry32 = (a: number) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const START: string[][] = [["bauble_red", "castle", "bauble_blue"], ["key", "orb", "bauble_gold"], ["troika", "star", "bauble_green"], ["bauble_blue", "orb", "key"], ["bauble_gold", "troika", "bauble_red"]];
 
 export function CrySym({ s, big }: { s: string; big?: boolean }) {
-  return (
-    <>
-      <Image src={`/img/verdant/slots/crystal/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="120px" className={`rounded-lg object-cover ${s === "star" ? "ring-2 ring-gold/70" : s === "orb" ? "ring-2 ring-[#a78bfa]/80" : ""}`} draggable={false} />
-      {s === "star" && !big && <BonusLabel />}
-    </>
-  );
+  return <SlotSymbol defs={DEFS} s={s} big={big} />;
 }
 
 const describe = (r: RoundView) => { const x = r.result as CryResult | null; if (!x) return "—"; return x.fs ? `Бонус: ${x.fs.spins.length} вращений${x.bought ? " (куплен)" : ""}` : x.base && x.base.mult > 0 ? `Выигрыш ${x.totalMult}×` : "Без выигрыша"; };
@@ -140,7 +141,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         if (s.orbs.length === CRY.reels * CRY.rows && !fullShown) {
           fullShown = true; sfx("jackpot");
           await t(1500);   // сначала даём рассмотреть поле из 15 одинаковых символов
-          setBanner(<motion.div initial={{ scale: 0.5 }} animate={{ scale: [0.5, 1.15, 1] }} className="grid gap-1 text-center"><p className="font-display text-[clamp(22px,6vw,36px)] font-bold text-[#e9d5ff]">ВСЁ ПОЛЕ В ШАРАХ!</p><p className="text-white/80">15 из 15 · внутри — {NAMES[s.reveal ?? "castle"]}</p></motion.div>);
+          setBanner(<motion.div initial={{ scale: 0.5 }} animate={{ scale: [0.5, 1.15, 1] }} className="grid gap-1 text-center"><p className="font-display text-[clamp(22px,6vw,36px)] font-bold text-[#e9d5ff]">ВСЁ ПОЛЕ В СФЕРАХ!</p><p className="text-white/80">15 из 15 · внутри — {NAMES[s.reveal ?? "castle"]}</p></motion.div>);
           await sleep(2200); setBanner(null);
         }
         // Выигрыш бонуса не больше максимального (×maxWin ставки) — как и выплата на сервере
@@ -150,10 +151,10 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         setLastWin(total.toString());
         if (s.mult >= 10) await showBig(s.mult, add0.toString(), `Вращение ${i + 1}`, true);
         if (total >= cap) {
-          sfx("jackpot"); setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="px-4 text-center font-display text-[clamp(22px,6vw,34px)] font-bold text-gold">МАКСИМАЛЬНЫЙ ВЫИГРЫШ ×{CRY.maxWin.toLocaleString("ru-RU")}!</motion.p>);
+          sfx("jackpot"); setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="px-4 text-center font-display text-[clamp(22px,6vw,34px)] font-bold text-accent">МАКСИМАЛЬНЫЙ ВЫИГРЫШ ×{CRY.maxWin.toLocaleString("ru-RU")}!</motion.p>);
           await sleep(2200); setBanner(null); break;   // дальше крутить незачем — выплата уже на потолке
         }
-        if (s.trigger) { sfx("bonus"); left += CRY.retrigger; setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-gold">+{CRY.retrigger} ВРАЩЕНИЙ!</motion.p>); await sleep(1400); setBanner(null); }
+        if (s.trigger) { sfx("bonus"); left += CRY.retrigger; setBanner(<motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-accent">+{CRY.retrigger} ВРАЩЕНИЙ!</motion.p>); await sleep(1400); setBanner(null); }
       }
       await showBig(res.totalMult, payout, label ?? `Бонус: ${f.spins.length} вращений`);
       setFs(null); setSticky(new Set()); setOrbCells([]);
@@ -185,12 +186,11 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
   const isAdmin = user?.role === "ADMIN";
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #a78bfa" }}>
-        <Image src="/img/verdant/bg/crystal.webp" alt="" fill priority sizes="100vw" className="object-cover object-[78%_center]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#120a2e]/45 via-[#0b0820]/35 to-[#070b1f]/92" />
+      <div className={SLOT_STAGE}>
+        <div aria-hidden className={SLOT_STAGE_BG} />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e9d5ff] drop-shadow-[0_2px_14px_rgb(167_139_250/0.9)]">◇ CRYSTAL VAULT</h2>
+            <h2 className={SLOT_TITLE}>◇ CRYSTAL VAULT</h2>
           </div>
           {/* Лестница улучшений: какой символ сейчас внутри шаров */}
           <AnimatePresence>{fs && (
@@ -199,16 +199,16 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
                 const on = Math.min(fs.level, CRY.ladder.length - 1) === i; const past = i < Math.min(fs.level, CRY.ladder.length - 1);
                 return (
                   <motion.div key={s} animate={on ? { scale: [1, 1.15, 1] } : { scale: 1 }} transition={{ duration: 0.6 }}
-                    className={`relative aspect-square overflow-hidden rounded-lg ${on ? "ring-2 ring-gold shadow-[0_0_18px_#ffd166]" : past ? "opacity-35" : "opacity-70"}`}>
+                    className={`relative aspect-square overflow-hidden rounded-lg ${on ? "ring-2 ring-accent shadow-[0_0_18px_#8bea4e]" : past ? "opacity-35" : "opacity-70"}`}>
                     <CrySym s={s} big />
                   </motion.div>
                 );
               })}
             </motion.div>
           )}</AnimatePresence>
-          {demo && <p className="rounded-xl bg-gold/15 px-3 py-2 text-center text-[13px] font-bold text-gold ring-1 ring-gold/50" data-testid="showcase-badge">🎬 ДЕМО-ПОКАЗ · без ставки, баланс не меняется, раунд не записывается</p>}
-          <BonusTotal state={fs} color="#c4b5fd" title="🔮 Бонус" sub={fs ? `Шаров на поле: ${sticky.size} · внутри: ${NAMES[CRY.ladder[Math.min(fs.level, 6)]!]}` : undefined} />
-          <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#2a1b5e,#0f0b2e)] p-2 shadow-[inset_0_0_0_2px_rgb(196_181_253/0.55),0_20px_50px_-20px_#000] sm:p-3">
+          {demo && <p className="rounded-xl bg-accent/15 px-3 py-2 text-center text-[13px] font-bold text-accent ring-1 ring-accent/50" data-testid="showcase-badge">🎬 ДЕМО-ПОКАЗ · без ставки, баланс не меняется, раунд не записывается</p>}
+          <BonusTotal state={fs} color="#a78bfa" title="◆ Бонус" sub={fs ? `Сфер на поле: ${sticky.size} · внутри: ${NAMES[CRY.ladder[Math.min(fs.level, 6)]!]}` : undefined} />
+          <div className={SLOT_FRAME}>
             <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <CrySym s={c} />} highlight={hl} lines={lines} linePatterns={CRY.lines} sound={{ spin: "whoosh", stop: "glass" }}
               overlay={<OrbLayer cells={orbCells} sticky={sticky} flash={flash} />} />
@@ -226,7 +226,7 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
           ))}
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={CRY.buyPrice}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#6d28d9", "#a78bfa"]} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={SLOT_ACCENT} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>
@@ -244,11 +244,11 @@ export function CrystalGame({ cfg }: { cfg: GameConfig }) {
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><CrySym s="orb" big /></span>
-          <p><b className="text-[#c4b5fd]">Crystal Vault</b> — символ-загадка. После остановки все шары на поле раскрываются в <b>один и тот же</b> случайный символ.</p>
+          <p><b className="text-[#a78bfa]">Сфера-загадка</b> — после остановки все сферы на поле раскрываются в <b>один и тот же</b> случайный символ.</p>
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><CrySym s="star" big /></span>
-          <p><b className="text-gold">Звезда</b>: 3, 4 или 5 в любом месте платят {CRY.scatterPays[3]}×, {CRY.scatterPays[4]}× или {CRY.scatterPays[5]}× ставки и дают <b>{CRY.freeSpins} бесплатных вращений</b>. В бонусе шары <b>прилипают</b> до конца, а символ внутри них каждое вращение <b>дорожает на ступень</b>: синий шар → зелёный → красный → золотой → ключ → тройка → дворец. 3 звезды в бонусе — ещё +{CRY.retrigger}.</p>
+          <p><b className="text-accent">Звезда</b>: 3, 4 или 5 в любом месте платят {CRY.scatterPays[3]}×, {CRY.scatterPays[4]}× или {CRY.scatterPays[5]}× ставки и дают <b>{CRY.freeSpins} бесплатных вращений</b>. В бонусе сферы <b>прилипают</b> до конца, а символ внутри них каждое вращение <b>дорожает на ступень</b>: сапфир → изумруд → рубин → золото → ключ → бриллиант → корона. 3 звезды в бонусе — ещё +{CRY.retrigger}.</p>
         </div>
         <p>«Купить бонус» — {CRY.buyPrice}× ставки. Максимальный выигрыш — {CRY.maxWin.toLocaleString("ru-RU")}× ставки. Расчётный RTP ≈ 96,5%. Каждый раунд проверяется на странице «Честность».</p>
       </InfoModal>
@@ -261,7 +261,7 @@ function Intro() {
     <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }} className="grid place-items-center gap-3 p-4 text-center">
       <motion.div animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }} transition={{ duration: 1.6, repeat: Infinity }} className="relative size-24 rounded-full shadow-[0_0_50px_#a78bfa]"><CrySym s="orb" big /></motion.div>
       <p className="font-display text-[clamp(20px,5vw,34px)] font-bold text-[#e9d5ff]">{CRY.freeSpins} БЕСПЛАТНЫХ ВРАЩЕНИЙ</p>
-      <p className="max-w-xs text-[13.5px] text-white/80">Шары прилипают к полю, а символ внутри них с каждым вращением становится дороже — до Ледяного дворца</p>
+      <p className="max-w-xs text-[13.5px] text-white/80">Сферы прилипают к полю, а символ внутри них с каждым вращением становится дороже — до Короны</p>
     </motion.div>
   );
 }

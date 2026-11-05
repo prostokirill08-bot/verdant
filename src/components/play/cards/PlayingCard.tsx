@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 // Игральная карта в фирменном изумрудном стиле VERDANT.
 const SUITS = ["♠", "♥", "♦", "♣"];
 const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-const FACE: Record<number, string> = { 11: "🧝", 12: "👸", 13: "♛" };
+const FACE: Record<number, string> = { 11: "♞", 12: "♛", 13: "♚" };
 export type CardData = { rank: number; suit: number };
 
 const SIZE = {

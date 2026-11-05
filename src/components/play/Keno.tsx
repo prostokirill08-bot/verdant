@@ -41,7 +41,7 @@ export function KenoGame({ cfg }: { cfg: GameConfig }) {
       <div>
         <Label aside={<span className="text-soft">{picks.length} / 10</span>}>Числа</Label>
         <div className="grid grid-cols-2 gap-1.5">
-          <button type="button" onClick={random} disabled={locked} className="h-9 rounded-lg bg-raised text-[13px] font-semibold text-soft hover:text-white disabled:opacity-50">🎲 Случайно</button>
+          <button type="button" onClick={random} disabled={locked} className="h-9 rounded-lg bg-raised text-[13px] font-semibold text-soft hover:text-white disabled:opacity-50">Случайно</button>
           <button type="button" onClick={() => { setPicks([]); setDrawn([]); setResult(null); }} disabled={locked || !picks.length} className="h-9 rounded-lg bg-raised text-[13px] font-semibold text-soft hover:text-white disabled:opacity-50">Очистить</button>
         </div>
       </div>
@@ -50,7 +50,7 @@ export function KenoGame({ cfg }: { cfg: GameConfig }) {
           <Label>Выплаты: совпадения → множитель</Label>
           <div className="flex flex-wrap gap-1">
             {pays.map((m, h) => m > 0 && (
-              <span key={h} className={`rounded-lg px-2 py-1 font-mono text-[12px] ${result?.hits === h ? "bg-gold text-ink" : "bg-ink text-soft"}`}>{h}: {m}×</span>
+              <span key={h} className={`rounded-lg px-2 py-1 font-mono text-[12px] ${result?.hits === h ? "bg-accent text-[#06140a]" : "bg-ink text-soft"}`}>{h}: {m}×</span>
             ))}
           </div>
         </div>
@@ -68,15 +68,13 @@ export function KenoGame({ cfg }: { cfg: GameConfig }) {
           return (
             <motion.button key={n} type="button" onClick={() => toggle(n)} disabled={locked} aria-pressed={picked}
               animate={out ? { scale: [1.25, 1] } : { scale: 1 }} transition={{ duration: 0.25 }}
-              className={`relative grid aspect-square place-items-center rounded-full font-mono text-[clamp(12px,2.6vw,16px)] font-bold transition-colors ${hit ? "bg-[radial-gradient(circle_at_35%_30%,#fff6c8,#ffd166_45%,#b7791f)] text-ink shadow-[0_0_18px_rgb(255_209_102/0.8)]" : picked ? "bg-[radial-gradient(circle_at_35%_30%,#ffb3bd,#e8263f_50%,#7a0c20)] text-white" : out ? "bg-[radial-gradient(circle_at_35%_30%,#e2f6ff,#8fdcff_45%,#2a6fa0)] text-ink" : "bg-[radial-gradient(circle_at_35%_30%,#3a4a8a,#1a2349_60%)] text-soft ring-1 ring-white/10 hover:brightness-125"}`}>
-              {/* Кристалл: колпачок сверху */}
-              <span aria-hidden className="absolute -top-[9%] left-1/2 h-[16%] w-[26%] -translate-x-1/2 rounded-sm bg-[linear-gradient(180deg,#ffe7a3,#b7791f)]" />
-              {hit ? "⭐" : n}
+              className={`relative grid aspect-square place-items-center rounded-xl font-mono text-[clamp(12px,2.6vw,16px)] font-bold transition-colors ${hit ? "bg-[linear-gradient(135deg,#d8ffc0,#8bea4e_50%,#1f9d55)] text-[#06140a] shadow-[0_0_18px_rgb(139_234_78/0.8)]" : picked ? "bg-[#163a22] text-[#d8ffc0] ring-2 ring-accent" : out ? "bg-[#0d2a33] text-[#9fe6ff] ring-1 ring-[#45c8f0]/70" : "bg-[#0d1a12] text-soft ring-1 ring-white/10 hover:ring-accent/50"}`}>
+              {n}
             </motion.button>
           );
         })}
       </div>
-      <p className={`h-8 text-center font-display text-[22px] font-bold ${result ? (result.m > 0 ? "text-gold" : "text-muted") : "text-transparent"}`} aria-live="polite">
+      <p className={`h-8 text-center font-display text-[22px] font-bold ${result ? (result.m > 0 ? "text-accent" : "text-muted") : "text-transparent"}`} aria-live="polite">
         {result ? (result.m > 0 ? `${result.hits} совпад. · ${result.m}× · +${points(result.payout)}` : `Совпадений: ${result.hits}`) : "—"}
       </p>
     </div>

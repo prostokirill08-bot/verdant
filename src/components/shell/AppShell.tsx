@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           
           <div className="lg:hidden"><Logo /></div>
           <nav className="verdant-topnav mx-auto hidden items-center gap-1 rounded-full border border-[#2b432f] bg-[#0a140d] p-1 lg:flex" aria-label="Основная навигация">
-            {[["/", "ГЛАВНАЯ"], ["/games", "БИБЛИОТЕКА"], ["/bonuses", "БОНУСЫ"], ["/fair", "ЧЕСТНОСТЬ"]].map(([href,label]) => <Link key={href} href={href!} className={`rounded-full px-4 py-2 text-[9px] font-extrabold tracking-[.1em] transition ${path === href ? "bg-[#8bea4e] text-[#091208]" : "text-[#9aab9d] hover:bg-white/[.05] hover:text-white"}`}>{label}</Link>)}
+            {[["/", "ГЛАВНАЯ"], ["/games", "БИБЛИОТЕКА"], ["/bonuses", "БОНУСЫ"], ["/fair", "ЧЕСТНОСТЬ"]].map(([href,label]) => <Link key={href} href={href!} className={`rounded-full px-4 py-2 text-[10.5px] font-extrabold tracking-[.1em] transition ${path === href ? "bg-[#8bea4e] text-[#091208]" : "text-[#9aab9d] hover:bg-white/[.05] hover:text-white"}`}>{label}</Link>)}
           </nav>
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
             <span className={user ? "hidden sm:block" : ""}><OnlineBadge /></span>

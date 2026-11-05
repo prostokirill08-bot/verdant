@@ -1,6 +1,5 @@
 "use client";
 import { sfx, winSfx } from "@/lib/sound";
-import NextImage from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -106,15 +105,41 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
   // Таймер для обратного отсчёта и надписи на кнопке
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 100); return () => clearInterval(t); }, []);
 
-  // Спрайт саней Санты (PNG с прозрачностью)
-  const sleigh = useRef<HTMLImageElement | null>(null);
-  useEffect(() => { const img = new Image(); img.src = "/img/verdant/rocket.svg"; sleigh.current = img; }, []);
-  const drawSleigh = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, crashed: boolean, w: number) => {
-    const img = sleigh.current!; const sw = Math.min(150, Math.max(90, w * 0.16)); const sh = (sw * img.naturalHeight) / img.naturalWidth;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.max(-1.1, Math.min(ang, 1.4)));
-    if (crashed) ctx.globalAlpha = 0.85;
-    ctx.drawImage(img, -sw * 0.88, -sh * 0.78, sw, sh); // нос оленей — на конце кривой
-    ctx.restore(); ctx.globalAlpha = 1;
+  /**
+   * Ракета рисуется прямо на canvas (вектор, чёткая на любом экране). Нос смотрит вдоль +X и стоит
+   * точно на конце кривой, корпус поворачивается по касательной к графику.
+   */
+  const drawRocket = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, crashed: boolean, w: number) => {
+    const L = Math.min(96, Math.max(58, w * 0.12)); const H = L * 0.17; const t = performance.now();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.max(-1.25, Math.min(ang, 1.4)));
+    if (crashed) {
+      // Взрыв: кольца и осколки на месте ракеты
+      ctx.rotate(-ang);
+      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(0, 0, L * (0.25 + i * 0.18), 0, Math.PI * 2); ctx.strokeStyle = i === 1 ? "rgba(255,92,112,.55)" : "rgba(255,77,109,.3)"; ctx.lineWidth = 3 - i; ctx.stroke(); }
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const r = L * (0.35 + (i % 3) * 0.12); ctx.fillStyle = i % 2 ? "#ff5c70" : "#ffd0d6"; ctx.beginPath(); ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 2.6, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore(); return;
+    }
+    // Пламя из сопла: мерцает
+    const fl = L * (0.45 + 0.12 * Math.sin(t / 45) + 0.06 * Math.sin(t / 17));
+    const fg = ctx.createLinearGradient(-L * 0.86, 0, -L * 0.86 - fl, 0);
+    fg.addColorStop(0, "#ffffff"); fg.addColorStop(0.25, "#c8ff9a"); fg.addColorStop(0.6, "rgba(139,234,78,.55)"); fg.addColorStop(1, "rgba(139,234,78,0)");
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-L * 0.84, -H * 0.62); ctx.quadraticCurveTo(-L * 0.86 - fl * 0.6, -H * 0.5, -L * 0.86 - fl, 0); ctx.quadraticCurveTo(-L * 0.86 - fl * 0.6, H * 0.5, -L * 0.84, H * 0.62); ctx.closePath(); ctx.fill();
+    // Стабилизаторы
+    ctx.fillStyle = "#1f9d55"; ctx.strokeStyle = "#06140a"; ctx.lineWidth = 1.5;
+    for (const sgn of [-1, 1]) { ctx.beginPath(); ctx.moveTo(-L * 0.55, sgn * H * 0.9); ctx.lineTo(-L * 0.9, sgn * H * 2.05); ctx.lineTo(-L * 0.86, sgn * H * 0.75); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    // Корпус с неоновым свечением
+    const bg = ctx.createLinearGradient(0, -H, 0, H); bg.addColorStop(0, "#f2ffe9"); bg.addColorStop(0.45, "#a7f66b"); bg.addColorStop(1, "#1f7a3e");
+    ctx.shadowColor = "#8bea4e"; ctx.shadowBlur = 16; ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(-L * 0.08, -H * 0.9, -L * 0.28, -H, -L * 0.42, -H); ctx.lineTo(-L * 0.8, -H * 0.86); ctx.quadraticCurveTo(-L * 0.88, 0, -L * 0.8, H * 0.86); ctx.lineTo(-L * 0.42, H); ctx.bezierCurveTo(-L * 0.28, H, -L * 0.08, H * 0.9, 0, 0); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.strokeStyle = "#06140a"; ctx.lineWidth = 1.5; ctx.stroke();
+    // Носовой обтекатель и полоса
+    ctx.fillStyle = "#06140a"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(-L * 0.05, -H * 0.62, -L * 0.12, -H * 0.8, -L * 0.18, -H * 0.86); ctx.lineTo(-L * 0.18, H * 0.86); ctx.bezierCurveTo(-L * 0.12, H * 0.8, -L * 0.05, H * 0.62, 0, 0); ctx.fill();
+    ctx.fillStyle = "rgba(6,20,10,.55)"; ctx.fillRect(-L * 0.66, -H * 0.92, L * 0.05, H * 1.84);
+    // Иллюминатор
+    ctx.beginPath(); ctx.arc(-L * 0.36, 0, H * 0.5, 0, Math.PI * 2); ctx.fillStyle = "#06140a"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#eaffd9"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(-L * 0.36, 0, H * 0.3, 0, Math.PI * 2); ctx.fillStyle = "#45c8f0"; ctx.fill();
+    ctx.beginPath(); ctx.arc(-L * 0.39, -H * 0.12, H * 0.1, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.restore();
   }, []);
 
   // Отрисовка графика: множитель e^(k·t) от момента старта по серверным часам
@@ -134,40 +159,39 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
       const X = (t: number) => pad.l + (t / tMax) * (w - pad.l - pad.r);
       const Y = (v: number) => h - pad.b - ((v - 1) / (mMax - 1)) * (h - pad.b - pad.t);
       // сетка
-      ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.fillStyle = "#aab6e0"; ctx.font = "11px var(--font-geist-mono), monospace"; ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.fillStyle = "#8fa894"; ctx.font = "11px var(--font-geist-mono), monospace"; ctx.lineWidth = 1;
       const step = mMax > 20 ? 10 : mMax > 6 ? 2 : mMax > 3 ? 0.5 : 0.25;
       for (let v = 1; v <= mMax; v += step) { ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(w - pad.r, Y(v)); ctx.stroke(); ctx.fillText(`${v.toFixed(v < 10 ? 1 : 0)}×`, 6, Y(v) + 4); }
       for (let s = 0; s <= tMax / 1000; s += tMax > 30000 ? 10 : 2) ctx.fillText(`${s}с`, X(s * 1000) - 6, h - 8);
-      if (!elapsed) { if (sleigh.current?.complete) drawSleigh(ctx, X(0) + 10, Y(1) - 18, -0.15, false, w); return; }
-      const crashed = round?.status === "CRASHED"; const col = crashed ? "#ff4d6d" : "#ffd166";
-      // Золотой шлейф саней
+      if (!elapsed) { drawRocket(ctx, X(0) + Math.min(96, Math.max(58, w * 0.12)) + 6, Y(1) - 14, -0.35, false, w); return; }
+      const crashed = round?.status === "CRASHED"; const col = crashed ? "#ff4d6d" : "#8bea4e";
+      // Неоновый шлейф ракеты
       ctx.beginPath(); ctx.moveTo(X(0), Y(1));
       for (let i = 1; i <= 80; i++) { const t = (elapsed * i) / 80; ctx.lineTo(X(t), Y(Math.exp(CRASH_GROWTH * t))); }
       ctx.lineWidth = 4; ctx.strokeStyle = col; ctx.lineCap = "round"; ctx.shadowColor = col; ctx.shadowBlur = 14; ctx.stroke(); ctx.shadowBlur = 0;
       ctx.lineTo(X(elapsed), Y(1)); ctx.closePath();
-      const g = ctx.createLinearGradient(0, pad.t, 0, h); g.addColorStop(0, crashed ? "rgba(255,77,109,.25)" : "rgba(255,209,102,.22)"); g.addColorStop(1, "rgba(0,0,0,0)");
+      const g = ctx.createLinearGradient(0, pad.t, 0, h); g.addColorStop(0, crashed ? "rgba(255,77,109,.25)" : "rgba(139,234,78,.22)"); g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g; ctx.fill();
-      // Искры за санями
+      // Искры за ракетой
       const nowMs = performance.now();
       for (let i = 0; i < 14; i++) {
         const t = elapsed * (1 - (i + 1) * 0.018); if (t <= 0) break;
         const px = X(t) + Math.sin(nowMs / 120 + i) * 3, py = Y(Math.exp(CRASH_GROWTH * t)) + Math.cos(nowMs / 150 + i * 2) * 3;
-        ctx.globalAlpha = crashed ? 0.25 : 1 - i / 14; ctx.fillStyle = i % 3 ? "#fff6d0" : "#ffd166";
+        ctx.globalAlpha = crashed ? 0.25 : 1 - i / 14; ctx.fillStyle = i % 3 ? "#eaffd9" : "#8bea4e";
         ctx.beginPath(); ctx.arc(px, py, 2.4 - i * 0.12, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
-      // Сани Санты на конце кривой, наклонены по касательной
+      // Ракета на конце кривой, наклонена по касательной
       const tx = X(elapsed), ty = Y(m);
       const dt = Math.max(elapsed * 0.02, 50); const ang = Math.atan2(Y(Math.exp(CRASH_GROWTH * elapsed)) - Y(Math.exp(CRASH_GROWTH * (elapsed - dt))), X(elapsed) - X(elapsed - dt));
-      if (sleigh.current?.complete) drawSleigh(ctx, tx, ty, crashed ? ang + 0.9 : ang, crashed, w);
-      else { ctx.beginPath(); ctx.arc(tx, ty, 7, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); }
+      drawRocket(ctx, tx, ty, ang, crashed, w);
       if (label.current) label.current.textContent = `${m.toFixed(2)}×`;
       // Пока моя ставка в игре — тик на каждые +0,25×, всё выше по тону
       if (!crashed && myActiveRef.current) { const step = Math.floor((m - 1) * 4); if (step > lastStep) { lastStep = step; sfx("tick", { pitch: Math.min(2.2, 0.6 + Math.log2(m) * 0.5) }); } }
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [round, now, drawSleigh]);
+  }, [round, now, drawRocket]);
 
   async function placeBet() {
     const r = await run<{ roundId: string; balance: string }>("/api/crash/bet", { amount, autoCashout: autoOn ? Math.round(autoNum * 100) / 100 : null, key: newKey() });
@@ -211,9 +235,8 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
         {history.map((h) => <span key={h.id} title={`Сид: ${h.serverSeed}`} className={`shrink-0 rounded-md bg-ink px-2 py-1 font-mono text-[12px] font-semibold ${cpTone(h.crashPoint)}`}>{h.crashPoint.toFixed(2)}×</span>)}
       </div>
       <div className="relative h-[300px] overflow-hidden sm:h-[380px]">
-        {/* Ночное небо над заснеженной деревней */}
-        <NextImage src="/img/verdant/bg/crash.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover object-[100%_center] opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/10 to-ink/70" />
+        {/* Тёмная изумрудная сцена в стиле сайта */}
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(80%_70%_at_85%_10%,#1d4a2a88,transparent_70%),radial-gradient(60%_60%_at_0%_100%,#0f3a2255,transparent_70%)]" />
         <canvas ref={canvas} className="absolute inset-0 size-full" aria-hidden />
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <AnimatePresence mode="wait">
@@ -221,7 +244,7 @@ export function CrashGame({ cfg }: { cfg: GameConfig }) {
               <motion.div key="bet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid w-56 gap-2 text-center">
                 <p className="text-[13px] uppercase tracking-wider text-soft">Ракета готовится к запуску</p>
                 <p className="font-display text-[40px] font-bold tabular">{(left / 1000).toFixed(1)}с</p>
-                <div className="h-1.5 overflow-hidden rounded-full bg-raised"><div className="h-full bg-[linear-gradient(90deg,#e8263f,#ffd166)]" style={{ width: `${(left / 7000) * 100}%` }} /></div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-raised"><div className="h-full bg-[linear-gradient(90deg,#35c46e,#a7f66b)]" style={{ width: `${(left / 7000) * 100}%` }} /></div>
               </motion.div>
             ) : status === "RUNNING" || status === "CRASHED" ? (
               <motion.div key={`run-${round?.id}`} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">

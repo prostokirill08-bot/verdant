@@ -160,7 +160,7 @@ export function BonusesPage() {
           <h2 className="mt-1 font-display text-[22px] font-bold">Подарок дня от Котонавта</h2>
           <p className="mt-1 max-w-xs text-[14px] text-white/75">Раз в сутки забирай демо-рубли в кабинете.</p>
           <Link href={user ? "/account" : "/register"} className="mt-4 inline-block"><Button>{user ? "Забрать подарок" : "Начать играть"}</Button></Link>
-          <Image src="/img/verdant/covers/coinflip.webp" alt="" width={200} height={200} className="pointer-events-none absolute -bottom-4 right-0 w-[130px] [mask-image:radial-gradient(circle,#000_55%,transparent_72%)]" />
+          <Image src="/img/verdant/games/coinflip.webp" alt="" width={200} height={200} className="pointer-events-none absolute -bottom-4 right-0 w-[130px] [mask-image:radial-gradient(circle,#000_55%,transparent_72%)]" />
         </section>
         {/* ---------- Последние призы ---------- */}
         <section className="rounded-[28px] border border-line bg-panel p-5">

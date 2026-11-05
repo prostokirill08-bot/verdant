@@ -159,7 +159,7 @@ function Verifier() {
       lines.push(["Раздача", cn(deck.slice(0, 5))], ["Запасные карты", cn(deck.slice(5))], ["После замены", cn(hand)], ["Комбинация", `${e.name} · ${e.mult}×`]);
     }
     if (game === "baccarat") { const r = K.baccarat(fs); lines.push(["Игрок", `${cn(r.player)} = ${r.playerScore}`], ["Банкир", `${cn(r.banker)} = ${r.bankerScore}`], ["Победитель", r.winner === "player" ? "Игрок" : r.winner === "banker" ? "Банкир" : "Ничья"]); }
-    if (game === "sledrace") { const r = K.sledRace(fs); lines.push(["Порядок на финише", r.order.map((i) => K.SLEDS[i]!.emoji).join(" → ")], ["Победитель", K.SLEDS[r.winner]!.name]); }
+    if (game === "sledrace") { const r = K.sledRace(fs); lines.push(["Порядок на финише", r.order.map((i) => K.SLEDS[i]!.name).join(" → ")], ["Победитель", K.SLEDS[r.winner]!.name]); }
     if (game === "mines") { const m = Math.min(24, Math.max(1, Number(p.mines) || 3)); const l = O.minesLayout(fs, m); lines.push(["Мины (клетки 1–25)", l.map((x) => x + 1).join(", ")]); }
     setOut({ hashOk: await sha256Hex(s.trim()), lines });
   }, [game, s, c, n, p]);

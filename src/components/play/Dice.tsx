@@ -9,8 +9,8 @@ import { BetAmount, betError, ErrorLine, GameLayout, Label, newKey, parsePoints,
 
 type Res = { round: RoundView; balance: string };
 // Зона проигрыша — леденец, зона выигрыша — ёлочная хвоя
-const CANE = "repeating-linear-gradient(-45deg, #e8263f 0 8px, #fff 8px 14px)";
-const PINE = "linear-gradient(90deg, #1f9d55, #3ee08f)";
+const CANE = "linear-gradient(90deg, #ff5c70, #ff6fb0)";
+const PINE = "linear-gradient(90deg, #35c46e, #a7f66b)";
 const describe = (r: RoundView) => { const x = r.result as { roll: number; target: number; over: boolean } | null; return x ? `Бросок ${x.roll.toFixed(2)} · ${x.over ? "больше" : "меньше"} ${x.target.toFixed(2)}` : "—"; };
 
 export function DiceGame({ cfg }: { cfg: GameConfig }) {
