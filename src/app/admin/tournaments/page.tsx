@@ -27,7 +27,7 @@ export default function AdminTournaments() {
       <section className="grid content-start gap-3 rounded-2xl border border-line bg-panel p-4">
         <p className="font-semibold">Настройки турнира недели</p>
         <fieldset disabled={!admin || act.busy} className="grid gap-2">
-          <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} className="size-4 accent-[#8bea4e]" />Турнир включён</label>
+          <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} className="size-4 accent-[#3ee08f]" />Турнир включён</label>
           <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Название</span><input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={inputCls} maxLength={60} /></label>
           <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Минимальная ставка, DC</span><input value={f.minBet} onChange={(e) => setF({ ...f, minBet: e.target.value })} className={`${inputCls} font-mono`} inputMode="decimal" /></label>
           <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Призы по местам, DC (через запятую)</span><textarea value={f.prizes} onChange={(e) => setF({ ...f, prizes: e.target.value })} rows={3} className={`${inputCls} h-auto py-2 font-mono`} /></label>

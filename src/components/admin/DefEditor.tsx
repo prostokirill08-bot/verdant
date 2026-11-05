@@ -40,8 +40,8 @@ export function DefEditor({ kind, def, metrics, onSaved, onCancel, readOnly }: {
             <button key={k} type="button" onClick={() => setF((x) => ({ ...x, icon: k }))} aria-pressed={f.icon === k} className={`rounded-xl p-0.5 ring-2 ${f.icon === k ? "ring-accent" : "ring-transparent"}`}><AchIcon icon={k} done={f.icon === k} size={36} /></button>
           ))}</div></L>
         )}
-        <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.enabled} onChange={set("enabled")} className="size-4 accent-[#8bea4e]" />Включено</label>
-        {kind === "quests" && <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.pinned} onChange={set("pinned")} className="size-4 accent-[#8bea4e]" />Каждый день (закреплено)</label>}
+        <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.enabled} onChange={set("enabled")} className="size-4 accent-[#3ee08f]" />Включено</label>
+        {kind === "quests" && <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.pinned} onChange={set("pinned")} className="size-4 accent-[#3ee08f]" />Каждый день (закреплено)</label>}
       </fieldset>
       {!readOnly && <div className="flex flex-wrap gap-2"><Button onClick={save} loading={act.busy}>{creating ? "Создать" : "Сохранить"}</Button>{onCancel && <Button variant="ghost" onClick={onCancel}>Отмена</Button>}{!creating && <Button variant="danger" onClick={del}>Удалить</Button>}</div>}
       <Msg m={act.msg} />

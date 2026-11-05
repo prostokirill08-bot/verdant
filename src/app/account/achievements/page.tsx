@@ -30,10 +30,10 @@ export default function AchievementsPage() {
           ))}
         </div>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-white/[.06]"><div className="h-full bg-[linear-gradient(90deg,#35c46e,#a7f66b)]" style={{ width: `${items.length ? (done / items.length) * 100 : 0}%` }} /></div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/[.06]"><div className="h-full bg-[linear-gradient(90deg,#1f9d55,#7cf5b6)]" style={{ width: `${items.length ? (done / items.length) * 100 : 0}%` }} /></div>
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="achievements">
         {shown.map((a) => (
-          <li key={a.code} data-code={a.code} data-done={a.unlockedAt ? "1" : "0"} className={`flex gap-3 rounded-2xl border p-4 ${a.unlockedAt ? "border-accent/35 bg-[linear-gradient(135deg,rgb(139_234_78/0.08),transparent)]" : "border-line bg-panel"}`}>
+          <li key={a.code} data-code={a.code} data-done={a.unlockedAt ? "1" : "0"} className={`flex gap-3 rounded-2xl border p-4 ${a.unlockedAt ? "border-accent/35 bg-[linear-gradient(135deg,rgb(62_224_143/0.08),transparent)]" : "border-line bg-panel"}`}>
             <AchIcon icon={a.icon} done={!!a.unlockedAt} />
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">

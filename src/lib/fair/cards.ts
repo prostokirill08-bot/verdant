@@ -1,4 +1,4 @@
-// Карточные и быстрые игры: Блэкджек, Видеопокер, Баккара, Race.
+// Карточные и быстрые игры: Блэкджек, Видеопокер, Баккара, Гонка на санях.
 // Чистые функции «числа из HMAC → результат», одинаково работают на сервере и на странице проверки честности.
 
 export type Card = { rank: number; suit: number };   // rank 1 (туз) … 13 (король), suit 0–3
@@ -164,14 +164,14 @@ export function baccaratPayout(bets: Record<BacSide, bigint>, winner: BacSide): 
   return winner === "player" ? bets.player * 2n : (bets.banker * 195n) / 100n;
 }
 
-// ============================== Race ==============================
+// ============================== Гонка на санях ==============================
 // 5 саночников с разными шансами. Победитель — по первому числу; порядок остальных — по следующим.
 export const SLEDS = [
-  { name: "Изумруд", emoji: "①", color: "#8bea4e", p: 0.36 },
-  { name: "Бирюза", emoji: "②", color: "#45c8f0", p: 0.26 },
-  { name: "Аметист", emoji: "③", color: "#a78bfa", p: 0.18 },
-  { name: "Янтарь", emoji: "④", color: "#f5d76e", p: 0.12 },
-  { name: "Рубин", emoji: "⑤", color: "#ff6fb0", p: 0.08 },
+  { name: "Пингвин Пип", emoji: "🐧", color: "#5b8cff", p: 0.36 },
+  { name: "Лис Рыжик", emoji: "🦊", color: "#ff8a3d", p: 0.26 },
+  { name: "Мишка Бурый", emoji: "🐻", color: "#c08457", p: 0.18 },
+  { name: "Зайка Снежок", emoji: "🐰", color: "#e7ecff", p: 0.12 },
+  { name: "Олень Звёздный", emoji: "🦌", color: "#ffd166", p: 0.08 },
 ] as const;
 export const SLED_FLOATS = 6;
 export const sledMult = (i: number, edgeBp: number) => floor2((1 - edgeBp / 10000) / SLEDS[i]!.p);

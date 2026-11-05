@@ -9,16 +9,9 @@ import { points, SNOW } from "@/lib/format";
 import { richFx } from "@/lib/prefs";
 import { parsePoints, unitsToInput, type GameConfig } from "../kit";
 
-/** Оформление слотов в стиле сайта: тёмная изумрудная сцена, неоновая рамка барабанов, светящийся заголовок. */
-export const SLOT_ACCENT: [string, string] = ["#1f9d55", "#a7f66b"];
-export const SLOT_STAGE = "relative overflow-hidden rounded-[22px] border border-[#2a4630] bg-[#060c08] shadow-[0_30px_80px_-45px_#5be37f]";
-export const SLOT_STAGE_BG = "pointer-events-none absolute inset-0 bg-[radial-gradient(70%_50%_at_50%_0%,#1d4a2a66,transparent_70%),radial-gradient(60%_40%_at_100%_100%,#0f3a2244,transparent_70%)] [background-size:auto,auto]";
-export const SLOT_FRAME = "relative rounded-2xl bg-[linear-gradient(180deg,#0f1f15,#070d09)] p-2 shadow-[inset_0_0_0_1.5px_rgb(139_234_78/0.42),0_0_40px_-18px_#8bea4e,0_20px_50px_-20px_#000] sm:p-3";
-export const SLOT_TITLE = "font-display text-[clamp(18px,4vw,28px)] font-bold tracking-[0.06em] text-[#eaffd9] [text-shadow:0_0_18px_rgb(139_234_78/0.55)]";
-
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export type LineWin = { line: number; sym: string; count: number; mult: number };
-const LINE_COLORS = ["#8bea4e", "#45c8f0", "#ff6fb0", "#f5d76e", "#a78bfa", "#35e889", "#ff9f43", "#6ff0c0", "#5b8cff", "#ff5c70"];
+const LINE_COLORS = ["#fbbf24", "#35f08c", "#22d3ee", "#f472b6", "#a78bfa", "#fb923c", "#4ade80", "#38bdf8", "#e879f9", "#facc15"];
 
 /**
  * Сетка барабанов. При смене spinKey каждый барабан «прокручивается» и останавливается с задержкой слева направо.
@@ -43,7 +36,7 @@ export function Reels<T>({ grid, rows, spinKey, turbo, filler, render, highlight
       {strips.map((strip, reel) => {
         const waiting = extra(reel) > 0 && !stopped.includes(reel);
         return (
-          <div key={reel} className={`relative overflow-hidden rounded-xl bg-black/35 ring-1 transition-shadow ${waiting ? "ring-2 ring-accent" : "ring-white/10"}`} style={{ aspectRatio: `1 / ${rows}` }}>
+          <div key={reel} className={`relative overflow-hidden rounded-xl bg-black/35 ring-1 transition-shadow ${waiting ? "ring-2 ring-gold" : "ring-white/10"}`} style={{ aspectRatio: `1 / ${rows}` }}>
             {waiting && <div aria-hidden className="reel-wait pointer-events-none absolute inset-0 z-10 rounded-xl shadow-[inset_0_0_34px_rgb(251_191_36/0.85)]" />}
             <motion.div key={`${spinKey}-${reel}`} className="absolute inset-x-0 top-0"
               style={{ height: `${(strip.length / rows) * 100}%` }}
@@ -124,9 +117,9 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
           <RoundBtn label="Уменьшить ставку" onClick={() => step(-1)} disabled={busy || auto > 0}>−</RoundBtn>
           <motion.button type="button" onClick={auto > 0 ? () => setAuto(0) : onSpin} disabled={(busy && auto === 0) || !cfg.enabled || (!enough && auto === 0)} whileTap={{ scale: 0.92 }}
             aria-label={auto > 0 ? "Остановить автоигру" : "Крутить"}
-            className="relative grid size-[58px] shrink-0 place-items-center rounded-full sm:size-[74px] text-[#06140a] shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
+            className="relative grid size-[58px] shrink-0 place-items-center rounded-full sm:size-[74px] text-white shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
             style={{ background: `radial-gradient(circle at 35% 30%, ${accent[1]}, ${accent[0]})`, boxShadow: `0 0 0 4px rgb(255 255 255 / 0.12), 0 12px 34px -10px ${accent[0]}` }}>
-            {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">∞</span><span className="text-[10.5px] font-bold uppercase">стоп</span></span> : (
+            {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">∞</span><span className="text-[9px] font-bold uppercase">стоп</span></span> : (
               <motion.svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" animate={busy ? { rotate: 360 } : { rotate: 0 }} transition={busy ? { repeat: Infinity, duration: 0.6, ease: "linear" } : {}}>
                 <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v4h-4" />
               </motion.svg>
@@ -136,7 +129,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
         </div>
         <div className="min-w-0 px-1 text-right sm:px-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Выигрыш</p>
-          <p className={`truncate font-mono text-[14px] font-bold tabular sm:text-[18px] ${lastWin && BigInt(lastWin) > 0n ? "text-accent" : "text-white/50"}`}>{lastWin ? points(lastWin) : "—"}</p>
+          <p className={`truncate font-mono text-[14px] font-bold tabular sm:text-[18px] ${lastWin && BigInt(lastWin) > 0n ? "text-gold" : "text-white/50"}`}>{lastWin ? points(lastWin) : "—"}</p>
         </div>
       </div>
       <div className={`grid gap-2 ${onBuy ? "grid-cols-[1fr_1fr_44px_1fr_1fr]" : "grid-cols-[1fr_1fr_44px_1fr]"}`}>
@@ -163,19 +156,19 @@ function Pill({ children, onClick, active, disabled, gold }: { children: React.R
 
 /** Уровни крупного выигрыша (в разах от ставки): надпись «растёт», пока докручивается сумма. */
 const TIERS = [
-  { at: 0, title: "ОТЛИЧНО!", c: ["#6ff0c0", "#ffffff"] },
-  { at: 10, title: "БОЛЬШОЙ ВЫИГРЫШ", c: ["#8bea4e", "#eaffd9"] },
-  { at: 25, title: "ОГРОМНЫЙ ВЫИГРЫШ", c: ["#45c8f0", "#d9fff6"] },
-  { at: 50, title: "МЕГА ВЫИГРЫШ", c: ["#a78bfa", "#eae2ff"] },
-  { at: 100, title: "ЛЕГЕНДАРНЫЙ ВЫИГРЫШ", c: ["#35e889", "#f5d76e"] },
-  { at: 200, title: "УЛЬТРА ВЫИГРЫШ", c: ["#ff6fb0", "#f5d76e"] },
+  { at: 0, title: "ОТЛИЧНО!", c: ["#8fdcff", "#ffffff"] },
+  { at: 10, title: "БОЛЬШОЙ ВЫИГРЫШ", c: ["#ffd166", "#fff6d0"] },
+  { at: 25, title: "ОГРОМНЫЙ ВЫИГРЫШ", c: ["#ff6b8b", "#ffd166"] },
+  { at: 50, title: "МЕГА ВЫИГРЫШ", c: ["#8fdcff", "#d8a8ff"] },
+  { at: 100, title: "ЛЕГЕНДАРНЫЙ ВЫИГРЫШ", c: ["#3ee08f", "#ffd166"] },
+  { at: 200, title: "УЛЬТРА ВЫИГРЫШ", c: ["#ff5cf0", "#ffd166"] },
 ] as const;
-const RAIN = ["◆", "✦", "◆", "●", "✧", "◆"];
+const RAIN = ["🪙", "⭐", "❄️", "🎁", "✨", "🪙", "💰"];
 const fmt = (v: number) => v.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const tierOf = (m: number) => TIERS.reduce((best, t, i) => (m >= t.at ? i : best), 0);
 
 /**
- * Крупный выигрыш на весь экран: вращающиеся лучи, дождь из неоновых кристаллов,
+ * Крупный выигрыш на весь экран: вращающиеся лучи, дождь из монет, снежинок и подарков,
  * счётчик суммы, а надпись повышается по уровням (×10 → ×25 → ×50 → ×100) с тряской и вспышкой.
  * Производительность: счётчик пишет цифры прямо в DOM (без перерисовки React каждый кадр),
  * все эффекты — CSS-анимации transform/opacity на видеокарте; на телефонах частиц меньше.
@@ -200,7 +193,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
 
   useEffect(() => {
     if (!show) { setTierIdx(0); setFinished(false); skip.current = false; return; }
-    document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый эффекты под оверлеем
+    document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый снег под оверлеем
     const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0; let lastTick = 0;
     sfx(short ? "win" : "bigwin");
     const tick = (t: number) => {
@@ -238,13 +231,13 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
       {show && (
         <motion.div key="bigwin" data-testid="big-win" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }} onClick={click}
           className="bigwin fixed inset-0 z-[70] grid cursor-pointer select-none place-items-center overflow-hidden"
-          style={{ background: `radial-gradient(circle at 50% 45%, ${c1}38, transparent 60%), rgb(3 8 5 / 0.94)`, contain: "strict" }}>
+          style={{ background: `radial-gradient(circle at 50% 45%, ${c1}38, transparent 60%), rgb(4 7 20 / 0.94)`, contain: "strict" }}>
           {/* Вращающиеся лучи: один слой на видеокарте, затухание к краям — отдельный неподвижный слой */}
           <div aria-hidden className="bw-rays" style={{ background: `repeating-conic-gradient(from 0deg, ${c1}55 0deg 7deg, transparent 7deg 18deg)` }} />
-          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 50% 45%, transparent 0, transparent 18%, #030805 62%)" }} />
-          {/* Дождь из неоновых кристаллов — чистый CSS */}
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 50% 45%, transparent 0, transparent 18%, #070b1f 62%)" }} />
+          {/* Дождь из монет, звёзд, снежинок и подарков — чистый CSS */}
           {rain.map((r, i) => (
-            <span key={i} aria-hidden className="bw-drop" style={{ color: i % 3 ? c1 : c2, textShadow: `0 0 10px ${c1}`, left: `${r.left}%`, fontSize: r.size, animationDuration: `${r.dur}s`, animationDelay: `${r.delay}s`, ["--rot" as string]: `${r.rot}deg` }}>{r.ch}</span>
+            <span key={i} aria-hidden className="bw-drop" style={{ left: `${r.left}%`, fontSize: r.size, animationDuration: `${r.dur}s`, animationDelay: `${r.delay}s`, ["--rot" as string]: `${r.rot}deg` }}>{r.ch}</span>
           ))}
           {/* Ударная волна, вспышка и искры при каждом новом уровне (перезапуск через key) */}
           <div key={`fx${tierIdx}`} aria-hidden className="pointer-events-none absolute inset-0">
@@ -261,7 +254,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
               style={{ backgroundImage: `linear-gradient(180deg, ${c2}, ${c1})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
               {tierIdx === 0 && label && !short ? "ИТОГ БОНУСА" : tier.title}
             </p>
-            <p className="mt-2 font-mono text-[clamp(38px,11vw,104px)] font-bold leading-none tabular text-[#f2ffe9]" style={{ textShadow: `0 0 18px ${c1}` }}>
+            <p className="mt-2 font-mono text-[clamp(38px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 18px ${c1}` }}>
               <span ref={amountEl}>0,00</span> {SNOW}
             </p>
             <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×<span ref={multEl}>0.00</span> ставки</p>
@@ -292,7 +285,7 @@ export function DryCounter({ dry, prev, avg }: { dry: number | null; prev: numbe
   if (dry === null) return null;
   return (
     <div data-testid="dry-counter" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-black/60 px-3 py-2 text-[13px] ring-1 ring-white/10">
-      <span className="text-white/75">◆ Спинов без бонуса: <motion.b key={dry} initial={{ scale: 1.35 }} animate={{ scale: 1 }} className="inline-block font-mono text-[15px] text-accent">{dry}</motion.b></span>
+      <span className="text-white/75">🎁 Спинов без бонуса: <motion.b key={dry} initial={{ scale: 1.35 }} animate={{ scale: 1 }} className="inline-block font-mono text-[15px] text-gold">{dry}</motion.b></span>
       <span className="text-[12px] text-white/50">{prev !== null ? `прошлый бонус — на ${prev}-м спине · ` : ""}в среднем раз в ~{avg}</span>
     </div>
   );
@@ -325,7 +318,7 @@ export function useSlotState(cfg: GameConfig) {
 /** Надпись BONUS поверх бонус-символа — сразу понятно, что 3 таких запускают бесплатные вращения. */
 export function BonusLabel() {
   return (
-    <span className="pointer-events-none absolute inset-x-0 bottom-[6%] mx-auto w-fit rounded-md bg-[linear-gradient(180deg,#c8ff9a,#4cc76a)] px-1.5 py-px font-display text-[clamp(8px,2.2vw,13px)] font-bold tracking-wider text-[#06140a] shadow-[0_0_12px_rgb(139_234_78/0.8)]">BONUS</span>
+    <span className="pointer-events-none absolute inset-x-0 bottom-[6%] mx-auto w-fit rounded-md bg-[linear-gradient(180deg,#fde68a,#f59e0b)] px-1.5 py-px font-display text-[clamp(8px,2.2vw,13px)] font-bold tracking-wider text-[#3a2300] shadow-[0_0_12px_rgb(251_191_36/0.8)]">BONUS</span>
   );
 }
 
@@ -338,7 +331,7 @@ export type BonusState = { left: number; done: number; total: string; add: strin
  * Счётчик бонуса: общая сумма выигрыша за все бесплатные вращения.
  * После каждого вращения сумма плавно докручивается, а сверху всплывает «+выигрыш спина».
  */
-export function BonusTotal({ state, color = "#8bea4e", title = "◆ Бонус", sub, label = "Выигрыш в бонусе" }: { state: BonusState | null; color?: string; title?: string; sub?: string; label?: string }) {
+export function BonusTotal({ state, color = "#ffd166", title = "🎁 Бонус", sub, label = "Выигрыш в бонусе" }: { state: BonusState | null; color?: string; title?: string; sub?: string; label?: string }) {
   const el = useRef<HTMLSpanElement>(null);
   const from = useRef(0);
   const target = state ? Number(state.total) / 100 : 0;

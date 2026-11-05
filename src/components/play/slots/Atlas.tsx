@@ -1,5 +1,4 @@
 "use client";
-import { PAL, SlotSymbol, type SymDef } from "./NeonSymbols";
 import { sfx } from "@/lib/sound";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -7,23 +6,33 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { anticipationFrom, ATLAS, type AtlasResult, type AtlasSpin } from "@/lib/fair/slots";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin, SLOT_ACCENT, SLOT_FRAME, SLOT_STAGE, SLOT_STAGE_BG, SLOT_TITLE } from "./SlotKit";
+import { BonusLabel, BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, winUnits, type BonusState, type LineWin } from "./SlotKit";
 
-const NAMES: Record<string, string> = { astronaut: "Корона", telescope: "Компас", comet: "Звезда", planet: "Планета", book: "Атлас", A: "A", K: "K", Q: "Q", J: "J", "10": "10" };
-/** Символы в стиле сайта: буквы — младшие, знаки — старшие, «Атлас» — wild и скаттер. */
-const DEFS: Record<string, SymDef> = {
-  "10": { letter: "10", color: PAL.teal }, J: { letter: "J", color: PAL.cyan }, Q: { letter: "Q", color: PAL.violet }, K: { letter: "K", color: PAL.orange }, A: { letter: "A", color: PAL.pink },
-  comet: { glyph: "star", color: PAL.gold, tier: "high" }, planet: { glyph: "planet", color: PAL.blue, tier: "high" },
-  telescope: { glyph: "compass", color: PAL.mint, tier: "high" }, astronaut: { glyph: "crown", color: PAL.lime, tier: "high" },
-  book: { glyph: "v", color: PAL.lime, tier: "special", label: "BONUS" },
-};
+const IMG: Record<string, string> = { astronaut: "astronaut", telescope: "telescope", comet: "comet", planet: "planet", book: "book" };
+const RANK: Record<string, [string, string]> = { "10": ["#ff6b6b", "#c2185b"], J: ["#60a5fa", "#1d4ed8"], Q: ["#4ade80", "#15803d"], K: ["#fbbf24", "#c2410c"], A: ["#c084fc", "#7e22ce"] };
+const NAMES: Record<string, string> = { astronaut: "Космо-Санта", telescope: "Телескоп с гирляндой", comet: "Рождественская звезда", planet: "Ёлочный шар", book: "Атлас Деда Мороза", A: "A", K: "K", Q: "Q", J: "J", "10": "10" };
 const SYMS = ATLAS.symbols.filter((s) => s !== "book");
 const randomSym = () => (Math.random() < 0.06 ? "book" : SYMS[Math.floor(Math.random() * SYMS.length)]!);
 // Стартовая раскладка фиксированная — одинаковая на сервере и в браузере (без ошибки гидратации)
 const START: string[][] = [["A", "astronaut", "10"], ["K", "book", "Q"], ["telescope", "J", "A"], ["Q", "book", "comet"], ["planet", "K", "J"]];
 
 export function Sym({ s, big }: { s: string; big?: boolean }) {
-  return <SlotSymbol defs={DEFS} s={s} big={big} />;
+  if (IMG[s]) return (
+    <>
+      <Image src={`/img/ny/slots/atlas/${IMG[s]}.webp`} alt={NAMES[s]!} fill sizes="120px" className={`rounded-lg object-cover ${s === "book" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      {s === "book" && !big && <BonusLabel />}
+    </>
+  );
+  const [a, b] = RANK[s] ?? ["#fff", "#999"];
+  return (
+    <span className="grid size-full place-items-center rounded-lg bg-[radial-gradient(circle,rgb(255_255_255/0.06),transparent_70%)]">
+      {/* Объём буквы — подложка из той же надписи (вместо filter: drop-shadow, который тормозит на телефонах) */}
+      <span className={`relative grid font-display font-bold leading-none ${big ? "text-[64px]" : "text-[clamp(24px,6vw,44px)]"}`}>
+        <span aria-hidden className="col-start-1 row-start-1 translate-y-[3px]" style={{ color: b, textShadow: `0 0 10px ${a}88` }}>{s}</span>
+        <span className="col-start-1 row-start-1" style={{ background: `linear-gradient(180deg, #fff 0%, ${a} 45%, ${b} 100%)`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", WebkitTextStroke: "1px rgb(255 255 255 / 0.35)" }}>{s}</span>
+      </span>
+    </span>
+  );
 }
 
 const describe = (r: RoundView) => { const x = r.result as AtlasResult | null; if (!x) return "—"; return x.fs ? `Бонус: ${x.fs.spins.length} фриспинов · ${NAMES[x.fs.special]}${x.bought ? " (куплен)" : ""}` : x.base && x.base.mult > 0 ? `Выигрыш ${x.totalMult}×` : "Без выигрыша"; };
@@ -120,20 +129,21 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
   const busy = playing || reqBusy;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className={SLOT_STAGE}>
-        <div aria-hidden className={SLOT_STAGE_BG} />
+      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #5b8cff" }}>
+        <Image src="/img/ny/bg/atlas.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/40 via-[#070b1f]/30 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className={SLOT_TITLE}>◈ ATLAS OF STARS</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_12px_rgb(124_92_255/0.9)]">🎄 АТЛАС ЗВЁЗД</h2>
             <AnimatePresence>{fs && (
-              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 rounded-xl bg-black/50 px-3 py-1.5 ring-1 ring-accent/50">
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 rounded-xl bg-black/50 px-3 py-1.5 ring-1 ring-gold/50">
                 <span className="relative size-8 overflow-hidden rounded-md"><Sym s={fs.special} /></span>
-                <span className="text-[12px] leading-tight"><b className="text-accent">Бесплатно: {fs.left}</b><br /><span className="text-white/70">особый символ</span></span>
+                <span className="text-[12px] leading-tight"><b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">особый символ</span></span>
               </motion.div>
             )}</AnimatePresence>
           </div>
           <BonusTotal state={fs} />
-          <div className={SLOT_FRAME}>
+          <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#1b2a6b,#0b1238)] p-2 shadow-[inset_0_0_0_2px_rgb(255_209_102/0.55),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={3} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
               render={(c) => <Sym s={c} />} highlight={hl} lines={lines} linePatterns={ATLAS.lines}
               overlay={expand && (
@@ -141,7 +151,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
                   {[0, 1, 2, 3, 4].map((reel) => (
                     <div key={reel} className="relative">
                       {expand.reels.includes(reel) && (
-                        <motion.div initial={{ scaleY: 0.33, opacity: 0 }} animate={{ scaleY: 1, opacity: 1 }} transition={{ duration: 0.45 }} className="absolute inset-0 overflow-hidden rounded-xl bg-[#1b1450] ring-2 ring-accent shadow-[0_0_30px_rgb(251_191_36/0.6)]">
+                        <motion.div initial={{ scaleY: 0.33, opacity: 0 }} animate={{ scaleY: 1, opacity: 1 }} transition={{ duration: 0.45 }} className="absolute inset-0 overflow-hidden rounded-xl bg-[#1b1450] ring-2 ring-gold shadow-[0_0_30px_rgb(251_191_36/0.6)]">
                           <div className="absolute inset-x-[6%] top-1/2 aspect-square -translate-y-1/2"><Sym s={expand.sym} big /></div>
                         </motion.div>
                       )}
@@ -157,13 +167,13 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
           <DryCounter dry={dry} prev={prev} avg={150} />
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={ATLAS.buyPrice}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={SLOT_ACCENT} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#b5122f", "#ff6b7a"]} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>
       </div>
       <RoundsPanel slug="atlas" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Atlas of Stars — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Атлас звёзд — выплаты">
         <p>10 линий, ставка делится поровну между линиями. Выплата — за 2–5 одинаковых символов слева направо. Числа ниже — во сколько раз выигрыш больше ставки на линию (ставка ÷ 10).</p>
         <div className="grid grid-cols-2 gap-2">
           {(["astronaut", "telescope", "comet", "planet", "A", "K", "Q", "J", "10"] as const).map((s) => (
@@ -175,7 +185,7 @@ export function AtlasGame({ cfg }: { cfg: GameConfig }) {
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><Sym s="book" /></span>
-          <p><b className="text-accent">Атлас</b> — дикий символ и скаттер одновременно. 3, 4 или 5 атласов с надписью BONUS в любом месте платят 2×, 20× или 200× общей ставки и дают <b>10 бесплатных вращений</b>. Перед бонусом выбирается особый символ: во время бесплатных вращений он раскрывается на весь барабан и платит по всем 10 линиям, даже на несмежных барабанах.</p>
+          <p><b className="text-gold">Атлас</b> — дикий символ и скаттер одновременно. 3, 4 или 5 атласов с надписью BONUS в любом месте платят 2×, 20× или 200× общей ставки и дают <b>10 бесплатных вращений</b>. Перед бонусом выбирается особый символ: во время бесплатных вращений он раскрывается на весь барабан и платит по всем 10 линиям, даже на несмежных барабанах.</p>
         </div>
         <p>Если на первых барабанах уже лежат 2 атласа, оставшиеся барабаны подсвечиваются и крутятся дольше — в ожидании третьего. Автоигру можно включить без лимита: она крутит, пока не нажмёшь «Стоп».</p>
         <p>«Купить бонус» сразу запускает бесплатные вращения за {ATLAS.buyPrice}× ставки. Максимальный выигрыш — {ATLAS.maxWin.toLocaleString("ru-RU")}× ставки. Расчётный RTP ≈ 95,5%. Результат каждого раунда проверяется на странице «Честность».</p>
@@ -189,12 +199,12 @@ function Intro({ special, count }: { special: string; count: number }) {
     <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }} className="grid place-items-center gap-3 p-4 text-center">
       <p className="font-display text-[clamp(20px,5vw,34px)] font-bold text-gradient">{count} БЕСПЛАТНЫХ ВРАЩЕНИЙ</p>
       <p className="text-white/80">Особый символ</p>
-      <motion.div initial={{ rotateY: 180 }} animate={{ rotateY: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="relative size-28 rounded-2xl ring-4 ring-accent shadow-[0_0_40px_rgb(251_191_36/0.7)]"><Sym s={special} big /></motion.div>
+      <motion.div initial={{ rotateY: 180 }} animate={{ rotateY: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="relative size-28 rounded-2xl ring-4 ring-gold shadow-[0_0_40px_rgb(251_191_36/0.7)]"><Sym s={special} big /></motion.div>
       <p className="max-w-xs text-[13px] text-white/70">Раскрывается на весь барабан и платит по всем линиям</p>
     </motion.div>
   );
 }
 function Retrigger() {
-  return <motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-accent">+10 ВРАЩЕНИЙ!</motion.p>;
+  return <motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="font-display text-[28px] font-bold text-gold">+10 ВРАЩЕНИЙ!</motion.p>;
 }
 

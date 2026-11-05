@@ -36,7 +36,7 @@ function Leaderboard() {
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" role="tablist">
         {TABS.map(([k, label]) => (
           <button key={k} role="tab" aria-selected={board === k} onClick={() => router.replace(k === "tournament" ? "/leaderboard" : `/leaderboard?board=${k}`, { scroll: false })} data-testid={`board-${k}`}
-            className={`h-10 shrink-0 rounded-lg px-3.5 text-[13px] font-semibold ${board === k ? "bg-[#9bea50] text-[#071007]" : "bg-[#0b1510] text-soft ring-1 ring-[#223527] hover:text-white"}`}>{label}</button>
+            className={`h-10 shrink-0 rounded-lg px-3.5 text-[13px] font-semibold ${board === k ? "bg-[#3ee08f] text-[#03170c]" : "bg-[#0f1633] text-soft ring-1 ring-[#28325f] hover:text-white"}`}>{label}</button>
         ))}
       </div>
       {err && <p className="text-danger">{err}</p>}

@@ -49,7 +49,7 @@ export default function QuestsPage() {
         {data.items.map((q) => {
           const key = `${q.day}:${q.code}`; const old = q.day !== data.day;
           return (
-            <li key={key} data-code={q.code} className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center ${q.claimedAt ? "border-line bg-panel/60 opacity-75" : q.completed ? "border-accent/40 bg-[linear-gradient(135deg,rgb(139_234_78/0.1),transparent)]" : "border-line bg-panel"}`}>
+            <li key={key} data-code={q.code} className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center ${q.claimedAt ? "border-line bg-panel/60 opacity-75" : q.completed ? "border-accent/40 bg-[linear-gradient(135deg,rgb(62_224_143/0.1),transparent)]" : "border-line bg-panel"}`}>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">{q.title}{old && <span className="ml-2 rounded-md bg-gold/15 px-1.5 py-0.5 text-[11px] text-gold">вчерашнее</span>}</p>
                 <p className="text-[13px] text-muted">{q.description}</p>

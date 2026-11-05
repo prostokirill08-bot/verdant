@@ -1,5 +1,4 @@
 "use client";
-import { PAL, SlotSymbol, type SymDef } from "./NeonSymbols";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,15 +6,10 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { AVA, type AvaResult, type AvaSpin } from "@/lib/fair/slots2";
 import { sfx } from "@/lib/sound";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusLabel, BonusTotal, DryCounter, InfoModal, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winUnits, type BonusState, SLOT_ACCENT, SLOT_FRAME, SLOT_STAGE, SLOT_STAGE_BG, SLOT_TITLE } from "./SlotKit";
+import { BonusLabel, BonusTotal, DryCounter, InfoModal, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winUnits, type BonusState } from "./SlotKit";
 
 const NAMES: Record<string, string> = {
-  bear: "Корона", owl: "Звезда", fox: "Щит", penguin: "Кольцо", ice_pink: "Розовый кристалл", ice_purple: "Фиолетовый кристалл", ice_green: "Изумруд", ice_blue: "Сапфир", snowflake: "Бонус",
-};
-const DEFS: Record<string, SymDef> = {
-  ice_blue: { glyph: "gem", color: PAL.cyan }, ice_green: { glyph: "gem", color: PAL.emerald }, ice_purple: { glyph: "gem", color: PAL.violet }, ice_pink: { glyph: "heart", color: PAL.pink },
-  penguin: { glyph: "ring", color: PAL.teal, tier: "high" }, fox: { glyph: "shield", color: PAL.orange, tier: "high" }, owl: { glyph: "star", color: PAL.gold, tier: "high" }, bear: { glyph: "crown", color: PAL.lime, tier: "high" },
-  snowflake: { glyph: "burst", color: PAL.lime, tier: "special", label: "BONUS" },
+  bear: "Мишка", owl: "Сова", fox: "Песец", penguin: "Пингвин", ice_pink: "Розовый лёд", ice_purple: "Фиолетовый лёд", ice_green: "Зелёный лёд", ice_blue: "Голубой лёд", snowflake: "Снежинка",
 };
 const R = AVA.reels, ROWS = AVA.rows;
 const START: string[][] = [
@@ -27,7 +21,12 @@ let seq = 0;
 const fromGrid = (g: string[][], drop = true): Cell[] => g.flatMap((col, reel) => col.map((sym, row) => ({ id: ++seq, sym, reel, row, fresh: drop, delay: reel * 0.06 + (ROWS - row) * 0.035 })));
 
 export function AvaSym({ s, big }: { s: string; big?: boolean }) {
-  return <SlotSymbol defs={DEFS} s={s} big={big} />;
+  return (
+    <>
+      <Image src={`/img/ny/slots/avalanche/${s}.webp`} alt={NAMES[s] ?? s} fill sizes="100px" className={`rounded-lg object-cover ${s === "snowflake" ? "ring-2 ring-[#8fdcff]" : ""}`} draggable={false} />
+      {s === "snowflake" && !big && <BonusLabel />}
+    </>
+  );
 }
 
 const describe = (r: RoundView) => { const x = r.result as AvaResult | null; if (!x) return "—"; return x.fs ? `Бонус: ${x.fs.spins.length} вращений${x.bought ? " (куплен)" : ""}` : x.base && x.base.mult > 0 ? `Выигрыш ${x.totalMult}× · обвалов ${x.base.steps.length - 1}` : "Без выигрыша"; };
@@ -45,7 +44,7 @@ function CascadeGrid({ cells, hot, shards }: { cells: Cell[]; hot: Set<string>; 
               exit={{ scale: 1.35, opacity: 0, rotate: 12, transition: { duration: 0.28 } }}
               transition={{ y: { duration: 0.42, delay: c.fresh ? c.delay : 0, ease: [0.3, 0.9, 0.4, 1.06] }, layout: { duration: 0.35, ease: [0.3, 0.9, 0.4, 1.06] }, scale: { duration: 0.5, repeat: isHot ? Infinity : 0 } }}
               className="absolute p-[3%]" style={{ left: `${(c.reel * 100) / R}%`, top: `${(c.row * 100) / ROWS}%`, width: `${100 / R}%`, height: `${100 / ROWS}%` }}>
-              <div className={`relative size-full rounded-lg ${isHot ? "shadow-[0_0_22px_#45c8f0] ring-2 ring-white" : ""}`}><AvaSym s={c.sym} /></div>
+              <div className={`relative size-full rounded-lg ${isHot ? "shadow-[0_0_22px_#8fdcff] ring-2 ring-white" : ""}`}><AvaSym s={c.sym} /></div>
             </motion.div>
           );
         })}
@@ -56,7 +55,7 @@ function CascadeGrid({ cells, hot, shards }: { cells: Cell[]; hot: Set<string>; 
           {Array.from({ length: 7 }, (_, i) => {
             const a = (i / 7) * Math.PI * 2 + s.key; return (
               <motion.span key={i} initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }} animate={{ x: Math.cos(a) * 46, y: Math.sin(a) * 46 + 30, opacity: 0, rotate: 180 }} transition={{ duration: 0.7, ease: "easeOut" }}
-                className="absolute h-2.5 w-1.5 bg-[linear-gradient(180deg,#fff,#45c8f0)] [clip-path:polygon(50%_0,100%_100%,0_100%)]" />
+                className="absolute h-2.5 w-1.5 bg-[linear-gradient(180deg,#fff,#8fdcff)] [clip-path:polygon(50%_0,100%_100%,0_100%)]" />
             );
           })}
         </div>
@@ -176,21 +175,22 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
   const busy = playing || reqBusy;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className={SLOT_STAGE}>
-        <div aria-hidden className={SLOT_STAGE_BG} />
+      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #8fdcff" }}>
+        <Image src="/img/ny/bg/avalanche.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#06142e]/40 via-[#071026]/30 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className={SLOT_TITLE}>AVALANCHE</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e0f2fe] drop-shadow-[0_2px_14px_rgb(143_220_255/0.9)]">❄️ СНЕЖНАЯ ЛАВИНА</h2>
             <AnimatePresence>{x !== null && (
               <motion.div key={x} initial={{ scale: 1.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 12 }}
-                className="rounded-2xl bg-[linear-gradient(180deg,#d9fff6,#45c8f0)] px-3 py-1 font-display text-[clamp(20px,4vw,28px)] font-bold text-[#06142e] shadow-[0_0_30px_#45c8f0]" data-testid="ava-x">×{x}</motion.div>
+                className="rounded-2xl bg-[linear-gradient(180deg,#e0f2fe,#60a5fa)] px-3 py-1 font-display text-[clamp(20px,4vw,28px)] font-bold text-[#06142e] shadow-[0_0_30px_#8fdcff]" data-testid="ava-x">×{x}</motion.div>
             )}</AnimatePresence>
           </div>
-          <BonusTotal state={fs} color="#45c8f0" title="✦ Лавина" sub={fs && x ? `Множитель лавины ×${x} — растёт с каждым обвалом` : undefined} />
-          <div className={SLOT_FRAME}>
+          <BonusTotal state={fs} color="#8fdcff" title="❄️ Лавина" sub={fs && x ? `Множитель лавины ×${x} — растёт с каждым обвалом` : undefined} />
+          <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#123a6b,#071a38)] p-2 shadow-[inset_0_0_0_2px_rgb(191_230_255/0.6),0_20px_50px_-20px_#000] sm:p-3">
             <CascadeGrid cells={cells} hot={hot} shards={shards} />
             <AnimatePresence>{winText && (
-              <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute inset-x-0 -bottom-1 z-10 mx-auto w-fit rounded-full bg-black/70 px-3 py-1 text-[12.5px] font-semibold text-[#cfe9ff] ring-1 ring-[#45c8f0]/40">{winText}</motion.p>
+              <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute inset-x-0 -bottom-1 z-10 mx-auto w-fit rounded-full bg-black/70 px-3 py-1 text-[12.5px] font-semibold text-[#cfe9ff] ring-1 ring-[#8fdcff]/40">{winText}</motion.p>
             )}</AnimatePresence>
             <AnimatePresence>{banner && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center rounded-2xl bg-black/75">{banner}</motion.div>
@@ -200,13 +200,13 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
           <DryCounter dry={dry} prev={prev} avg={250} />
           {user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play(false)} onBuy={() => void play(true)} buyPrice={AVA.buyPrice}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={SLOT_ACCENT} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#1d4ed8", "#60a5fa"]} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>
       </div>
       <RoundsPanel slug="avalanche" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Avalanche — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Снежная лавина — выплаты">
         <p>Поле 6×5, линий нет: платят <b>8 и больше одинаковых символов в любом месте</b>. Выигрышные символы раскалываются, оставшиеся падают вниз, сверху досыпаются новые — и так, пока появляются новые выигрыши (каскад). Числа — во сколько раз выигрыш больше общей ставки за 8–9 / 10–11 / 12+ символов.</p>
         <div className="grid grid-cols-2 gap-2">
           {[...AVA.high].reverse().concat([...AVA.low].reverse()).map((s) => (
@@ -218,7 +218,7 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-ink p-3">
           <span className="relative size-14 shrink-0"><AvaSym s="snowflake" big /></span>
-          <p><b className="text-accent">Неоновая звезда BONUS</b>: 4, 5 или 6 в любом месте платят {AVA.scatterPays[4]}×, {AVA.scatterPays[5]}× или {AVA.scatterPays[6]}× ставки и запускают <b>{AVA.freeSpins} бесплатных вращений</b>. В бонусе работает <b>множитель лавины</b>: он начинается с ×1 и растёт на +1 после каждого выигрышного обвала — и не сбрасывается между вращениями. 3 снежинки в бонусе — ещё +{AVA.retrigger}.</p>
+          <p><b className="text-[#8fdcff]">Снежинка</b>: 4, 5 или 6 в любом месте платят {AVA.scatterPays[4]}×, {AVA.scatterPays[5]}× или {AVA.scatterPays[6]}× ставки и запускают <b>{AVA.freeSpins} бесплатных вращений</b>. В бонусе работает <b>множитель лавины</b>: он начинается с ×1 и растёт на +1 после каждого выигрышного обвала — и не сбрасывается между вращениями. 3 снежинки в бонусе — ещё +{AVA.retrigger}.</p>
         </div>
         <p>«Купить бонус» — {AVA.buyPrice}× ставки. Максимальный выигрыш — {AVA.maxWin.toLocaleString("ru-RU")}× ставки. Расчётный RTP ≈ 97%. Каждый раунд проверяется на странице «Честность».</p>
       </InfoModal>
@@ -229,8 +229,8 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
 function Intro() {
   return (
     <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }} className="grid place-items-center gap-3 p-4 text-center">
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="relative size-24 rounded-full shadow-[0_0_50px_#45c8f0]"><AvaSym s="snowflake" big /></motion.div>
-      <p className="font-display text-[clamp(20px,5vw,34px)] font-bold text-[#d9fff6]">{AVA.freeSpins} БЕСПЛАТНЫХ ВРАЩЕНИЙ</p>
+      <motion.div animate={{ rotate: 360 }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="relative size-24 rounded-full shadow-[0_0_50px_#8fdcff]"><AvaSym s="snowflake" big /></motion.div>
+      <p className="font-display text-[clamp(20px,5vw,34px)] font-bold text-[#e0f2fe]">{AVA.freeSpins} БЕСПЛАТНЫХ ВРАЩЕНИЙ</p>
       <p className="max-w-xs text-[13.5px] text-white/80">Каждый обвал увеличивает множитель лавины на +1 — и он копится до конца бонуса</p>
     </motion.div>
   );

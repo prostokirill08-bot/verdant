@@ -59,11 +59,11 @@ export function VideoPokerGame({ cfg }: { cfg: GameConfig }) {
   const stage = (
     <div className="grid min-h-[440px] content-center gap-4 p-3 sm:p-6">
       {/* Таблица выплат: текущая комбинация подсвечена */}
-      <div className="mx-auto grid w-full max-w-[560px] grid-cols-2 gap-x-2 rounded-2xl bg-[#0b1a10]/90 p-2 ring-1 ring-accent/30 sm:gap-x-4 sm:p-2.5" data-testid="vp-paytable">
+      <div className="mx-auto grid w-full max-w-[560px] grid-cols-2 gap-x-2 rounded-2xl bg-[#0b1638]/90 p-2 ring-1 ring-[#8fdcff]/30 sm:gap-x-4 sm:p-2.5" data-testid="vp-paytable">
         {VP_PAYS.map(([k, name, m]) => {
           const on = combo?.rank === k;
           return (
-            <div key={k} className={`flex items-center justify-between gap-1 rounded-lg px-2 py-1 text-[10.5px] sm:px-2.5 sm:text-[13px] ${on ? "bg-accent text-[#06140a]" : "text-[#d8f5e3]"}`}>
+            <div key={k} className={`flex items-center justify-between gap-1 rounded-lg px-2 py-1 text-[10.5px] sm:px-2.5 sm:text-[13px] ${on ? "bg-gold text-ink" : "text-[#cfe6ff]"}`}>
               <span className="truncate font-semibold uppercase sm:tracking-wide">{name}</span>
               <span className="shrink-0 font-mono font-bold">{m}× {bet > 0n && <span className={`ml-1 hidden text-[11px] sm:inline ${on ? "text-ink/70" : "text-muted"}`}>{points(bet * BigInt(m))}</span>}</span>
             </div>
@@ -76,9 +76,9 @@ export function VideoPokerGame({ cfg }: { cfg: GameConfig }) {
           return (
             <button key={`${deal}-${i}-${c ? c.rank * 4 + c.suit : "x"}`} type="button" onClick={() => toggle(i)} disabled={!active} className="relative grid justify-items-center gap-1.5 disabled:cursor-default" data-testid="vp-card" aria-pressed={held[i]}>
               <motion.div animate={{ y: active && held[i] ? -10 : 0 }} className="w-full">
-                <PlayingCard card={c} hidden={!c} size="lg" delay={i * 0.08} from={{ x: 0, y: -60 }} glow={active && held[i] ? "#8bea4e" : undefined} dim={!!round && !active && !win} />
+                <PlayingCard card={c} hidden={!c} size="lg" delay={i * 0.08} from={{ x: 0, y: -60 }} glow={active && held[i] ? "#ffd166" : undefined} dim={!!round && !active && !win} />
               </motion.div>
-              <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-opacity sm:text-[11px] ${held[i] && active ? "bg-accent text-[#06140a] opacity-100" : "opacity-0"}`}>Держать</span>
+              <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-opacity sm:text-[11px] ${held[i] && active ? "bg-gold text-ink opacity-100" : "opacity-0"}`}>Держать</span>
             </button>
           );
         })}
@@ -87,7 +87,7 @@ export function VideoPokerGame({ cfg }: { cfg: GameConfig }) {
         <AnimatePresence mode="wait">
           {round && (
             <motion.p key={`${round.id}-${round.status}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: active ? 0.4 : 0.6 }}
-              className={`font-display text-[20px] font-bold ${active ? "text-[#d8f5e3]" : win ? "text-accent" : "text-white/60"}`} data-testid="vp-status">
+              className={`font-display text-[20px] font-bold ${active ? "text-[#cfe6ff]" : win ? "text-gold" : "text-white/60"}`} data-testid="vp-status">
               {active ? (combo && combo.mult > 0 ? `На руках: ${combo.name}` : "Выбери карты, которые оставить") : win ? `${combo?.name} · +${points(round.payout)}` : "Нет комбинации"}
             </motion.p>
           )}

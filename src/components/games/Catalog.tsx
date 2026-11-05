@@ -62,14 +62,14 @@ export function Catalog({ games, initial }: { games: CatalogItem[]; initial: { c
     <div className="grid gap-5">
       <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#263c2c] bg-[#0b1510] px-3 focus-within:border-[#8be94e] sm:max-w-sm">
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#28325f] bg-[#0f1633] px-3 focus-within:border-[#3ee08f] sm:max-w-sm">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="shrink-0 text-muted" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
             <input id="game-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по названию" aria-label="Поиск игр" className="w-full min-w-0 bg-transparent text-[15px] outline-none placeholder:text-muted" />
             {q && <button type="button" onClick={() => setQ("")} className="text-muted hover:text-white" aria-label="Очистить поиск">✕</button>}
           </label>
-          <label className="flex h-11 items-center gap-2 rounded-xl border border-[#263c2c] bg-[#0b1510] px-3 text-[13.5px]">
+          <label className="flex h-11 items-center gap-2 rounded-xl border border-[#28325f] bg-[#0f1633] px-3 text-[13.5px]">
             <span className="text-muted">Сортировка</span>
-            <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Сортировка" data-testid="catalog-sort" className="bg-transparent font-semibold text-white outline-none [&>option]:bg-[#0b1510]">
+            <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Сортировка" data-testid="catalog-sort" className="bg-transparent font-semibold text-white outline-none [&>option]:bg-[#0f1633]">
               {SORTS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
             </select>
           </label>
@@ -77,7 +77,7 @@ export function Catalog({ games, initial }: { games: CatalogItem[]; initial: { c
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Категории">
           {TABS.map(([k, t]) => (
             <button key={k} role="tab" aria-selected={cat === k} onClick={() => setCat(k)} data-testid={`cat-${k}`}
-              className={`flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[13px] font-semibold transition-colors ${cat === k ? "bg-[#9bea50] text-[#071007] shadow-[0_8px_24px_-10px_#9bea50]" : "bg-[#0b1510] text-soft ring-1 ring-[#223527] hover:text-white"}`}>
+              className={`flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[13px] font-semibold transition-colors ${cat === k ? "bg-[#3ee08f] text-[#03170c] shadow-[0_8px_24px_-10px_#3ee08f]" : "bg-[#0f1633] text-soft ring-1 ring-[#28325f] hover:text-white"}`}>
               {t}<span className={`rounded-md px-1.5 text-[11px] font-bold ${cat === k ? "bg-black/15" : "bg-raised text-muted"}`}>{count(k)}</span>
             </button>
           ))}

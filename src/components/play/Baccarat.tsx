@@ -47,7 +47,7 @@ export function BaccaratGame({ cfg }: { cfg: GameConfig }) {
 
   const field = (s: Side, odds: string, cls: string) => (
     <button type="button" onClick={() => place(s)} disabled={playing} data-testid={`bac-${s}`}
-      className={`relative grid h-20 place-items-center rounded-2xl border-2 text-center transition-[filter] hover:brightness-110 disabled:cursor-not-allowed ${cls} ${res && !playing && res.r.winner === s ? "ring-4 ring-accent" : ""}`}>
+      className={`relative grid h-20 place-items-center rounded-2xl border-2 text-center transition-[filter] hover:brightness-110 disabled:cursor-not-allowed ${cls} ${res && !playing && res.r.winner === s ? "ring-4 ring-gold" : ""}`}>
       <span><span className="block font-display text-[18px] font-bold uppercase tracking-wider">{NAMES[s]}</span><span className="text-[12px] font-semibold opacity-80">{odds}</span></span>
       {bets[s] > 0n && <span className="absolute -right-1.5 -top-1.5 grid h-7 min-w-7 place-items-center rounded-full px-1 font-mono text-[11px] font-bold text-ink shadow ring-2 ring-ink" style={{ background: CHIP_COLOR[(CHIPS.filter((c) => c <= bets[s]).at(-1) ?? CHIPS[0]!).toString()] }}>{short(bets[s])}</span>}
     </button>
@@ -81,7 +81,7 @@ export function BaccaratGame({ cfg }: { cfg: GameConfig }) {
     const cards = res?.r[side] ?? []; const score = res ? (side === "player" ? res.r.playerScore : res.r.bankerScore) : null;
     return (
       <div className="flex flex-col items-center gap-2">
-        <p className={`text-[12px] font-bold uppercase tracking-[0.16em] ${side === "player" ? "text-[#45c8f0]" : "text-[#ff6fb0]"}`}>{NAMES[side]}
+        <p className={`text-[12px] font-bold uppercase tracking-[0.16em] ${side === "player" ? "text-[#8fb4ff]" : "text-[#ff8aa0]"}`}>{NAMES[side]}
           {score !== null && <motion.span key={res!.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: revealAt }} className="ml-2 rounded-md bg-black/50 px-2 py-0.5 font-mono text-[15px] text-white" data-testid={`bac-score-${side}`}>{score}</motion.span>}
         </p>
         <div className="flex min-h-[clamp(76px,21vw,118px)] -space-x-[clamp(14px,4vw,24px)]">
@@ -93,22 +93,22 @@ export function BaccaratGame({ cfg }: { cfg: GameConfig }) {
 
   const stage = (
     <div className="relative grid min-h-[440px] content-between gap-4 p-4 sm:p-6">
-      <div aria-hidden className="pointer-events-none absolute inset-3 rounded-[40px] bg-[radial-gradient(120%_90%_at_50%_0%,#1f6b45,#0b2f1f_75%)] ring-2 ring-accent/30" />
+      <div aria-hidden className="pointer-events-none absolute inset-3 rounded-[40px] bg-[radial-gradient(120%_90%_at_50%_0%,#1f6b45,#0b2f1f_75%)] ring-2 ring-gold/30" />
       <div className="relative flex min-h-6 flex-wrap justify-center gap-1" aria-label="Последние раздачи">
-        {history.map((h, i) => <span key={i} className="grid size-6 place-items-center rounded-full text-[10px] font-bold text-white" style={{ background: h === "player" ? "#1b7fa3" : h === "banker" ? "#b8306f" : "#1f9d55" }}>{h === "player" ? "И" : h === "banker" ? "Б" : "Н"}</span>)}
+        {history.map((h, i) => <span key={i} className="grid size-6 place-items-center rounded-full text-[10px] font-bold text-white" style={{ background: h === "player" ? "#3b5bdb" : h === "banker" ? "#c2185b" : "#1f9d55" }}>{h === "player" ? "И" : h === "banker" ? "Б" : "Н"}</span>)}
       </div>
       <div className="relative grid grid-cols-2 gap-2">{hand("player")}{hand("banker")}</div>
       <div className="relative grid min-h-9 place-items-center">
         <AnimatePresence>
-          {res && <motion.p key={res.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: revealAt + 0.15 }} className="font-display text-[20px] font-bold text-accent" data-testid="bac-result">
+          {res && <motion.p key={res.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: revealAt + 0.15 }} className="font-display text-[20px] font-bold text-gold" data-testid="bac-result">
             {res.r.winner === "tie" ? "Ничья" : `Победа: ${NAMES[res.r.winner]}`}{res.payout > 0n ? ` · +${points(res.payout)}` : ""}
           </motion.p>}
         </AnimatePresence>
       </div>
       <div className="relative grid grid-cols-[1fr_0.8fr_1fr] gap-2 text-white">
-        {field("player", "1 : 1", "border-[#45c8f0]/70 bg-[#0b2a33]/85 shadow-[0_0_20px_-8px_#45c8f0]")}
-        {field("tie", "8 : 1", "border-[#8bea4e]/70 bg-[#123a1e]/85 shadow-[0_0_20px_-8px_#8bea4e]")}
-        {field("banker", "0,95 : 1", "border-[#ff6fb0]/70 bg-[#3a0f24]/85 shadow-[0_0_20px_-8px_#ff6fb0]")}
+        {field("player", "1 : 1", "border-[#5b8cff]/70 bg-[#1b2f78]/80")}
+        {field("tie", "8 : 1", "border-[#3ee08f]/70 bg-[#0f4d31]/80")}
+        {field("banker", "0,95 : 1", "border-[#ff5c7a]/70 bg-[#6b1230]/80")}
       </div>
     </div>
   );

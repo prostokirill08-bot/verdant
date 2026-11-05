@@ -51,7 +51,7 @@ export const tournamentSchema = z.object({
   prizes: z.array(z.number().int().min(0).max(100_000_000)).max(50),
 });
 export type TournamentSettings = z.infer<typeof tournamentSchema>;
-const TOUR_DEFAULTS: TournamentSettings = { enabled: true, title: "Турнир недели", minBet: Number(KEY_MIN_BET), prizes: TOURNAMENT_PRIZES.map(Number) };
+const TOUR_DEFAULTS: TournamentSettings = { enabled: true, title: "Ледяная гонка", minBet: Number(KEY_MIN_BET), prizes: TOURNAMENT_PRIZES.map(Number) };
 export async function tournamentSettings(): Promise<TournamentSettings> {
   const parsed = tournamentSchema.partial().safeParse((await getSetting("tournament")) ?? {});
   return { ...TOUR_DEFAULTS, ...(parsed.success ? parsed.data : {}) };

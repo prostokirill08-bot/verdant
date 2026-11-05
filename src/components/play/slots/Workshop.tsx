@@ -1,30 +1,25 @@
 "use client";
-import { NeonTile, PAL, SlotSymbol, type SymDef } from "./NeonSymbols";
 import { sfx, spinTicks } from "@/lib/sound";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CHEST_NAMES, CHESTS, meterView, WS, type ChestKind, type WsCell, type WsResult, type WsSpin, type WsTrigger } from "@/lib/fair/workshop";
 import { points } from "@/lib/format";
 import { ErrorLine, newKey, parsePoints, PlayButton, RoundsPanel, useGameRequest, type GameConfig, type RoundView } from "../kit";
-import { BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, type BonusState, type LineWin, SLOT_ACCENT, SLOT_FRAME, SLOT_STAGE, SLOT_STAGE_BG, SLOT_TITLE } from "./SlotKit";
+import { BonusTotal, DryCounter, InfoModal, Reels, SlotControls, sleep, useDrySpins, useSlotState, WinOverlay, winCells, type BonusState, type LineWin } from "./SlotKit";
 
 // ===== Оформление =====
 const SYMS = ["cane", "mitten", "ginger", "cocoa", "globe", "nutcracker", "santa"];
-const NAMES: Record<string, string> = { cane: "Молния", mitten: "Сердце", ginger: "Клевер", cocoa: "Пламя", globe: "Сфера", nutcracker: "Щит", santa: "Wild" };
-const DEFS: Record<string, SymDef> = {
-  cane: { glyph: "bolt", color: PAL.cyan }, mitten: { glyph: "heart", color: PAL.pink }, ginger: { glyph: "clover", color: PAL.emerald }, cocoa: { glyph: "flame", color: PAL.orange },
-  globe: { glyph: "orb", color: PAL.violet, tier: "high" }, nutcracker: { glyph: "shield", color: PAL.gold, tier: "high" },
-  santa: { glyph: "v", color: PAL.lime, tier: "special", label: "WILD" },
-};
+const NAMES: Record<string, string> = { cane: "Леденец", mitten: "Варежка", ginger: "Пряник", cocoa: "Какао", globe: "Снежный шар", nutcracker: "Щелкунчик", santa: "Дед Мороз" };
 /** Цвет и значок каждого сундука: монета того же цвета летит в него. */
 const CHEST_STYLE: Record<ChestKind, { color: string; dark: string; icon: string; about: string }> = {
-  gifts: { color: "#8bea4e", dark: "#1f6b2a", icon: "◆", about: "Открой 3 тайника из 12 — в каждом множитель до ×100." },
-  frost: { color: "#45c8f0", dark: "#0b4f70", icon: "✦", about: "10 вращений: каждый символ фиксируется на месте до конца бонуса." },
-  stars: { color: "#a78bfa", dark: "#43238a", icon: "✦", about: "10 вращений: множитель растёт на +1 после каждого выигрыша." },
-  bells: { color: "#f5d76e", dark: "#7a5d0a", icon: "●", about: "Кристаллы с номиналами и 3 перекрута; новый кристалл возвращает перекруты к 3. Всё поле — ×200." },
-  wheel: { color: "#ff6fb0", dark: "#8a1650", icon: "◎", about: "Колесо бонусов: от ×5 до ×250 ставки бонуса." },
+  gifts: { color: "#3ee08f", dark: "#0d6b3c", icon: "🎁", about: "Открой 3 подарка из 12 — в каждом множитель до ×100." },
+  frost: { color: "#5bc8ff", dark: "#0b4f80", icon: "❄️", about: "10 вращений: каждый Дед Мороз примерзает к месту до конца бонуса." },
+  stars: { color: "#c38bff", dark: "#4b1f8a", icon: "⭐", about: "10 вращений: множитель растёт на +1 после каждого выигрыша." },
+  bells: { color: "#ffd166", dark: "#8a5a00", icon: "🔔", about: "Колокольчики с номиналами и 3 перекрута; новый колокольчик возвращает перекруты к 3. Всё поле — ×200." },
+  wheel: { color: "#ff5f6f", dark: "#8a0d24", icon: "🎡", about: "Колесо Деда Мороза: от ×5 до ×250 ставки бонуса." },
 };
 const START: WsCell[][] = [
   [{ sym: "cane" }, { sym: "globe" }, { sym: "mitten" }, { sym: "ginger" }], [{ sym: "cocoa" }, { sym: "santa" }, { sym: "cane" }, { sym: "coin", chest: 0 }],
@@ -58,11 +53,11 @@ function Coin({ chest, size = "cell" }: { chest: number; size?: "cell" | "fly" }
   const k = CHESTS[chest]!; const st = CHEST_STYLE[k];
   return (
     <span className={`relative grid place-items-center rounded-full ${size === "cell" ? "size-[84%]" : "size-full"}`}
-      style={{ background: "conic-gradient(from 0deg, #f1fff6, #3fbf7a, #c8ffe0, #1f8a55, #f1fff6, #3fbf7a, #c8ffe0, #1f8a55, #f1fff6)", boxShadow: `0 4px 10px rgb(0 0 0 / 0.5), 0 0 16px ${st.color}66` }}>
+      style={{ background: "conic-gradient(from 0deg, #fff1b0, #d99a12, #ffe38a, #b97a08, #fff1b0, #d99a12, #ffe38a, #b97a08, #fff1b0)", boxShadow: `0 4px 10px rgb(0 0 0 / 0.5), 0 0 16px ${st.color}66` }}>
       {/* насечка по ободу */}
-      <span className="absolute inset-[4%] rounded-full" style={{ background: "repeating-conic-gradient(#0f5a34 0 4deg, transparent 4deg 10deg)", WebkitMask: "radial-gradient(circle, transparent 62%, #000 63%)", mask: "radial-gradient(circle, transparent 62%, #000 63%)" }} />
+      <span className="absolute inset-[4%] rounded-full" style={{ background: "repeating-conic-gradient(#8a5a00 0 4deg, transparent 4deg 10deg)", WebkitMask: "radial-gradient(circle, transparent 62%, #000 63%)", mask: "radial-gradient(circle, transparent 62%, #000 63%)" }} />
       {/* эмаль цвета сундука */}
-      <span className="absolute inset-[17%] grid place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #ffffff66, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "inset 0 0 0 2px #d9ffe9, inset 0 2px 6px rgb(0 0 0 / 0.45)" }}>
+      <span className="absolute inset-[17%] grid place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #ffffff66, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "inset 0 0 0 2px #fff3b0, inset 0 2px 6px rgb(0 0 0 / 0.45)" }}>
         <Glyph kind={k} className="size-[62%] drop-shadow-[0_1px_1px_rgb(0_0_0/0.6)]" />
       </span>
     </span>
@@ -73,82 +68,44 @@ function Cell({ c, frozen }: { c: WsCell; frozen?: boolean }) {
   if (c.sym === "coin") return <span className="grid size-full place-items-center"><Coin chest={c.chest ?? 0} /></span>;
   return (
     <span className="relative block size-full">
-      <SlotSymbol defs={DEFS} s={c.sym} />
-      {frozen && <span aria-hidden className="pointer-events-none absolute inset-0 rounded-lg bg-[linear-gradient(160deg,rgb(69_200_240/0.35),rgb(69_200_240/0.08))] ring-2 ring-[#45c8f0]" />}
+      <Image src={`/img/ny/slots/workshop/${c.sym}.webp`} alt={NAMES[c.sym] ?? c.sym} fill sizes="110px" className={`rounded-lg object-cover ${c.sym === "santa" ? "ring-2 ring-gold/70" : ""}`} draggable={false} />
+      {frozen && <span aria-hidden className="pointer-events-none absolute inset-0 rounded-lg bg-[linear-gradient(160deg,rgb(191_230_255/0.45),rgb(91_200_255/0.15))] ring-2 ring-[#bfe6ff]" />}
     </span>
   );
 }
 
 type ChestView = { kind: ChestKind; have: number; full?: boolean; open?: boolean; bump?: number };
 
-/** Пропорции сундука-витрины (viewBox 100×127). */
-const DOME = { aspect: "100 / 127" };
+/** Окно, в котором растёт горка монет (доли картинки сундука): от верха до передней стенки. */
+const DOME = { aspect: "408 / 518", winTop: "9%", winH: "56.3%", winX: "8%" };
 /** Шахматный порядок: спереди 3 сундука, сзади 2 между ними (центры в % ширины, размер в % ширины). */
 const PLACE: Record<number, { cx: number; w: number; top: string; z: number }> = {
   0: { cx: 17, w: 31, top: "36.5%", z: 3 }, 2: { cx: 50, w: 31, top: "36.5%", z: 3 }, 4: { cx: 83, w: 31, top: "36.5%", z: 3 },
   1: { cx: 33.5, w: 27, top: "0%", z: 1 }, 3: { cx: 66.5, w: 27, top: "0%", z: 1 },
 };
 
-/** Горка кристаллов внутри купола: фиксированная раскладка, чтобы не прыгала между рендерами. */
-const GEMS = [
-  [22, 62, 7], [34, 60, 8], [47, 61, 9], [60, 60, 8], [73, 62, 7], [28, 52, 7], [41, 51, 8], [54, 50, 8], [67, 52, 7],
-  [35, 42, 7], [48, 40, 8], [61, 42, 7], [42, 32, 6], [55, 31, 6], [49, 23, 6],
-] as const;
-const GEM_COLORS = ["#8bea4e", "#45c8f0", "#35e889", "#a78bfa", "#6ff0c0", "#f5d76e", "#ff6fb0"];
-
-function Gem({ x, y, r, c }: { x: number; y: number; r: number; c: string }) {
-  return (
-    <g transform={`translate(${x} ${y})`}>
-      <path d={`M0 ${-r} L${r * 0.9} ${-r * 0.2} L0 ${r} L${-r * 0.9} ${-r * 0.2}Z`} fill={c} stroke="#03140a" strokeWidth="0.8" />
-      <path d={`M${-r * 0.9} ${-r * 0.2} L${r * 0.9} ${-r * 0.2} M0 ${-r} L${-r * 0.35} ${-r * 0.2} L0 ${r} L${r * 0.35} ${-r * 0.2}Z`} fill="none" stroke="#ffffff" strokeOpacity="0.45" strokeWidth="0.6" />
-    </g>
-  );
-}
-
-/** Сундук-витрина: стеклянный купол, внутри растёт горка кристаллов, снизу — корпус с неоновой окантовкой. */
 function Chest({ v, i, refEl }: { v: ChestView; i: number; refEl: (el: HTMLDivElement | null) => void }) {
-  const st = CHEST_STYLE[v.kind]; const pl = PLACE[i]!; const id = useId().replace(/:/g, "");
+  const st = CHEST_STYLE[v.kind]; const pl = PLACE[i]!;
+  // Монет внутри тем больше, чем больше их нападало; до краёв сундук наполняет только «счастливая» монета
   const fill = v.full ? 1 : Math.min(0.8, 0.25 + (v.have / WS.visualMax) * 0.6);
   const shown = v.full || v.have > 0;
-  const lift = shown ? (1 - fill) * 46 : 52;
   return (
     <div ref={refEl} data-chest={i} className="absolute" style={{ left: `${pl.cx - pl.w / 2}%`, width: `${pl.w}%`, top: pl.top, zIndex: pl.z }}>
       <motion.div key={v.bump ?? 0} role="img" aria-label={`Сундук «${CHEST_NAMES[v.kind]}»`}
         animate={v.bump ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.3 }}
         className={`relative block w-full ${v.full ? "chest-full" : ""}`} style={{ aspectRatio: DOME.aspect }}>
         {v.full && <span aria-hidden className="pointer-events-none absolute -inset-[18%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}88, transparent 62%)` }} />}
-        <svg viewBox="0 0 100 127" className="absolute inset-0 size-full overflow-visible" aria-hidden>
-          <defs>
-            <linearGradient id={`b${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a3122" /><stop offset="1" stopColor="#060d08" /></linearGradient>
-            <radialGradient id={`g${id}`} cx="0.5" cy="0.75" r="0.7"><stop offset="0" stopColor={st.color} stopOpacity="0.35" /><stop offset="1" stopColor={st.color} stopOpacity="0.06" /></radialGradient>
-            <clipPath id={`c${id}`}><path d="M13 66 V40 Q13 12 50 12 Q87 12 87 40 V66 Z" /></clipPath>
-          </defs>
-          {/* Тень и подсветка снизу */}
-          <ellipse cx="50" cy="122" rx="44" ry="5" fill="#000" opacity="0.55" />
-          {/* Купол: задняя стенка */}
-          <path d="M13 66 V40 Q13 12 50 12 Q87 12 87 40 V66 Z" fill={`url(#g${id})`} />
-          {/* Кристаллы поднимаются по мере наполнения */}
-          <g clipPath={`url(#c${id})`}>
-            <g style={{ transform: `translateY(${lift}px)`, transition: "transform .5s ease-out" }}>
-              {GEMS.map(([x, y, r], k) => <Gem key={k} x={x} y={y} r={r} c={k % 3 === 0 ? st.color : GEM_COLORS[(k + i) % GEM_COLORS.length]!} />)}
-            </g>
-          </g>
-          {/* Купол: стекло и блики */}
-          <path d="M13 66 V40 Q13 12 50 12 Q87 12 87 40 V66" fill="none" stroke={st.color} strokeWidth="2.2" strokeOpacity="0.9" />
-          <path d="M13 66 V40 Q13 12 50 12 Q87 12 87 40 V66" fill="none" stroke={st.color} strokeWidth="7" strokeOpacity="0.15" />
-          <path d="M22 44 Q24 24 42 19" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" />
-          <path d="M24 54 V50" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="2.4" strokeLinecap="round" />
-          <circle cx="50" cy="8" r="4" fill="#0b160f" stroke={st.color} strokeWidth="1.6" />
-          {/* Корпус */}
-          <rect x="6" y="64" width="88" height="56" rx="9" fill={`url(#b${id})`} stroke={st.color} strokeWidth="2" />
-          <rect x="6" y="64" width="88" height="56" rx="9" fill="none" stroke={st.color} strokeOpacity="0.18" strokeWidth="7" />
-          <rect x="6" y="64" width="88" height="9" rx="4" fill={st.color} opacity="0.85" />
-          <path d="M10 68.5 H90" stroke="#fff" strokeOpacity="0.5" strokeWidth="1" />
-          <path d="M22 76 V116 M78 76 V116" stroke={st.color} strokeOpacity="0.45" strokeWidth="1.6" />
-          <path d="M12 112 H88" stroke="#fff" strokeOpacity="0.08" strokeWidth="1" />
-        </svg>
-        <span className="absolute left-1/2 top-[73%] grid aspect-square w-[30%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full"
-          style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: `0 0 0 2px #0b160f, 0 0 0 3.5px ${st.color}, 0 0 14px ${st.color}88` }}>
+        {/* Слои: сундук → горка монет (поднимается через transform) → передняя стенка → значок бонуса */}
+        <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        <div className="absolute overflow-hidden" style={{ top: DOME.winTop, height: DOME.winH, left: DOME.winX, right: DOME.winX }}>
+          {/* Горка монет занимает нижние 62% окна; поднимается из-за передней стенки по мере наполнения */}
+          <div className="absolute inset-x-0 bottom-0 h-[62%] transition-transform duration-500 ease-out" style={{ transform: `translateY(${shown ? (1 - fill) * 100 : 100}%)` }}>
+            <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-cover object-bottom" />
+          </div>
+        </div>
+        <Image src={`/img/ny/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        <span className="absolute left-1/2 top-[68%] grid aspect-square w-[28%] -translate-x-1/2 place-items-center rounded-full"
+          style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
           <Glyph kind={v.kind} className="size-[64%]" />
         </span>
       </motion.div>
@@ -156,19 +113,18 @@ function Chest({ v, i, refEl }: { v: ChestView; i: number; refEl: (el: HTMLDivEl
   );
 }
 
-/** Неоновый подиум под сундуками: back — ступень под задним рядом, front — под передним (рисуется за сундуками). */
+/** Горы золотых монет под сундуками. back — гора за передним рядом, front — россыпь у ног передних сундуков. */
 function GoldHeap({ layer }: { layer: "back" | "front" }) {
+  const parts = layer === "back"
+    ? [{ l: -4, w: 46, flip: false }, { l: 27, w: 46, flip: true }, { l: 58, w: 46, flip: false }]
+    : [{ l: -20, w: 40, flip: true }, { l: 13.5, w: 40, flip: false }, { l: 46.5, w: 40, flip: true }, { l: 80, w: 40, flip: false }];   // вершины — между сундуками, значки не закрываются
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-x-0" style={layer === "back" ? { top: "36%", height: "10%", zIndex: 0 } : { top: "80%", height: "14%", zIndex: 2 }}>
-      <svg viewBox="0 0 300 40" preserveAspectRatio="none" className="size-full">
-        <defs>
-          <linearGradient id={`pod-${layer}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#173a24" /><stop offset="1" stopColor="#050b07" /></linearGradient>
-        </defs>
-        <path d="M18 6 H282 L298 38 H2 Z" fill={`url(#pod-${layer})`} />
-        <path d="M18 6 H282" stroke="#8bea4e" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-        <path d="M18 6 H282" stroke="#8bea4e" strokeOpacity="0.25" strokeWidth="6" vectorEffect="non-scaling-stroke" />
-        <path d="M2 38 L18 6 M298 38 L282 6" stroke="#8bea4e" strokeOpacity="0.5" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-      </svg>
+    <div aria-hidden className="pointer-events-none absolute inset-x-0" style={layer === "back" ? { top: "30%", height: "24%", zIndex: 2 } : { bottom: "-3%", height: "23%", zIndex: 4 }}>
+      {parts.map((p, k) => (
+        <div key={k} className="absolute bottom-0 h-full" style={{ left: `${p.l}%`, width: `${p.w}%`, transform: p.flip ? "scaleX(-1)" : undefined }}>
+          <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="260px" className="object-cover object-bottom" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -204,9 +160,9 @@ function GiftsPanel({ s, onPick }: { s: GiftsState; onPick: (i: number) => void 
         const shown = v ?? (s.reveal ? s.boxes[i] : null);
         return (
           <button key={i} type="button" onClick={() => onPick(i)} disabled={v !== null || s.reveal}
-            className={`relative grid place-items-center rounded-xl ring-1 transition-transform active:scale-95 ${v !== null ? "bg-[radial-gradient(circle,#8bea4e55,#123f1c)] ring-accent" : s.reveal ? "bg-black/40 opacity-60 ring-white/10" : "bg-[radial-gradient(circle,#173a24,#07110a)] ring-accent/30 hover:brightness-125"}`}>
-            {shown === null ? <span className="gift-wobble block size-[clamp(30px,8vw,52px)]" style={{ animationDelay: `${(i % 4) * 0.15}s` }}><NeonTile glyph="chest" color={PAL.lime} className="size-full" /></span> : (
-              <motion.span initial={{ scale: 0.3 }} animate={{ scale: 1 }} className={`font-display text-[clamp(18px,5vw,30px)] font-bold ${v !== null ? "text-accent" : "text-white/70"}`}>×{shown}</motion.span>
+            className={`relative grid place-items-center rounded-xl ring-1 transition-transform active:scale-95 ${v !== null ? "bg-[radial-gradient(circle,#3ee08f55,#0d6b3c)] ring-accent" : s.reveal ? "bg-black/40 opacity-60 ring-white/10" : "bg-[radial-gradient(circle,#1f6b45,#0b2d1f)] ring-white/15 hover:brightness-125"}`}>
+            {shown === null ? <span className="gift-wobble text-[clamp(26px,7vw,46px)]" style={{ animationDelay: `${(i % 4) * 0.15}s` }}>🎁</span> : (
+              <motion.span initial={{ scale: 0.3 }} animate={{ scale: 1 }} className={`font-display text-[clamp(18px,5vw,30px)] font-bold ${v !== null ? "text-gold" : "text-white/70"}`}>×{shown}</motion.span>
             )}
           </button>
         );
@@ -221,11 +177,11 @@ function BellsPanel({ s }: { s: BellsState }) {
       {Array.from({ length: WS.rows }, (_, row) => Array.from({ length: WS.reels }, (_, reel) => {
         const key = `${reel}:${row}`; const v = s.cells[key];
         return (
-          <div key={key} className={`grid place-items-center rounded-xl ${v !== undefined ? "bg-[radial-gradient(circle,#f5d76e44,#2a2405)] ring-2 ring-[#f5d76e]" : "bg-black/45 ring-1 ring-white/10"}`} style={{ gridColumn: reel + 1, gridRow: row + 1 }}>
+          <div key={key} className={`grid place-items-center rounded-xl ${v !== undefined ? "bg-[radial-gradient(circle,#ffd16655,#4a3000)] ring-2 ring-gold" : "bg-black/45 ring-1 ring-white/10"}`} style={{ gridColumn: reel + 1, gridRow: row + 1 }}>
             {v !== undefined && (
               <motion.span key={s.fresh.includes(key) ? `n${key}` : key} initial={s.fresh.includes(key) ? { scale: 0, rotate: -30 } : false} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 14 }} className="grid place-items-center leading-none">
-                <span className="block size-[clamp(22px,6vw,38px)]"><NeonTile glyph="bell" color={PAL.gold} className="size-full" /></span>
-                <span className="font-mono text-[clamp(10px,2.6vw,14px)] font-bold text-accent">×{v}</span>
+                <span className="text-[clamp(18px,5vw,32px)]">🔔</span>
+                <span className="font-mono text-[clamp(10px,2.6vw,14px)] font-bold text-gold">×{v}</span>
               </motion.span>
             )}
           </div>
@@ -237,26 +193,26 @@ function BellsPanel({ s }: { s: BellsState }) {
 
 function WheelPanel({ s }: { s: WheelState }) {
   const n = WS.wheel.length; const seg = 360 / n;
-  const COLORS = ["#0f2416", "#173a24", "#0f2416", "#173a24", "#0f2416", "#173a24", "#0f2416", "#173a24", "#0f2416", "#173a24", "#0f2416", "#173a24"];
-  const TXT = ["#8bea4e", "#45c8f0", "#ff6fb0", "#f5d76e", "#a78bfa", "#6ff0c0"];
+  const COLORS = ["#e8263f", "#1f9d55", "#ffd166", "#5b8cff", "#ff6b8b", "#3ee08f", "#c38bff", "#ffb02e", "#5bc8ff", "#ff4d6d", "#ffd166", "#ffffff"];
   return (
     <div className="grid h-full place-items-center p-2">
       <div className="relative aspect-square h-[92%] max-w-full">
-        <svg viewBox="-110 -125 220 30" className="absolute inset-x-0 -top-[7%] z-10 w-full" aria-hidden><path d="M-9 -122 L9 -122 L0 -100Z" fill="#8bea4e" stroke="#eaffd9" strokeWidth="2" /></svg>
+        <svg viewBox="-110 -125 220 30" className="absolute inset-x-0 -top-[7%] z-10 w-full" aria-hidden><path d="M-9 -122 L9 -122 L0 -100Z" fill="#ffd166" stroke="#fff" strokeWidth="2" /></svg>
         <motion.svg viewBox="-100 -100 200 200" className="size-full" animate={{ rotate: s.angle }} transition={{ duration: s.spinning ? 4.2 : 0, ease: [0.12, 0.6, 0.12, 1] }}>
-          <circle r="99" fill="#8bea4e" opacity="0.9" /><circle r="94" fill="#06100a" />
+          <circle r="99" fill="#ffd166" /><circle r="94" fill="#0f1633" />
           {WS.wheel.map((m, i) => {
             const a0 = ((i - 0.5) * seg - 90) * (Math.PI / 180), a1 = ((i + 0.5) * seg - 90) * (Math.PI / 180); const R = 92;
             const am = i * seg - 90; const tx = 66 * Math.cos((am * Math.PI) / 180), ty = 66 * Math.sin((am * Math.PI) / 180);
+            const light = COLORS[i] === "#ffd166" || COLORS[i] === "#ffffff" || COLORS[i] === "#3ee08f" || COLORS[i] === "#ffb02e";
             return (
               <g key={i}>
-                <path d={`M0 0 L${R * Math.cos(a0)} ${R * Math.sin(a0)} A${R} ${R} 0 0 1 ${R * Math.cos(a1)} ${R * Math.sin(a1)}Z`} fill={COLORS[i]} stroke="#8bea4e" strokeOpacity="0.35" strokeWidth="1" opacity={s.segment === null || s.segment === i || s.spinning ? 1 : 0.55} />
-                <text x={tx} y={ty} fill={TXT[i % TXT.length]} fontSize="12" fontWeight="800" textAnchor="middle" dominantBaseline="central" transform={`rotate(${am + 90} ${tx} ${ty})`}>×{m}</text>
+                <path d={`M0 0 L${R * Math.cos(a0)} ${R * Math.sin(a0)} A${R} ${R} 0 0 1 ${R * Math.cos(a1)} ${R * Math.sin(a1)}Z`} fill={COLORS[i]} stroke="#070b1f" strokeWidth="1" opacity={s.segment === null || s.segment === i || s.spinning ? 1 : 0.55} />
+                <text x={tx} y={ty} fill={light ? "#2a1a00" : "#fff"} fontSize="11" fontWeight="800" textAnchor="middle" dominantBaseline="central" transform={`rotate(${am + 90} ${tx} ${ty})`}>×{m}</text>
               </g>
             );
           })}
-          <circle r="18" fill="#06100a" stroke="#8bea4e" strokeWidth="3" />
-          <text y="1" fontSize="20" fontWeight="900" fill="#8bea4e" textAnchor="middle" dominantBaseline="central">V</text>
+          <circle r="18" fill="#0f1633" stroke="#ffd166" strokeWidth="3" />
+          <text y="1" fontSize="18" textAnchor="middle" dominantBaseline="central">🎅</text>
         </motion.svg>
       </div>
     </div>
@@ -267,10 +223,10 @@ function Intro({ t }: { t: WsTrigger }) {
   const st = CHEST_STYLE[t.kind];
   return (
     <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }} className="grid max-w-[90%] place-items-center gap-2 p-4 text-center">
-      <span className="grid size-[clamp(56px,14vw,84px)] place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: `0 0 0 3px #0b160f, 0 0 0 5px ${st.color}, 0 0 30px ${st.color}` }}><Glyph kind={t.kind} className="size-[62%]" /></span>
+      <span className="grid size-[clamp(56px,14vw,84px)] place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: `0 0 0 3px #ffe08a, 0 0 30px ${st.color}` }}><Glyph kind={t.kind} className="size-[62%]" /></span>
       <p className="font-display text-[clamp(20px,5vw,34px)] font-bold" style={{ color: st.color }}>СУНДУК «{CHEST_NAMES[t.kind].toUpperCase()}»</p>
       <p className="text-[14px] text-white/85">{st.about}</p>
-      <p className="rounded-full bg-black/50 px-3 py-1 font-mono text-[14px] text-accent ring-1 ring-accent/40">Открыт на {t.coins}-й монете · ставка {money(t.stake)}</p>
+      <p className="rounded-full bg-black/50 px-3 py-1 font-mono text-[14px] text-gold ring-1 ring-gold/40">Открыт на {t.coins}-й монете · ставка {money(t.stake)}</p>
     </motion.div>
   );
 }
@@ -418,14 +374,14 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       setFeat({ kind: "gifts", boxes: f.boxes, opened, picks: f.picks, reveal: false });
       let total = 0;
       for (let k = 0; k < f.picks; k++) {
-        setFs({ left: f.picks - k, done: k, total: String(total), add: null, tick: k, title: "◆ Тайники", sub: `Открой ещё ${f.picks - k} из ${f.boxes.length}`, color: st.color });
+        setFs({ left: f.picks - k, done: k, total: String(total), add: null, tick: k, title: "🎁 Подарки", sub: `Открой ещё ${f.picks - k} из ${f.boxes.length}`, color: st.color });
         const i = await new Promise<number>((res) => { pickRes.current = res; });
         pickRes.current = null;
         if (opened[i] !== null) { k--; continue; }
         opened[i] = f.boxes[k]!; total += Math.floor(tr.stake * f.boxes[k]!);
         sfx("pop"); sfx(f.boxes[k]! >= 10 ? "bigwin" : "coin", { delay: 120 });
         setFeat({ kind: "gifts", boxes: f.boxes.map((v, j) => (opened[j] !== null ? opened[j]! : v)), opened: [...opened], picks: f.picks, reveal: false });
-        setFs({ left: f.picks - k - 1, done: k + 1, total: String(total), add: String(Math.floor(tr.stake * f.boxes[k]!)), tick: k + 1, title: "◆ Тайники", sub: `Открыто ${k + 1} из ${f.picks}`, color: st.color });
+        setFs({ left: f.picks - k - 1, done: k + 1, total: String(total), add: String(Math.floor(tr.stake * f.boxes[k]!)), tick: k + 1, title: "🎁 Подарки", sub: `Открыто ${k + 1} из ${f.picks}`, color: st.color });
         await t(600);
       }
       // Показываем, что лежало в остальных подарках
@@ -434,7 +390,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       setFeat({ kind: "gifts", boxes: display, opened: [...opened], picks: f.picks, reveal: true });
       await t(1400);
     } else if (f.kind === "frost" || f.kind === "stars") {
-      await runSpins(f.spins, tr, f.kind === "frost" ? "✦ Фиксация" : "✦ Звездопад");
+      await runSpins(f.spins, tr, f.kind === "frost" ? "❄️ Мороз" : "⭐ Звездопад");
       setSticky(new Set()); setStarX(null);
     } else if (f.kind === "bells") {
       let prevKeys: string[] = [];
@@ -445,13 +401,13 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
         const sum = Object.values(step.cells).reduce((s, v) => s + v, 0);
         setFeat({ kind: "bells", cells: step.cells, respins: step.respins, fresh, full: false });
         if (k === 0) sfx("bells"); else if (fresh.length) fresh.forEach((_, j) => sfx("gem", { pitch: 1 + j * 0.12, delay: j * 90 }));
-        setFs({ left: step.respins, done: k, total: String(Math.floor(tr.stake * sum)), add: fresh.length && k > 0 ? String(Math.floor(tr.stake * fresh.reduce((s, x) => s + step.cells[x]!, 0))) : null, tick: k, title: "● Кристаллы", sub: `Перекрутов: ${step.respins} · колокольчиков ${keys.length}/${WS.reels * WS.rows}`, color: st.color });
+        setFs({ left: step.respins, done: k, total: String(Math.floor(tr.stake * sum)), add: fresh.length && k > 0 ? String(Math.floor(tr.stake * fresh.reduce((s, x) => s + step.cells[x]!, 0))) : null, tick: k, title: "🔔 Колокольчики", sub: `Перекрутов: ${step.respins} · колокольчиков ${keys.length}/${WS.reels * WS.rows}`, color: st.color });
         await t(k === 0 ? 700 : fresh.length ? 600 : 250);
       }
-      if (f.full) { sfx("jackpot"); setBanner(<p className="font-display text-[28px] font-bold text-accent">ВСЁ ПОЛЕ! +×{WS.bellGrand}</p>); await sleep(1500); setBanner(null); }
+      if (f.full) { sfx("jackpot"); setBanner(<p className="font-display text-[28px] font-bold text-gold">ВСЁ ПОЛЕ! +×{WS.bellGrand}</p>); await sleep(1500); setBanner(null); }
     } else if (f.kind === "wheel") {
       setFeat({ kind: "wheel", angle: 0, spinning: false, segment: null });
-      setFs({ left: 0, done: 0, total: "0", add: null, tick: 0, title: "◎ Колесо", sub: "Крути колесо!", color: st.color });
+      setFs({ left: 0, done: 0, total: "0", add: null, tick: 0, title: "🎡 Колесо", sub: "Крути колесо!", color: st.color });
       await waitTap("Крутить колесо", st.color);
       setFs((x) => x && { ...x, sub: "Колесо крутится…" });
       const seg = 360 / WS.wheel.length;
@@ -460,7 +416,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
       await sleep(4400);
       sfx("bigwin");
       setFeat({ kind: "wheel", angle: 360 * 6 - f.segment * seg, spinning: false, segment: f.segment });
-      setFs({ left: 0, done: 1, total: String(tr.payout), add: String(tr.payout), tick: 1, title: "◎ Колесо", sub: `Выпало ×${WS.wheel[f.segment]}`, color: st.color });
+      setFs({ left: 0, done: 1, total: String(tr.payout), add: String(tr.payout), tick: 1, title: "🎡 Колесо", sub: `Выпало ×${WS.wheel[f.segment]}`, color: st.color });
       await t(900);
     }
     // Итог сундука (с учётом потолка) и большой экран выигрыша
@@ -503,14 +459,15 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
   }, [auto, playing, reqBusy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const busy = playing || reqBusy;
-  const st = fs ? fs.color : "#8bea4e";
+  const st = fs ? fs.color : "#ffb02e";
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className={SLOT_STAGE}>
-        <div aria-hidden className={SLOT_STAGE_BG} />
+      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #ffb02e" }}>
+        <Image src="/img/ny/bg/workshop.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/45 via-[#070b1f]/35 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-3 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className={SLOT_TITLE}>▣ EMERALD CASES</h2>
+            <h2 className="font-display text-[clamp(20px,4.4vw,32px)] font-bold tracking-wide text-[#ffd98a] drop-shadow-[0_2px_12px_rgb(255_150_40/0.8)]">🎅 МАСТЕРСКАЯ САНТЫ</h2>
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
@@ -522,12 +479,12 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             {spill && <CoinSpill key={spill.key} chest={spill.chest} />}
           </div>
           <BonusTotal state={fs} color={st} title={fs?.title} sub={fs?.sub} label="Выигрыш сундука" />
-          <div ref={reelsBox} className={SLOT_FRAME}>
+          <div ref={reelsBox} className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#3a1d0e,#140a05)] p-2 shadow-[inset_0_0_0_2px_rgb(255_176_46/0.6),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={4} spinKey={spinKey} turbo={turbo || !!fs} filler={randomCell} onStopped={() => stop.current()}
               render={(c, { reel, row }) => <span className="block size-full" data-ws={`${reel}:${row}`}><Cell c={c} frozen={c.sym === "santa" && sticky.has(`${reel}:${row}`)} /></span>}
               highlight={hl} lines={lines} linePatterns={WS.lines} />
             <AnimatePresence>{feat && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-2 z-10 rounded-xl bg-[#050b07]/95 ring-1 ring-accent/30 sm:inset-3">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-2 z-10 rounded-xl bg-[#140a05]/95 sm:inset-3">
                 {feat.kind === "gifts" && <GiftsPanel s={feat} onPick={(i) => pickRes.current?.(i)} />}
                 {feat.kind === "bells" && <BellsPanel s={feat} />}
                 {feat.kind === "wheel" && <WheelPanel s={feat} />}
@@ -547,7 +504,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             </motion.button>
           ) : user ? (
             <SlotControls cfg={cfg} bet={bet} setBet={setBet} busy={busy} onSpin={() => void play()}
-              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={SLOT_ACCENT} lastWin={lastWin} />
+              auto={auto} setAuto={setAuto} turbo={turbo} setTurbo={setTurbo} onInfo={() => setInfo(true)} accent={["#b45309", "#ffb02e"]} lastWin={lastWin} />
           ) : <PlayButton onClick={() => {}}>Войти</PlayButton>}
           <ErrorLine text={error} />
         </div>
@@ -564,7 +521,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
           ))}
         </div>, document.body)}
       <RoundsPanel slug="workshop" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Emerald Cases — правила">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Мастерская Санты — правила">
         <p>25 фиксированных линий, ставка делится на 25. Выплата — за 3–5 одинаковых символов слева направо (числа — во сколько раз больше ставки на линию). <b>Дед Мороз</b> — дикий символ на барабанах 2–4.</p>
         <div className="grid grid-cols-2 gap-2">
           {(["nutcracker", "globe", "cocoa", "ginger", "mitten", "cane"] as const).map((s) => (

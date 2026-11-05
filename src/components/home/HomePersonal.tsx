@@ -24,7 +24,7 @@ export function HomePersonal({ games }: { games: G[] }) {
   return (
     <>
       {last && (
-        <Link href={`/games/${last.slug}`} data-testid="continue-game" className="group flex items-center gap-3 rounded-2xl border border-accent/25 bg-[linear-gradient(90deg,rgb(139_234_78/0.12),transparent)] p-3 pr-4 transition-colors hover:border-accent/60">
+        <Link href={`/games/${last.slug}`} data-testid="continue-game" className="group flex items-center gap-3 rounded-2xl border border-accent/25 bg-[linear-gradient(90deg,rgb(62_224_143/0.12),transparent)] p-3 pr-4 transition-colors hover:border-accent/60">
           <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10"><Image src={GAMES[last.slug].cover} alt="" fill sizes="64px" className="object-cover" /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[11.5px] font-bold uppercase tracking-[0.12em] text-accent">Продолжить игру</span>
@@ -34,8 +34,8 @@ export function HomePersonal({ games }: { games: G[] }) {
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-accent-ink transition-transform group-hover:scale-110" aria-hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z" /></svg></span>
         </Link>
       )}
-      {recent.length > 0 && <div className="verdant-shelf"><GameRow title="Недавно играли" emoji="◷" games={pick(recent.map((r) => r.slug))} href="/games?cat=recent" /></div>}
-      {favs.length > 0 && <div className="verdant-shelf"><GameRow title="Избранное" emoji="♥" games={pick(favs)} href="/games?cat=fav" /></div>}
+      {recent.length > 0 && <GameRow title="Недавно играли" emoji="◷" games={pick(recent.map((r) => r.slug))} href="/games?cat=recent" />}
+      {favs.length > 0 && <GameRow title="Избранное" emoji="♥" games={pick(favs)} href="/games?cat=fav" />}
     </>
   );
 }

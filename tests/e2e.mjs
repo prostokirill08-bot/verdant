@@ -143,10 +143,13 @@ for (let i = 0; i < 20 && r.j.round?.status === "ACTIVE"; i++) {
 }
 ok("ставка больше баланса → 400", (await p.req("/api/games/dice/bet", { amount: "9999", params: { target: 50, over: true }, key: key() })).s === 400);
 ok("неверные параметры → 400", (await p.req("/api/games/dice/bet", { amount: "1", params: { target: 1, over: true }, key: key() })).s === 400);
-const before = await p.balance();
+// Награды за достижения (VERDANT 2.0) могут прийти посреди проверки — учитываем их по журналу
+const rewards = async () => ((await p.req("/api/account/ledger?type=REWARD")).j.items ?? []).reduce((s, e) => s + BigInt(e.amount), 0n);
+const before = await p.balance(); const rw0 = await rewards();
 const par = await Promise.all(Array.from({ length: 10 }, () => p.req("/api/games/dice/bet", { amount: "1", params: { target: 50, over: false }, key: key() })));
 const paid = par.reduce((s, x) => s + BigInt(x.j.round?.payout ?? 0), 0n);
-ok("10 параллельных ставок без потерь", par.every((x) => x.s === 200) && (await p.balance()) === before - 1000n + paid);
+await new Promise((r) => setTimeout(r, 4500));
+ok("10 параллельных ставок без потерь", par.every((x) => x.s === 200) && (await p.balance()) === before - 1000n + paid + ((await rewards()) - rw0));
 r = await p.req("/api/mines/start", { amount: "1", mines: 24, key: key() });
 ok("mines: старт", r.s === 200 && !r.j.round.state.mines);
 ok("mines: смена сидов во время раунда запрещена", (await p.req("/api/fair", {})).s === 409);

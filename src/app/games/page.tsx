@@ -13,7 +13,7 @@ export default async function GamesPage({ searchParams }: { searchParams: Promis
     return { slug, title: g.title, tagline: g.tagline, enabled: g.enabled, category: cats.get(slug) ?? GAMES[slug].category, addedAt: g.addedAt.toISOString(), popularity: pop[slug] ?? 0 };
   });
   return (
-    <div className="verdant-catalog grid gap-6">
+    <div className="grid gap-6">
       <div>
         <h1 className="font-display text-[28px] font-bold">Каталог <span className="text-gradient">игр</span></h1>
         <p className="mt-1 text-muted">Все игры работают на виртуальных демо-кредитах. Результат каждого раунда считает сервер.</p>

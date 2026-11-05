@@ -107,7 +107,7 @@ export function NotificationBell() {
       <AnimatePresence>
         {open && (
           <motion.div role="dialog" aria-label="Уведомления" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
-            className="fixed inset-x-3 top-[70px] z-50 max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0b1811] p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[380px]">
+            className="fixed inset-x-3 top-[70px] z-50 max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1633] p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[380px]">
             <NotificationList onChange={(n) => { setUnread(n); last.current = n; }} onNavigate={() => setOpen(false)} />
           </motion.div>
         )}
@@ -115,7 +115,7 @@ export function NotificationBell() {
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} role="status" data-testid="notice-toast"
-            className="fixed inset-x-3 top-[74px] z-[60] mx-auto flex max-w-sm gap-3 rounded-2xl border border-accent/40 bg-[#0b1811]/95 p-3 shadow-[0_20px_50px_-20px_#000,0_0_30px_-12px_#8bea4e] backdrop-blur sm:left-auto sm:right-6 sm:mx-0">
+            className="fixed inset-x-3 top-[74px] z-[60] mx-auto flex max-w-sm gap-3 rounded-2xl border border-accent/40 bg-[#0f1633]/95 p-3 shadow-[0_20px_50px_-20px_#000,0_0_30px_-12px_#3ee08f] backdrop-blur sm:left-auto sm:right-6 sm:mx-0">
             <Icon kind={toast.kind} />
             <Link href={toast.link ?? "/account/notifications"} onClick={() => setToast(null)} className="min-w-0 flex-1">
               <p className="text-[13.5px] font-semibold">{toast.title}</p><p className="text-[12.5px] text-muted">{toast.body}</p>
