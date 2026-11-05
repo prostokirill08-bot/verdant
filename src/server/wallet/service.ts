@@ -20,7 +20,7 @@ export async function claimDailyBonus(userId: string, ip: string) {
     const r = await applyEntry(tx, { userId, type: "DEMO_GRANT", amount, idempotencyKey: `bonus:${userId}:${day}`, note: "Ежедневный бонус" });
     if (!r.duplicate) {
       await tx.user.update({ where: { id: userId }, data: { lastBonusAt: new Date() } });
-      await notify(userId, { kind: "daily_bonus", title: "Ежедневная награда получена", body: `На баланс зачислено ${points(amount)} демо-кредитов. Следующая — через 24 часа.`, link: "/account" }, tx);
+      await notify(userId, { kind: "daily_bonus", title: "Ежедневная награда получена", body: `На баланс зачислено ${points(amount)} демо-рублей. Следующая — через 24 часа.`, link: "/account" }, tx);
     }
     return r;
   });

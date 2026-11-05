@@ -22,7 +22,7 @@ async function call<T = unknown>(method: string, payload: Record<string, unknown
   return data.result as T;
 }
 
-const DESCRIPTION = "Verdant — новогодние мини-игры: слоты, Crash, Mines, блэкджек, турнир недели и сундук с джекпотом.\n\nДемо-проект: игра идёт только на виртуальные демо-кредиты, их нельзя купить или вывести.";
+const DESCRIPTION = "Verdant — новогодние мини-игры: слоты, Crash, Mines, блэкджек, турнир недели и сундук с джекпотом.\n\nДемо-проект: игра идёт только на виртуальные демо-рубли, их нельзя купить или вывести.";
 
 /** Настройка бота при старте сервера: вебхук, кнопка меню «Играть», команды и описание. */
 export async function setupBot() {
@@ -35,7 +35,7 @@ export async function setupBot() {
     await call("setWebhook", { url: `${url}/api/telegram/webhook`, secret_token: webhookSecret(), allowed_updates: ["message"], drop_pending_updates: true });
     await call("setChatMenuButton", { menu_button: { type: "web_app", text: "Играть", web_app: { url } } });
     await call("setMyCommands", { commands: [{ command: "start", description: "Открыть игры" }, { command: "games", description: "Список игр" }, { command: "help", description: "Что это за бот" }] });
-    await call("setMyShortDescription", { short_description: "Новогодние мини-игры на демо-кредитах 🎄" }).catch(() => {});
+    await call("setMyShortDescription", { short_description: "Новогодние мини-игры на демо-рублях 🎄" }).catch(() => {});
     await call("setMyDescription", { description: DESCRIPTION }).catch(() => {});
     console.log(`[telegram] бот @${me.username} подключён, Mini App: ${url}`);
   } catch (e) {
@@ -57,7 +57,7 @@ export async function handleMessage(m: Message) {
     const game = arg && (GAME_SLUGS as readonly string[]).includes(arg) ? arg : null;
     await call("sendMessage", {
       chat_id: m.chat.id,
-      text: `Привет${name ? `, ${name}` : ""}! 🎄\n\nЭто Verdant — 21 новогодняя игра, сундук со снежными ключами и турнир недели. Вход — через Telegram, ничего вводить не нужно. Демо-кредиты бесплатны: их можно получить в кабинете.\n\nДемо-проект: реальных денег здесь нет.`,
+      text: `Привет${name ? `, ${name}` : ""}! 🎄\n\nЭто Verdant — 21 новогодняя игра, сундук со снежными ключами и турнир недели. Вход — через Telegram, ничего вводить не нужно. Демо-рубли бесплатны: их можно получить в кабинете.\n\nДемо-проект: реальных денег здесь нет.`,
       reply_markup: { inline_keyboard: [[open(game ? "▶️ Открыть игру" : "🎮 Играть", game ? `/games/${game}` : "")], [open("🎁 Бонусы и турнир", "/bonuses")]] },
     });
   } else if (cmd === "/games") {
@@ -66,7 +66,7 @@ export async function handleMessage(m: Message) {
   } else {
     await call("sendMessage", {
       chat_id: m.chat.id,
-      text: "Нажми «Играть» внизу или /start — откроется Verdant. /games — популярные игры.\n\nВсе ставки — на демо-кредиты: их нельзя купить или вывести.",
+      text: "Нажми «Играть» внизу или /start — откроется Verdant. /games — популярные игры.\n\nВсе ставки — на демо-рубли: их нельзя купить или вывести.",
       reply_markup: { inline_keyboard: [[open("🎮 Играть")]] },
     });
   }

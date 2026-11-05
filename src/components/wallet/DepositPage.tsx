@@ -11,7 +11,7 @@ import { haptic } from "@/lib/telegram";
 import { newKey, parsePoints } from "@/components/play/kit";
 
 type Info = { min: string; max: string; dayLimit: string; dayUsed: string; items: { id: string; amount: string; method: string; createdAt: string }[] };
-const NAME: Record<string, string> = { demo: "Демо-кредиты", card: "Демо-кредиты", sbp: "Демо-кредиты", wallet: "Демо-кредиты" };
+const NAME: Record<string, string> = { demo: "Демо-рубли", card: "Демо-рубли", sbp: "Демо-рубли", wallet: "Демо-рубли" };
 const PRESETS = [300, 1000, 3000, 10_000, 50_000, 300_000];
 const rub = (n: number) => n.toLocaleString("ru-RU");
 
@@ -48,8 +48,8 @@ export function DepositPage() {
   if (!loading && !user) return (
     <div className="mx-auto grid max-w-md gap-4 rounded-[24px] border border-line bg-panel p-6 text-center">
       <p className="text-[40px] text-accent" aria-hidden>◆</p>
-      <h1 className="font-display text-[24px] font-bold">Демо-кредиты</h1>
-      <p className="text-muted">Войди или зарегистрируйся, чтобы получить демо-кредиты и начать играть.</p>
+      <h1 className="font-display text-[24px] font-bold">Демо-рубли</h1>
+      <p className="text-muted">Войди или зарегистрируйся, чтобы получить демо-рубли и начать играть.</p>
       <div className="grid grid-cols-2 gap-2"><Link href="/login?next=/deposit"><Button variant="secondary" className="w-full">Войти</Button></Link><Link href="/register"><Button className="w-full">Регистрация</Button></Link></div>
     </div>
   );
@@ -58,16 +58,16 @@ export function DepositPage() {
     <div className="mx-auto grid max-w-[980px] gap-5 lg:grid-cols-[1fr_340px]">
       <section className="relative overflow-hidden rounded-[24px] border border-line bg-panel p-5 sm:p-7" data-testid="deposit-form">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="font-display text-[24px] font-bold sm:text-[28px]">Демо-кредиты</h1>
+          <h1 className="font-display text-[24px] font-bold sm:text-[28px]">Демо-рубли</h1>
           <span className="rounded-lg bg-gold/15 px-2.5 py-1 text-[12px] font-semibold text-gold">Бесплатно · без оплаты</span>
         </div>
         <p className="mt-1 text-[14px] text-muted">Баланс: <span className="font-mono font-semibold text-white">{points(balance)}</span></p>
 
         <p className="mt-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">Сумма</p>
         <div className="mt-2 flex h-16 items-center rounded-2xl border-2 border-line bg-ink px-4 focus-within:border-accent">
-          <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, "").slice(0, 10))} inputMode="decimal" aria-label="Сколько кредитов начислить" data-testid="deposit-amount"
+          <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, "").slice(0, 10))} inputMode="decimal" aria-label="Сумма пополнения" data-testid="deposit-amount"
             className="min-w-0 flex-1 bg-transparent font-mono text-[28px] font-semibold outline-none" />
-          <span className="text-[20px] font-semibold text-muted">DC</span>
+          <span className="text-[20px] font-semibold text-muted">₽</span>
         </div>
         <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
           {PRESETS.map((p) => (
@@ -75,14 +75,14 @@ export function DepositPage() {
               className={`h-10 rounded-xl text-[13.5px] font-semibold transition-colors ${units === BigInt(p * 100) ? "bg-accent text-accent-ink" : "bg-raised text-soft hover:text-white"}`}>{rub(p)}</button>
           ))}
         </div>
-        <p className={`mt-2 min-h-5 text-[13px] ${err && amount ? "text-danger" : "text-muted"}`}>{err && amount ? err : "От 300 до 300 000 кредитов за раз, до 1 000 000 в сутки"}</p>
+        <p className={`mt-2 min-h-5 text-[13px] ${err && amount ? "text-danger" : "text-muted"}`}>{err && amount ? err : "От 300 до 300 000 ₽ за раз, до 1 000 000 ₽ в сутки"}</p>
 
         <AnimatePresence>{error && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-2 rounded-xl bg-danger/10 px-3 py-2 text-[13.5px] text-danger" role="alert">{error}</motion.p>}</AnimatePresence>
 
         <Button size="lg" className="btn-shine mt-4 w-full" onClick={pay} disabled={!!err || step !== "form"} loading={step === "processing"} data-testid="deposit-pay">
           {units !== null && !err ? `Получить ${points(units)}` : "Получить"}
         </Button>
-        <p className="mt-3 text-center text-[12px] leading-relaxed text-muted">Демо-кредиты бесплатны и виртуальны: их нельзя купить, продать, обменять или вывести. Оплата не принимается, платёжные данные не нужны.</p>
+        <p className="mt-3 text-center text-[12px] leading-relaxed text-muted">Демо-рубли бесплатны и виртуальны: их нельзя купить, продать, обменять или вывести. Оплата не принимается, платёжные данные не нужны.</p>
 
         {/* Обработка и успех поверх формы */}
         <AnimatePresence>
@@ -100,7 +100,7 @@ export function DepositPage() {
                     <svg viewBox="0 0 24 24" className="size-10" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
                   </span>
                   <p className="font-display text-[24px] font-bold" data-testid="deposit-done">+{points(done.amount)}</p>
-                  <p className="text-muted">Демо-кредиты начислены. Сейчас на балансе <span className="font-mono text-white">{points(done.balance)}</span></p>
+                  <p className="text-muted">Демо-рубли начислены. Сейчас на балансе <span className="font-mono text-white">{points(done.balance)}</span></p>
                   <div className="mt-2 grid w-full max-w-xs grid-cols-2 gap-2">
                     <Button variant="secondary" onClick={() => setStep("form")}>Ещё раз</Button>
                     <Link href="/games"><Button className="w-full">К играм</Button></Link>
@@ -116,8 +116,8 @@ export function DepositPage() {
         <div className="rounded-[24px] border border-line bg-panel p-5">
           <p className="font-semibold">Лимиты</p>
           <dl className="mt-3 grid gap-2 text-[14px]">
-            <div className="flex justify-between"><dt className="text-muted">За раз</dt><dd>300 – 300 000 DC</dd></div>
-            <div className="flex justify-between"><dt className="text-muted">В сутки</dt><dd>до 1 000 000 DC</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">За раз</dt><dd>300 – 300 000 ₽</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">В сутки</dt><dd>до 1 000 000 ₽</dd></div>
             <div className="flex justify-between"><dt className="text-muted">Осталось сегодня</dt><dd className="font-mono">{info ? points(left > 0n ? left : 0n) : "…"}</dd></div>
           </dl>
           {info && <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, Number((BigInt(info.dayUsed) * 100n) / BigInt(info.dayLimit)))}%` }} /></div>}
@@ -131,7 +131,7 @@ export function DepositPage() {
                 <span className="font-mono font-semibold text-accent">+{points(d.amount)}</span>
               </li>
             ))}
-            {info && !info.items.length && <li className="text-[14px] text-muted">Пока пусто — минимум 300 кредитов за раз.</li>}
+            {info && !info.items.length && <li className="text-[14px] text-muted">Пока пусто — минимум 300 ₽ за раз.</li>}
           </ul>
           <Link href="/account/history" className="mt-3 inline-block text-[13.5px] text-accent hover:underline">Все операции →</Link>
         </div>

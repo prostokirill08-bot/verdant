@@ -9,7 +9,7 @@ import { GAME_NAMES, GAME_SLUGS, isGameSlug } from "@/lib/games";
 
 type Item = { id: string; type: string; amount: string; balanceAfter: string; note: string | null; createdAt: string; game: string | null; multiplier: string | null };
 const TYPES: [string, string][] = [["ALL", "Все"], ["BET", "Ставки"], ["WIN", "Выигрыши"], ["DEPOSIT", "Пополнения"], ["DEMO_GRANT", "Бонусы"], ["REWARD", "Награды"], ["PROMO", "Призы"], ["REFUND", "Возвраты"], ["ADMIN_ADJUST", "Корректировки"]];
-const LABEL: Record<string, string> = { REWARD: "Награда", BET: "Ставка", WIN: "Выигрыш", DEPOSIT: "Пополнение", PROMO: "Приз акции", DEMO_GRANT: "Демо-кредиты", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
+const LABEL: Record<string, string> = { REWARD: "Награда", BET: "Ставка", WIN: "Выигрыш", DEPOSIT: "Пополнение", PROMO: "Приз акции", DEMO_GRANT: "Демо-рубли", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
 
 function LedgerHistory() {
   const [type, setType] = useState("ALL");

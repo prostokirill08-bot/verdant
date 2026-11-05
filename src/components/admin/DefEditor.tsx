@@ -33,7 +33,7 @@ export function DefEditor({ kind, def, metrics, onSaved, onCancel, readOnly }: {
         <L t="Описание" wide><input value={f.description} onChange={set("description")} className={inputCls} maxLength={200} /></L>
         <L t="Условие (метрика)"><select value={f.metric} onChange={set("metric")} className={inputCls}>{Object.entries(metrics).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></L>
         <L t="Цель (сколько нужно)"><input value={f.target} onChange={set("target")} className={`${inputCls} font-mono`} inputMode="numeric" /></L>
-        <L t="Награда, DC"><input value={f.reward} onChange={set("reward")} className={`${inputCls} font-mono`} inputMode="decimal" /></L>
+        <L t="Награда, ₽"><input value={f.reward} onChange={set("reward")} className={`${inputCls} font-mono`} inputMode="decimal" /></L>
         <L t="Порядок"><input value={f.sortOrder} onChange={set("sortOrder")} className={`${inputCls} font-mono`} inputMode="numeric" /></L>
         {kind === "achievements" && (
           <L t="Иконка" wide><div className="flex flex-wrap gap-1.5">{Object.keys(ACH_ICONS).map((k) => (

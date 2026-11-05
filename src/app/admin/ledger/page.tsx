@@ -7,7 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { points } from "@/lib/format";
 
 type E = { id: string; type: string; amount: string; balanceAfter: string; note: string | null; createdAt: string; user: { id: string; username: string; publicId: string } };
-const TYPES: [string, string][] = [["ALL", "Все"], ["BET", "Ставки"], ["WIN", "Выигрыши"], ["REWARD", "Награды"], ["PROMO", "Призы акций"], ["DEMO_GRANT", "Демо-бонусы"], ["DEPOSIT", "Демо-кредиты"], ["REFUND", "Возвраты"], ["ADMIN_ADJUST", "Корректировки"]];
+const TYPES: [string, string][] = [["ALL", "Все"], ["BET", "Ставки"], ["WIN", "Выигрыши"], ["REWARD", "Награды"], ["PROMO", "Призы акций"], ["DEMO_GRANT", "Демо-бонусы"], ["DEPOSIT", "Демо-рубли"], ["REFUND", "Возвраты"], ["ADMIN_ADJUST", "Корректировки"]];
 
 /** История операций всех кошельков (только администратор). */
 export default function AdminLedger() {

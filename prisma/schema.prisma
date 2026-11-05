@@ -313,7 +313,7 @@ model AchievementDef {
   icon        String                       // ключ встроенной иконки
   metric      String
   target      Int
-  reward      BigInt   @default(0)         // демо-кредиты (в сотых)
+  reward      BigInt   @default(0)         // демо-рубли (в сотых)
   enabled     Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -388,7 +388,7 @@ model Tournament {
   startsAt    DateTime
   endsAt      DateTime
   status      String    @default("ACTIVE") // ACTIVE | FINISHED
-  prizes      Json                         // призы по местам (строки, сотые доли кредита)
+  prizes      Json                         // призы по местам (строки, копейки)
   notifiedAt  DateTime?                    // уведомление о старте разослано
   finishedAt  DateTime?
   entries     TournamentEntry[]

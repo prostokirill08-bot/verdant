@@ -31,7 +31,7 @@ function Leaderboard() {
     <div className="grid gap-5">
       <div>
         <h1 className="font-display text-[28px] font-bold">Рейтинг <span className="text-gradient">игроков</span></h1>
-        <p className="mt-1 text-muted">Только реальные игроки и реальные раунды со ставкой от 1 кредита. Призы — виртуальные демо-кредиты, без денежных призов.</p>
+        <p className="mt-1 text-muted">Только реальные игроки и реальные раунды со ставкой от 1 ₽. Призы — виртуальные демо-рубли, без денежных призов.</p>
       </div>
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" role="tablist">
         {TABS.map(([k, label]) => (

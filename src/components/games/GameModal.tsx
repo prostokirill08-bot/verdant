@@ -100,7 +100,7 @@ function GameSheet({ slug, row, fav, onFav, onClose }: { slug: GameSlug; row?: G
           <div><p className="text-muted">Ставка</p><p className="font-mono text-soft">{row ? `${points(row.minBet)} – ${points(row.maxBet)}` : "—"}</p></div>
           <div><p className="text-muted">Честность</p><p className="text-accent">🛡️ проверяемый результат</p></div>
         </div>
-        {!user && <p className="relative mt-3 text-[12.5px] text-muted">«Демо» — сразу играть без регистрации на демо-кредитах (аккаунт гостя хранится 3 дня). «Играть» — зарегистрироваться и сохранить баланс.</p>}
+        {!user && <p className="relative mt-3 text-[12.5px] text-muted">«Демо» — сразу играть без регистрации на демо-рублях (аккаунт гостя хранится 3 дня). «Играть» — зарегистрироваться и сохранить баланс.</p>}
         {err && <p className="relative mt-2 text-[13px] text-danger">{err}</p>}
         <div className={`relative mt-4 grid gap-2 ${user ? "grid-cols-1" : "grid-cols-[1fr_1.4fr]"}`}>
           {!user && (

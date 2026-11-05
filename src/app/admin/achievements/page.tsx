@@ -17,7 +17,7 @@ export default function AdminAchievements() {
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[13.5px] text-muted">Достижения выдаются сервером автоматически после ставок. Засчитываются раунды со ставкой от 1 DC. Награда начисляется один раз.</p>
+        <p className="text-[13.5px] text-muted">Достижения выдаются сервером автоматически после ставок. Засчитываются раунды со ставкой от 1 ₽. Награда начисляется один раз.</p>
         {admin && <Button onClick={() => setOpen(open === "new" ? null : "new")}>+ Новое достижение</Button>}
       </div>
       {open === "new" && <section className="rounded-2xl border border-accent/40 bg-panel p-4"><DefEditor kind="achievements" def={null} metrics={ACHIEVEMENT_METRICS} onSaved={() => { setOpen(null); void reload(); }} onCancel={() => setOpen(null)} /></section>}

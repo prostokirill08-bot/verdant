@@ -83,14 +83,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <NavLink href="/account" active={path === "/account"}>Профиль</NavLink>
             <NavLink href="/account/achievements" active={path === "/account/achievements"}>Достижения</NavLink>
             <NavLink href="/account/quests" active={path === "/account/quests"}>Задания дня</NavLink>
-            <NavLink href="/deposit" active={path === "/deposit"}>Демо-кредиты</NavLink>
+            <NavLink href="/deposit" active={path === "/deposit"}>Демо-рубли</NavLink>
             <NavLink href="/account/history" active={path === "/account/history"}>История</NavLink>
             <NavLink href="/account/settings" active={path === "/account/settings"}>Настройки</NavLink>
             {user.role !== "USER" && <NavLink href="/admin" active={path.startsWith("/admin")}>Админ-панель</NavLink>}
           </div>
         )}
         <div className="mt-auto"><TelegramLink variant="side" /></div>
-        <p className="px-3 text-[11.5px] leading-relaxed text-muted/70">🎄 С наступающим! Демо-платформа: только виртуальные демо-кредиты — их нельзя купить или вывести.</p>
+        <p className="px-3 text-[11.5px] leading-relaxed text-muted/70">🎄 С наступающим! Демо-платформа: только виртуальные демо-рубли — их нельзя купить или вывести.</p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
                     <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[14px] font-semibold tabular min-[400px]:text-[15px]">{points(balance)}</motion.span>
                   </Link>
-                  <Link href="/deposit" className="grid size-7 place-items-center max-[400px]:hidden rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white hover:brightness-110" aria-label="Получить демо-кредиты" title="Демо-кредиты" data-testid="deposit-plus">
+                  <Link href="/deposit" className="grid size-7 place-items-center max-[400px]:hidden rounded-lg bg-[linear-gradient(180deg,#ff5f6f,#d4183a)] text-white hover:brightness-110" aria-label="Получить демо-рубли" title="Демо-рубли" data-testid="deposit-plus">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
                   </Link>
                 </div>
@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <motion.div role="menu" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
                         className="absolute right-0 top-12 w-56 rounded-2xl border border-line bg-panel p-1.5 shadow-2xl">
                         <div className="px-3 py-2"><p className="font-semibold">{user.username}</p><p className="font-mono text-[12px] text-muted">{user.publicId}</p></div>
-                        {[["/account", "Профиль"], ["/account/achievements", "Достижения"], ["/account/quests", "Задания дня"], ["/deposit", "Демо-кредиты"], ["/account/history", "История"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
+                        {[["/account", "Профиль"], ["/account/achievements", "Достижения"], ["/account/quests", "Задания дня"], ["/deposit", "Демо-рубли"], ["/account/history", "История"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
                           <Link key={h} href={h!} onClick={() => setMenu(false)} role="menuitem" className="block rounded-xl px-3 py-2 text-[14px] text-soft hover:bg-raised hover:text-white">{t}</Link>
                         ))}
                         <button onClick={() => setSound(!sound.on)} role="menuitemcheckbox" aria-checked={sound.on} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[14px] text-soft hover:bg-raised hover:text-white">Звук <span className={`flex items-center gap-1.5 text-[12.5px] ${sound.on ? "text-accent" : "text-muted"}`}><SoundIcon on={sound.on} />{sound.on ? "вкл" : "выкл"}</span></button>

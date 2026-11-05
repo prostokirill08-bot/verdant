@@ -8,7 +8,7 @@ export const ACHIEVEMENT_METRICS = {
   active_days: "Дней активности",
   streak_days: "Дней активности подряд",
   best_multiplier: "Лучший множитель (×)",
-  wagered_total: "Поставлено кредитов",
+  wagered_total: "Поставлено рублей",
 } as const;
 export type AchievementMetric = keyof typeof ACHIEVEMENT_METRICS;
 
@@ -20,14 +20,14 @@ export const QUEST_METRICS = {
   games_today: "Разных игр за день",
   categories_today: "Разных категорий за день",
   new_game_today: "Новых для себя игр",
-  wagered_today: "Поставить кредитов",
+  wagered_today: "Поставить рублей",
 } as const;
 export type QuestMetric = keyof typeof QUEST_METRICS;
 
 export const isAchievementMetric = (m: string): m is AchievementMetric => m in ACHIEVEMENT_METRICS;
 export const isQuestMetric = (m: string): m is QuestMetric => m in QUEST_METRICS;
 
-/** Раунд засчитывается в прогресс, если ставка не меньше 1 кредита (как и в турнире) — мелкими ставками не «нафармить». */
+/** Раунд засчитывается в прогресс, если ставка не меньше 1 ₽ (как и в турнире) — мелкими ставками не «нафармить». */
 export const PROGRESS_MIN_BET = 100n;
 
 /** Встроенные иконки достижений (SVG-пути 24×24). */
@@ -48,7 +48,7 @@ export const ACH_ICONS: Record<string, string> = {
 export const ACH_ICON_KEYS = Object.keys(ACH_ICONS);
 
 type Def = { code: string; title: string; description: string; metric: string; target: number; reward: number; sortOrder: number };
-/** Стартовый набор достижений (награда — в сотых долях кредита). Администратор может менять их в админке. */
+/** Стартовый набор достижений (награда — в копейках). Администратор может менять их в админке. */
 export const DEFAULT_ACHIEVEMENTS: (Def & { icon: string })[] = [
   { code: "first_game", title: "Первый запуск", description: "Сыграй первый раунд в любой игре", icon: "spark", metric: "rounds_total", target: 1, reward: 1_000, sortOrder: 1 },
   { code: "rounds_10", title: "Разогрев", description: "Сыграй 10 раундов", icon: "flame", metric: "rounds_total", target: 10, reward: 2_500, sortOrder: 2 },
@@ -68,7 +68,7 @@ export const DEFAULT_ACHIEVEMENTS: (Def & { icon: string })[] = [
 /** Стартовый набор ежедневных заданий. pinned — показываются каждый день. */
 export const DEFAULT_QUESTS: (Def & { pinned: boolean })[] = [
   { code: "visit", title: "Посетить платформу", description: "Зайди на VERDANT сегодня", metric: "visit_today", target: 1, reward: 500, pinned: true, sortOrder: 1 },
-  { code: "rounds_3", title: "Сыграть 3 раунда", description: "Сыграй 3 раунда со ставкой от 1 кредита", metric: "rounds_today", target: 3, reward: 1_000, pinned: true, sortOrder: 2 },
+  { code: "rounds_3", title: "Сыграть 3 раунда", description: "Сыграй 3 раунда со ставкой от 1 ₽", metric: "rounds_today", target: 3, reward: 1_000, pinned: true, sortOrder: 2 },
   { code: "new_game", title: "Попробовать новую игру", description: "Сыграй в игру, в которую ещё не играл", metric: "new_game_today", target: 1, reward: 1_500, pinned: false, sortOrder: 3 },
   { code: "two_categories", title: "Две категории", description: "Сыграй в 2 разные категории: слоты, быстрые или карточные", metric: "categories_today", target: 2, reward: 1_500, pinned: false, sortOrder: 4 },
   { code: "three_games", title: "Три игры", description: "Сыграй в 3 разные игры за день", metric: "games_today", target: 3, reward: 1_500, pinned: false, sortOrder: 5 },

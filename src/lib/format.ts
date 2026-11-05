@@ -1,6 +1,6 @@
 // Клиентское форматирование сумм (приходят строками в сотых).
-/** Значок игровой валюты — DC, виртуальные демо-кредиты (бесплатные, купить или вывести нельзя). */
-export const SNOW = "DC";
+/** Значок игровой валюты — ₽, виртуальные демо-рубли (бесплатные, купить или вывести нельзя). */
+export const SNOW = "₽";
 const CUR = "\u00a0" + SNOW;
 export function points(units: string | number | bigint | null | undefined): string {
   if (units === null || units === undefined) return "0,00" + CUR;

@@ -16,7 +16,7 @@ export default async function GamesPage({ searchParams }: { searchParams: Promis
     <div className="grid gap-6">
       <div>
         <h1 className="font-display text-[28px] font-bold">Каталог <span className="text-gradient">игр</span></h1>
-        <p className="mt-1 text-muted">Все игры работают на виртуальных демо-кредитах. Результат каждого раунда считает сервер.</p>
+        <p className="mt-1 text-muted">Все игры работают на виртуальных демо-рублях. Результат каждого раунда считает сервер.</p>
       </div>
       <Catalog initial={{ cat: sp.cat, q: sp.q?.slice(0, 60), sort: sp.sort }} games={items} />
     </div>

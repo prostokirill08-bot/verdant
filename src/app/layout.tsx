@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({ subsets: ["latin", "cyrillic"], variable: "--font
 const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", weight: ["500", "700"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Verdant — мини-игры на демо-кредитах", template: "%s · Verdant" },
-  description: "Игровая демо-платформа: слоты, Crash, Mines, Plinko и другие игры на виртуальных демо-кредитах.",
+  title: { default: "Verdant — мини-игры на демо-рублях", template: "%s · Verdant" },
+  description: "Игровая демо-платформа: слоты, Crash, Mines, Plinko и другие игры на виртуальных демо-рублях.",
 };
 export const viewport: Viewport = { themeColor: "#070b1f", width: "device-width", initialScale: 1 };
 

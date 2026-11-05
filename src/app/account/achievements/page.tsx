@@ -22,7 +22,7 @@ export default function AchievementsPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[24px] font-bold">Достижения</h1>
-          <p className="text-[14px] text-muted">Получено {done} из {items.length}. Засчитываются раунды со ставкой от 1 кредита; награды — демо-кредиты.</p>
+          <p className="text-[14px] text-muted">Получено {done} из {items.length}. Засчитываются раунды со ставкой от 1 ₽; награды — демо-рубли.</p>
         </div>
         <div className="flex gap-1.5" role="group" aria-label="Фильтр">
           {([["all", "Все"], ["open", "В процессе"], ["done", "Получены"]] as const).map(([k, t]) => (

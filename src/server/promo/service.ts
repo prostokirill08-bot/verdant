@@ -41,7 +41,7 @@ export async function openChest(userId: string) {
 
 // ---------- Турнир недели ----------
 // Неделя — с понедельника 00:00 по МСК. Очки — лучший множитель одного раунда со ставкой не меньше minBet.
-// Призы — только виртуальные демо-кредиты. Настройки (вкл/выкл, призы, минимальная ставка) — в админке.
+// Призы — только виртуальные демо-рубли. Настройки (вкл/выкл, призы, минимальная ставка) — в админке.
 export const TOURNAMENT_PRIZES = [5_000_000n, 2_500_000n, 1_000_000n, 250_000n, 250_000n, 250_000n, 250_000n, 250_000n, 250_000n, 250_000n];
 const DAY = 24 * 3600 * 1000;
 export const tournamentSchema = z.object({
@@ -96,7 +96,7 @@ export async function currentTournament() {
 }
 
 /**
- * Итоги прошедшей недели: выплата призов (демо-кредиты), таблица в истории и уведомления участникам.
+ * Итоги прошедшей недели: выплата призов (демо-рубли), таблица в истории и уведомления участникам.
  * Повторный запуск ничего не делает: ключ журнала, (week, place) и статус турнира уникальны.
  */
 export async function payTournament(now = Date.now()) {
@@ -139,7 +139,7 @@ export async function announceTournament(now = Date.now()) {
   if (!claim.count) return 0;
   const since = new Date(now - 14 * DAY); const sinceDay = since.toISOString().slice(0, 10);
   const users = await db.activityDay.findMany({ where: { day: { gte: sinceDay }, user: { role: "USER", status: "ACTIVE", email: { not: { endsWith: `@${GUEST_DOMAIN}` } } } }, distinct: ["userId"], select: { userId: true } });
-  await notifyMany(users.map((u) => u.userId), { kind: "tournament_start", title: `${t.title} начался`, body: `Лучший множитель за неделю со ставкой от ${points(BigInt(s.minBet))} попадает в таблицу. Призы — демо-кредиты.`, link: "/leaderboard" });
+  await notifyMany(users.map((u) => u.userId), { kind: "tournament_start", title: `${t.title} начался`, body: `Лучший множитель за неделю со ставкой от ${points(BigInt(s.minBet))} попадает в таблицу. Призы — демо-рубли.`, link: "/leaderboard" });
   return users.length;
 }
 

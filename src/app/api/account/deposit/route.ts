@@ -8,7 +8,7 @@ const schema = z.object({ amount: amountSchema, method: z.literal("demo").defaul
 
 export const GET = route({ auth: true }, async ({ user }) => depositInfo(user!.id));
 
-// Начисление бесплатных демо-кредитов: от 300 до 300 000 DC, повтор с тем же ключом не пополняет второй раз
+// Начисление бесплатных демо-рублей: от 300 до 300 000 ₽, повтор с тем же ключом не пополняет второй раз
 export const POST = route({ auth: true, rate: { key: "deposit", limit: 30, window: 600 } }, async ({ req, user, ip }) => {
   const p = await body(req, schema);
   const r = await createDeposit(user!.id, p.amount, p.method, p.key, ip);

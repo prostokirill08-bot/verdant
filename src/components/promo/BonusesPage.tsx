@@ -59,7 +59,7 @@ export function BonusesPage() {
     <div className="grid min-w-0 gap-6 [&>*]:min-w-0">
       <div>
         <h1 className="font-display text-[28px] font-bold">Бонусы <span className="text-gradient">и турнир</span></h1>
-        <p className="mt-1 text-muted">Все призы — в виртуальных демо-кредитах: их нельзя купить или вывести.</p>
+        <p className="mt-1 text-muted">Все призы — в виртуальных демо-рублях: их нельзя купить или вывести.</p>
       </div>
 
       {/* ---------- Сундук со снежными ключами ---------- */}
@@ -70,7 +70,7 @@ export function BonusesPage() {
           <div className="grid content-start gap-3">
             <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#8fdcff]">🔑 Акция · снежные ключи</p>
             <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Сундук Деда Мороза</h2>
-            <p className="max-w-lg text-[15px] text-white/80">Ключ выпадает за ставки в любой игре — в среднем 1 ключ на каждые {k ? points(k.perWager) : "2 000 DC"} ставок: чем больше ставка, тем выше шанс. Собери {k?.need ?? 4} ключа и открой сундук: внутри приз или весь джекпот.</p>
+            <p className="max-w-lg text-[15px] text-white/80">Ключ выпадает за ставки в любой игре — в среднем 1 ключ на каждые {k ? points(k.perWager) : "2 000 ₽"} ставок: чем больше ставка, тем выше шанс. Собери {k?.need ?? 4} ключа и открой сундук: внутри приз или весь джекпот.</p>
             <div className="mt-1 w-fit rounded-2xl bg-black/40 px-4 py-3 ring-1 ring-gold/40">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold/80">Джекпот сундука</p>
               <p className="font-display text-[clamp(28px,6vw,44px)] font-bold text-gold [text-shadow:0_0_24px_#ffb02e80]" data-testid="jackpot">{data ? <Ticker value={BigInt(data.jackpot.pool)} /> : "…"}</p>
@@ -114,7 +114,7 @@ export function BonusesPage() {
           <div className="relative grid gap-3 p-5 sm:p-8">
             <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-gold">🏆 Турнир недели</p>
             <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">{t?.title ?? "Турнир недели"}</h2>
-            <p className="max-w-lg text-[15px] text-white/80">Побеждает самый крупный множитель одного выигрыша за неделю (ставка от 1 DC, любая игра). Призы начисляются автоматически в понедельник.</p>
+            <p className="max-w-lg text-[15px] text-white/80">Побеждает самый крупный множитель одного выигрыша за неделю (ставка от 1 ₽, любая игра). Призы начисляются автоматически в понедельник.</p>
             {t && <div><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">До конца турнира</p><Countdown to={t.endsAt} label="До конца турнира" compact /></div>}
           </div>
         </div>
@@ -159,7 +159,7 @@ export function BonusesPage() {
         <section className="snow-cap relative overflow-hidden rounded-[28px] border border-line bg-[linear-gradient(120deg,#16245e,#0f1633_55%,#4a0f22)] p-6">
           <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-gold">🎁 Каждый день</p>
           <h2 className="mt-1 font-display text-[22px] font-bold">Подарок дня от Котонавта</h2>
-          <p className="mt-1 max-w-xs text-[14px] text-white/75">Раз в сутки забирай демо-кредиты в кабинете.</p>
+          <p className="mt-1 max-w-xs text-[14px] text-white/75">Раз в сутки забирай демо-рубли в кабинете.</p>
           <Link href={user ? "/account" : "/register"} className="mt-4 inline-block"><Button>{user ? "Забрать подарок" : "Начать играть"}</Button></Link>
           <Image src="/img/ny/mascot/cat.webp" alt="" width={200} height={200} className="pointer-events-none absolute -bottom-4 right-0 w-[130px] [mask-image:radial-gradient(circle,#000_55%,transparent_72%)]" />
         </section>

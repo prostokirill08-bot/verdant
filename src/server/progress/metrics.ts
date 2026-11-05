@@ -6,7 +6,7 @@ import { PROGRESS_MIN_BET, type AchievementMetric, type QuestMetric } from "@/li
 
 type Agg = { rounds: bigint; wins: bigint; wagered: bigint | null; best: Prisma.Decimal | null; games: string[] | null };
 
-/** Сводка по засчитанным раундам игрока (ставка ≥ 1 кредита), при необходимости — в интервале по времени расчёта. */
+/** Сводка по засчитанным раундам игрока (ставка ≥ 1 ₽), при необходимости — в интервале по времени расчёта. */
 async function roundAgg(userId: string, from?: Date, to?: Date): Promise<Agg> {
   const time = from && to ? Prisma.sql`AND "settledAt" >= ${from} AND "settledAt" < ${to}` : Prisma.empty;
   const [row] = await db.$queryRaw<Agg[]>`

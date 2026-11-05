@@ -10,7 +10,7 @@ import { points } from "@/lib/format";
 type S = { enabled: boolean; title: string; minBet: number; prizes: number[] };
 type D = { settings: S; current: { week: string; title: string; prizes: string[]; top: LbRow[]; endsAt: string }; history: { id: string; title: string; startsAt: string; participants: number; top: LbRow[] }[] };
 
-/** Турниры: настройки (только демо-кредиты), текущая таблица, история и ручное подведение итогов. */
+/** Турниры: настройки (только демо-рубли), текущая таблица, история и ручное подведение итогов. */
 export default function AdminTournaments() {
   const { data, error, reload } = useAdminData<D>("/api/admin/tournaments");
   const admin = useIsAdmin(); const act = useAction();
@@ -29,10 +29,10 @@ export default function AdminTournaments() {
         <fieldset disabled={!admin || act.busy} className="grid gap-2">
           <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} className="size-4 accent-[#3ee08f]" />Турнир включён</label>
           <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Название</span><input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={inputCls} maxLength={60} /></label>
-          <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Минимальная ставка, DC</span><input value={f.minBet} onChange={(e) => setF({ ...f, minBet: e.target.value })} className={`${inputCls} font-mono`} inputMode="decimal" /></label>
-          <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Призы по местам, DC (через запятую)</span><textarea value={f.prizes} onChange={(e) => setF({ ...f, prizes: e.target.value })} rows={3} className={`${inputCls} h-auto py-2 font-mono`} /></label>
+          <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Минимальная ставка, ₽</span><input value={f.minBet} onChange={(e) => setF({ ...f, minBet: e.target.value })} className={`${inputCls} font-mono`} inputMode="decimal" /></label>
+          <label className="grid gap-1"><span className="text-[11.5px] uppercase tracking-wider text-muted">Призы по местам, ₽ (через запятую)</span><textarea value={f.prizes} onChange={(e) => setF({ ...f, prizes: e.target.value })} rows={3} className={`${inputCls} h-auto py-2 font-mono`} /></label>
         </fieldset>
-        <p className="text-[12.5px] text-muted">Только виртуальные демо-кредиты — денежных призов нет. Итоги подводятся автоматически в понедельник 00:00 МСК (фоновая задача раз в 15 минут).</p>
+        <p className="text-[12.5px] text-muted">Только виртуальные демо-рубли — денежных призов нет. Итоги подводятся автоматически в понедельник 00:00 МСК (фоновая задача раз в 15 минут).</p>
         {admin && <div className="flex flex-wrap gap-2"><Button onClick={save} loading={act.busy}>Сохранить</Button><Button variant="secondary" loading={act.busy} onClick={() => act.run(() => api<{ paid: number }>("/api/admin/tournaments/finalize", { method: "POST" }), "Итоги прошлой недели проверены").then((r) => r && reload())}>Подвести итоги прошлой недели</Button></div>}
         <Msg m={act.msg} />
       </section>

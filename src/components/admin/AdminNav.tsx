@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = [["/admin", "Обзор"], ["/admin/users", "Пользователи"], ["/admin/ledger", "Операции"], ["/admin/deposits", "Демо-кредиты"], ["/admin/games", "Игры"], ["/admin/achievements", "Достижения"], ["/admin/quests", "Задания"], ["/admin/tournaments", "Турниры"], ["/admin/errors", "Ошибки"], ["/admin/sessions", "Сессии"], ["/admin/audit", "Журнал действий"], ["/admin/settings", "Настройки"]] as const;
+const TABS = [["/admin", "Обзор"], ["/admin/users", "Пользователи"], ["/admin/ledger", "Операции"], ["/admin/deposits", "Демо-рубли"], ["/admin/games", "Игры"], ["/admin/achievements", "Достижения"], ["/admin/quests", "Задания"], ["/admin/tournaments", "Турниры"], ["/admin/errors", "Ошибки"], ["/admin/sessions", "Сессии"], ["/admin/audit", "Журнал действий"], ["/admin/settings", "Настройки"]] as const;
 
 export function AdminNav({ role }: { role: string }) {
   const path = usePathname();

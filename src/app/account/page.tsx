@@ -68,7 +68,7 @@ export default function AccountPage() {
               <p className="text-[13px] text-muted">На платформе с {new Date(s.user.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}</p>
             </div>
           </div>
-          <p className="relative mt-6 text-[12px] font-semibold uppercase tracking-wider text-muted">Баланс демо-кредитов</p>
+          <p className="relative mt-6 text-[12px] font-semibold uppercase tracking-wider text-muted">Баланс демо-рублей</p>
           <p className="relative mt-1 font-mono text-[36px] font-semibold leading-none tabular sm:text-[40px]">{points(s.balance)}</p>
           <div className="relative mt-5 flex flex-wrap items-center gap-2">
             <Button onClick={bonus} loading={busy} disabled={!!s.bonus.availableAt}>
