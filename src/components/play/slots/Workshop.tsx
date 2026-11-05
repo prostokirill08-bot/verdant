@@ -95,37 +95,45 @@ function Chest({ v, i, refEl }: { v: ChestView; i: number; refEl: (el: HTMLDivEl
         animate={v.bump ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.3 }}
         className={`relative block w-full ${v.full ? "chest-full" : ""}`} style={{ aspectRatio: DOME.aspect }}>
         {v.full && <span aria-hidden className="pointer-events-none absolute -inset-[18%] rounded-full" style={{ background: `radial-gradient(circle, ${st.color}88, transparent 62%)` }} />}
-        {/* Слои: сундук → горка монет (поднимается через transform) → передняя стенка → значок бонуса */}
-        <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
+        {/* Слои сундука и наполнение; общий передний слой монет и значок бонуса лежат поверх сцены. */}
+        <Image src={`/img/ny/slots/workshop/dome-back-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority style={{ filter: "drop-shadow(0 7px 9px rgb(0 0 0 / .48))" }} />
         <div className="absolute overflow-hidden" style={{ top: DOME.winTop, height: DOME.winH, left: DOME.winX, right: DOME.winX }}>
           {/* Горка монет занимает нижние 62% окна; поднимается из-за передней стенки по мере наполнения */}
           <div className="absolute inset-x-0 bottom-0 h-[62%] transition-transform duration-500 ease-out" style={{ transform: `translateY(${shown ? (1 - fill) * 100 : 100}%)` }}>
             <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="150px" className="object-cover object-bottom" />
           </div>
         </div>
-        <Image src={`/img/ny/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority />
-        <span className="absolute left-1/2 top-[68%] grid aspect-square w-[28%] -translate-x-1/2 place-items-center rounded-full"
-          style={{ background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`, boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
-          <Glyph kind={v.kind} className="size-[64%]" />
-        </span>
+        <Image src={`/img/ny/slots/workshop/dome-front-${i}.webp`} alt="" fill sizes="170px" className="object-contain" priority style={{ filter: "drop-shadow(0 6px 8px rgb(0 0 0 / .42))" }} />
       </motion.div>
     </div>
   );
 }
 
-/** Горы золотых монет под сундуками. back — гора за передним рядом, front — россыпь у ног передних сундуков. */
+/** Единая гора сокровищ: один фон и органичный передний слой, без повторяющихся тайлов. */
 function GoldHeap({ layer }: { layer: "back" | "front" }) {
-  const parts = layer === "back"
-    ? [{ l: -4, w: 46, flip: false }, { l: 27, w: 46, flip: true }, { l: 58, w: 46, flip: false }]
-    : [{ l: -20, w: 40, flip: true }, { l: 13.5, w: 40, flip: false }, { l: 46.5, w: 40, flip: true }, { l: 80, w: 40, flip: false }];   // вершины — между сундуками, значки не закрываются
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-x-0" style={layer === "back" ? { top: "30%", height: "24%", zIndex: 2 } : { bottom: "-3%", height: "23%", zIndex: 4 }}>
-      {parts.map((p, k) => (
-        <div key={k} className="absolute bottom-0 h-full" style={{ left: `${p.l}%`, width: `${p.w}%`, transform: p.flip ? "scaleX(-1)" : undefined }}>
-          <Image src="/img/ny/slots/workshop/pile.webp" alt="" fill sizes="260px" className="object-cover object-bottom" />
-        </div>
-      ))}
+  if (layer === "back") return (
+    <div aria-hidden className="pointer-events-none absolute inset-0" style={{ zIndex: 0 }}>
+      <Image src="/img/ny/slots/workshop/hoard.webp" alt="" fill sizes="(max-width: 560px) 100vw, 560px" className="object-fill" priority />
     </div>
+  );
+  return (
+    <div aria-hidden className="hoard-front pointer-events-none absolute inset-x-0 bottom-[-1%] h-[38%]" style={{ zIndex: 4 }}>
+      <Image src="/img/ny/slots/workshop/hoard-front.webp" alt="" fill sizes="(max-width: 560px) 100vw, 560px" className="object-fill" priority />
+    </div>
+  );
+}
+
+/** Значок бонуса выведен над передним слоем монет и всегда остаётся читаемым. */
+function ChestBadge({ kind, i }: { kind: ChestKind; i: number }) {
+  const st = CHEST_STYLE[kind]; const pl = PLACE[i]!;
+  const badgeTop = (pl.top === "0%" ? 0 : 36.5) + pl.w * 1.548 * 0.68;
+  return (
+    <span aria-hidden className="pointer-events-none absolute grid aspect-square -translate-x-1/2 place-items-center rounded-full"
+      style={{ left: `${pl.cx}%`, top: `${badgeTop}%`, width: `${pl.w * 0.28}%`, zIndex: 6,
+        background: `radial-gradient(circle at 35% 30%, #ffffff55, transparent 45%), radial-gradient(circle, ${st.color}, ${st.dark})`,
+        boxShadow: "0 0 0 2px #ffe08a, 0 0 0 4px #8a5a00, 0 3px 8px rgb(0 0 0 / 0.6)" }}>
+      <Glyph kind={kind} className="size-[64%]" />
+    </span>
   );
 }
 
@@ -471,11 +479,12 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
-          <div ref={stageRef} className="relative z-20 mx-auto w-full max-w-[560px] scroll-mt-20" style={{ aspectRatio: "100 / 82" }}>
+          <div ref={stageRef} className="relative z-20 mx-auto w-full max-w-[560px] scroll-mt-20 isolate" style={{ aspectRatio: "100 / 82" }}>
             {/* Золото: гора за передним рядом (на ней стоят задние сундуки) и россыпь у ног передних */}
             <GoldHeap layer="back" />
             {chests.map((c, i) => <Chest key={c.kind} v={c} i={i} refEl={(el) => { chestEls.current[i] = el; }} />)}
             <GoldHeap layer="front" />
+            {chests.map((c, i) => <ChestBadge key={`badge-${c.kind}`} kind={c.kind} i={i} />)}
             {spill && <CoinSpill key={spill.key} chest={spill.chest} />}
           </div>
           <BonusTotal state={fs} color={st} title={fs?.title} sub={fs?.sub} label="Выигрыш сундука" />

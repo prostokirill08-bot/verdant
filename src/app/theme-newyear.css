@@ -16,8 +16,6 @@ body::after {
 .garland::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 12px 8px,#ff4d5e 0 3px,transparent 5px),radial-gradient(circle at 36px 8px,#ffd166 0 3px,transparent 5px),radial-gradient(circle at 60px 8px,#3ee08f 0 3px,transparent 5px),radial-gradient(circle at 84px 8px,#8fdcff 0 3px,transparent 5px); background-size: 96px 14px; filter: drop-shadow(0 0 3px rgb(255 209 102 / .7)); animation: twinkle 1.8s steps(2) infinite; }
 .garland::after { content: ""; position: absolute; left: 0; right: 0; top: 2px; height: 1px; background: rgb(255 255 255 / .18); }
 @keyframes twinkle { 50% { opacity: .58; } }
-.snow-cap { position: relative; }
-.snow-cap::before { content: ""; position: absolute; left: 6px; right: 6px; top: -6px; height: 14px; z-index: 2; pointer-events: none; background: radial-gradient(14px 9px at 12% 70%,#fff 96%,transparent),radial-gradient(18px 10px at 30% 60%,#f3f8ff 96%,transparent),radial-gradient(12px 8px at 52% 75%,#fff 96%,transparent),radial-gradient(20px 10px at 74% 60%,#f3f8ff 96%,transparent),radial-gradient(12px 8px at 92% 72%,#fff 96%,transparent),linear-gradient(#fff,#fff) bottom/100% 5px no-repeat; border-radius: 10px 10px 2px 2px; }
 .newyear-decor { position: fixed; inset: 0; z-index: 39; pointer-events: none; overflow: hidden; }
 .newyear-decor::before { content: "✦"; position: absolute; top: 12%; right: 5%; color: rgb(255 209 102 / .25); font-size: 18px; text-shadow: 0 0 22px rgb(255 209 102 / .45); }
 html.bigwin-open body::before, html.bigwin-open body::after, html.bigwin-open .garland::before { animation-play-state: paused; visibility: hidden; }
@@ -41,3 +39,44 @@ html.fx-low .newyear-decor, html.anim-off .newyear-decor { display: none !import
 }
 @media (max-width: 640px) { .ornate-frame::before { left: 30px; right: 30px; } }
 html.anim-off .ornate-frame::before, html.bigwin-open .ornate-frame::before { animation: none; }
+
+/* Реалистичный лежащий снег */
+.snow-cap { position: relative; isolation: isolate; }
+.snow-cap::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  left: -1px;
+  right: -1px;
+  top: -2px;
+  height: clamp(24px, 6vw, 44px);
+  background: url("/img/ny/snow/snow-cap.svg") center top / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 3px rgb(3 12 25 / .38));
+}
+.snow-cap:nth-child(4n + 2)::before, :nth-child(4n + 2) > .snow-cap::before { background-image: url("/img/ny/snow/snow-cap-b.svg"); }
+.snow-cap:nth-child(4n + 3)::before, :nth-child(4n + 3) > .snow-cap::before { background-image: url("/img/ny/snow/snow-cap-c.svg"); }
+.snow-cap:nth-child(4n)::before, :nth-child(4n) > .snow-cap::before { background-image: url("/img/ny/snow/snow-cap-d.svg"); }
+/* A few fixed ice glints; no continuous animation or layout impact. */
+.snow-cap::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  top: 2px;
+  left: 4%;
+  width: 92%;
+  height: 13px;
+  opacity: .32;
+  background: radial-gradient(circle at 13% 45%, #fff 0 1px, transparent 1.8px),
+              radial-gradient(circle at 42% 20%, #fff 0 .8px, transparent 1.6px),
+              radial-gradient(circle at 71% 50%, #fff 0 1px, transparent 1.8px),
+              radial-gradient(circle at 89% 28%, #fff 0 .8px, transparent 1.6px);
+}
+html.fx-low .snow-cap::before {
+  filter: none;
+  background-image: linear-gradient(180deg, #fff 0%, #eaf2f8 58%, #a9bdcc 100%);
+  clip-path: polygon(0 0,100% 0,100% 48%,96% 55%,92% 45%,87% 62%,82% 50%,77% 57%,72% 42%,66% 58%,60% 46%,55% 62%,49% 48%,43% 58%,37% 44%,31% 58%,25% 46%,19% 60%,13% 45%,7% 56%,0 48%);
+}
+html.fx-low .snow-cap::after { display: none; }
+html.anim-off .snow-cap::before, html.anim-reduced .snow-cap::before { animation: none !important; }
