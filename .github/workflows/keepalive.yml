@@ -1,0 +1,13 @@
+# Будит сайт на бесплатном Render, если он всё-таки уснул (основной само-пинг — внутри сервера).
+name: keep-alive
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: curl -fsS --retry 3 --retry-delay 20 --max-time 90 https://verdant-t0ch.onrender.com/api/health -o /dev/null || true

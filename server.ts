@@ -20,6 +20,7 @@ const { startCrashEngine } = await import("@/server/crash/engine");
 const { crashSnapshot } = await import("@/server/crash/service");
 const { subscribe } = await import("@/server/realtime/bus");
 const { startJobs } = await import("@/server/jobs");
+const { startBots } = await import("@/server/bots");
 const { setupBot } = await import("@/server/telegram/bot");
 const { db } = await import("@/server/db");
 const upgradeNext = app.getUpgradeHandler();
@@ -60,6 +61,7 @@ setInterval(() => {
 
 server.listen(port, () => console.log(`> Verdant: http://localhost:${port} (${dev ? "dev" : "production"})`));
 void startCrashEngine();
+startBots();
 startJobs();
 void setupBot();
 
