@@ -11,7 +11,7 @@
 export type Sfx =
   | "tap" | "bet" | "chip" | "spin" | "reel" | "tick" | "win" | "bigwin" | "megawin" | "lose" | "bonus" | "coin" | "coins"
   | "card" | "flip" | "gem" | "boom" | "cashout" | "key" | "chest" | "jackpot" | "dice" | "pop" | "bells" | "whoosh" | "count" | "launch"
-  // темы новых слотов: «Снежная лавина», «Новогодний салют», «Хрустальный шар»
+  // темы новых слотов: «Лавина», «Салют», «Хрустальный шар»
   | "ice" | "rumble" | "chime" | "drop" | "whistle" | "firework" | "glass" | "harp" | "upgrade";
 
 let ctx: AudioContext | null = null;

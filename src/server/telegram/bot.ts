@@ -45,7 +45,7 @@ export async function setupBot() {
 
 type Message = { chat: { id: number; type: string }; text?: string; from?: { first_name?: string } };
 const open = (text: string, path = "") => ({ text, web_app: { url: `${appUrl()}${path}` } });
-const FEATURED: [string, string][] = [["🎰 Мастерская Санты", "workshop"], ["🃏 Блэкджек", "blackjack"], ["🚀 Crash", "crash"], ["💣 Mines", "mines"], ["🛷 Гонка на санях", "sledrace"], ["🂡 Снежный покер", "videopoker"]];
+const FEATURED: [string, string][] = [["🎰 Сундуки удачи", "workshop"], ["🃏 Блэкджек", "blackjack"], ["🚀 Crash", "crash"], ["💣 Mines", "mines"], ["🛷 Большая гонка", "sledrace"], ["🂡 Видеопокер", "videopoker"]];
 
 /** Ответ на сообщение боту. Кнопки web_app открывают сайт внутри Telegram с автоматическим входом. */
 export async function handleMessage(m: Message) {

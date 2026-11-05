@@ -112,7 +112,7 @@ body::after {
 @keyframes reel-wait { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 html.bigwin-open .cell-hot, html.bigwin-open .reel-wait { animation-play-state: paused; }
 
-/* Мастерская Санты: полный сундук пульсирует, подарки покачиваются (только transform) */
+/* Сундуки удачи: полный сундук пульсирует, подарки покачиваются (только transform) */
 .chest-full { will-change: transform; animation: chest-full .8s ease-in-out infinite; }
 @keyframes chest-full { 0%, 100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.08) rotate(-3deg); } 75% { transform: scale(1.08) rotate(3deg); } }
 .gift-wobble { display: inline-block; will-change: transform; animation: gift-wobble 1.6s ease-in-out infinite; }

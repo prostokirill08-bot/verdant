@@ -110,7 +110,7 @@ test("Интрига: включается после второго бонус-
   assert.equal(anticipationFrom(g([["b", "x"], ["x", "x"], ["x", "x"], ["x", "x"], ["b", "x"]]), "b"), null);
 });
 
-test("Мастерская Санты: пересчёт по сиду, сундуки, RTP", async () => {
+test("Сундуки удачи: пересчёт по сиду, сундуки, RTP", async () => {
   const W = await import("./workshop");
   const { rngFromArray, SLOT_FLOATS } = await import("./slots");
   // сервер (поток) = браузер (массив), с состоянием сундуков между спинами

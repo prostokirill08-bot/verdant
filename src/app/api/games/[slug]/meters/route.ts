@@ -2,7 +2,7 @@ import { route, HttpError } from "@/server/http";
 import { db } from "@/server/db";
 import { decodeMeters, emptyMeters, meterView } from "@/lib/fair/workshop";
 
-// Состояние сундуков игрока в «Мастерской Санты»: сколько монет собрано, сколько нужно, ставка бонуса
+// Состояние сундуков игрока в «Сундуков удачи»: сколько монет собрано, сколько нужно, ставка бонуса
 export const GET = route({ rate: { key: "rounds", limit: 120, window: 60 } }, async ({ user, params }) => {
   if (params.slug !== "workshop") throw new HttpError(404, "Игра не найдена", "not_found");
   if (!user) return { chests: meterView(emptyMeters()) };

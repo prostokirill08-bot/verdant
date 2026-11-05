@@ -98,21 +98,21 @@ ok("keno", (await p.req("/api/games/keno/bet", { amount: "1", params: { picks: [
 ok("keno: повтор чисел → 400", (await p.req("/api/games/keno/bet", { amount: "1", params: { picks: [1, 1] }, key: key() })).s === 400);
 ok("слот «Атлас»", (await p.req("/api/games/atlas/bet", { amount: "1", params: { buy: false }, key: key() })).j.round?.result.base.grid.length === 5);
 ok("слот «Неоновый сад»: покупка бонуса", (await p.req("/api/games/neon-garden/bet", { amount: "1", params: { buy: true }, key: key() })).j.round?.result.fs?.spins.length >= 10);
-{ // «Мастерская Санты»: сундуки сохраняются между спинами и совпадают с последним раундом
+{ // «Сундуки удачи»: сундуки сохраняются между спинами и совпадают с последним раундом
   let last = null;
   for (let i = 0; i < 15; i++) last = (await p.req("/api/games/workshop/bet", { amount: "1", params: {}, key: key() })).j.round;
   const m = (await p.req("/api/games/workshop/meters")).j.chests?.map((c) => c.have).join(",");
-  ok("слот «Мастерская Санты»: сундуки между спинами", last?.result.base.grid.length === 5 && m === last.result.after.map((x) => x.have).join(",") && last.params.meters !== undefined);
+  ok("слот «Сундуки удачи»: сундуки между спинами", last?.result.base.grid.length === 5 && m === last.result.after.map((x) => x.have).join(",") && last.params.meters !== undefined);
 }
 { // Новые слоты: обычное вращение и покупка бонуса; списание и выплата сходятся с журналом
   const sp = await newPlayer(); await sp.req("/api/account/deposit", { amount: "5000", method: "demo", key: key() });
   let a = await sp.req("/api/games/avalanche/bet", { amount: "1", params: { buy: false }, key: key() });
-  ok("слот «Снежная лавина»: поле 6×5 и каскады", a.s === 200 && a.j.round.result.base.steps[0].grid.length === 6 && a.j.round.result.base.steps[0].grid[0].length === 5);
+  ok("слот «Лавина»: поле 6×5 и каскады", a.s === 200 && a.j.round.result.base.steps[0].grid.length === 6 && a.j.round.result.base.steps[0].grid[0].length === 5);
   a = await sp.req("/api/games/avalanche/bet", { amount: "1", params: { buy: true }, key: key() });
   const av = a.j.round?.result?.fs?.spins ?? [];
   ok("«Лавина»: бонус, множитель растёт", a.s === 200 && a.j.round.bet === "10000" && av.length >= 10 && av.at(-1).xAfter >= 1, JSON.stringify(a.j).slice(0, 200));
   let s = await sp.req("/api/games/salute/bet", { amount: "1", params: { buy: false }, key: key() });
-  ok("слот «Новогодний салют»: 5×4", s.s === 200 && s.j.round.result.base.grid.length === 5 && s.j.round.result.base.grid[0].length === 4);
+  ok("слот «Салют»: 5×4", s.s === 200 && s.j.round.result.base.grid.length === 5 && s.j.round.result.base.grid[0].length === 4);
   s = await sp.req("/api/games/salute/bet", { amount: "1", params: { buy: true }, key: key() });
   const ss = s.j.round?.result?.fs?.spins ?? [];
   // ракеты шагают: ракета из вращения k на следующем вращении стоит на ряд выше (или улетела)
@@ -192,7 +192,7 @@ console.log("— Карточные игры и гонка");
   ok("баккара: выплата по правилам", r1.s === 200 && pay === want && (await p.balance()) === b0 - 300n + pay, `${w} ${pay}`);
   ok("баккара: пустая ставка → 400", (await p.req("/api/games/baccarat/bet", { params: {}, key: key() })).s === 400);
 }
-{ // Гонка на санях
+{ // Большая гонка
   const r1 = await p.req("/api/games/sledrace/bet", { amount: "1", params: { pick: 4 }, key: key() });
   ok("гонка: результат и порядок финиша", r1.s === 200 && r1.j.round.result.order.length === 5 && r1.j.round.result.order[0] === r1.j.round.result.winner);
   ok("гонка: неверный саночник → 400", (await p.req("/api/games/sledrace/bet", { amount: "1", params: { pick: 7 }, key: key() })).s === 400);

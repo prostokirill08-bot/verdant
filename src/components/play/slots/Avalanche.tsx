@@ -180,7 +180,7 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
         <div className="absolute inset-0 bg-gradient-to-b from-[#06142e]/40 via-[#071026]/30 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e0f2fe] drop-shadow-[0_2px_14px_rgb(143_220_255/0.9)]">❄️ СНЕЖНАЯ ЛАВИНА</h2>
+            <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-[#e0f2fe] drop-shadow-[0_2px_14px_rgb(143_220_255/0.9)]">❄️ ЛАВИНА</h2>
             <AnimatePresence>{x !== null && (
               <motion.div key={x} initial={{ scale: 1.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 12 }}
                 className="rounded-2xl bg-[linear-gradient(180deg,#e0f2fe,#60a5fa)] px-3 py-1 font-display text-[clamp(20px,4vw,28px)] font-bold text-[#06142e] shadow-[0_0_30px_#8fdcff]" data-testid="ava-x">×{x}</motion.div>
@@ -206,7 +206,7 @@ export function AvalancheGame({ cfg }: { cfg: GameConfig }) {
         </div>
       </div>
       <RoundsPanel slug="avalanche" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Снежная лавина — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Лавина — выплаты">
         <p>Поле 6×5, линий нет: платят <b>8 и больше одинаковых символов в любом месте</b>. Выигрышные символы раскалываются, оставшиеся падают вниз, сверху досыпаются новые — и так, пока появляются новые выигрыши (каскад). Числа — во сколько раз выигрыш больше общей ставки за 8–9 / 10–11 / 12+ символов.</p>
         <div className="grid grid-cols-2 gap-2">
           {[...AVA.high].reverse().concat([...AVA.low].reverse()).map((s) => (

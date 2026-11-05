@@ -467,7 +467,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
         <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/45 via-[#070b1f]/35 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-3 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(20px,4.4vw,32px)] font-bold tracking-wide text-[#ffd98a] drop-shadow-[0_2px_12px_rgb(255_150_40/0.8)]">🎅 МАСТЕРСКАЯ САНТЫ</h2>
+            <h2 className="font-display text-[clamp(20px,4.4vw,32px)] font-bold tracking-wide text-[#ffd98a] drop-shadow-[0_2px_12px_rgb(255_150_40/0.8)]">🎅 СУНДУКИ УДАЧИ</h2>
             {starX !== null && <span className="rounded-xl bg-black/60 px-3 py-1.5 font-display text-[20px] font-bold text-[#c38bff] ring-1 ring-[#c38bff]/60">×{starX}</span>}
           </div>
           {/* Пять сундуков: у каждого свой бонус */}
@@ -521,7 +521,7 @@ export function WorkshopGame({ cfg }: { cfg: GameConfig }) {
           ))}
         </div>, document.body)}
       <RoundsPanel slug="workshop" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Мастерская Санты — правила">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Сундуки удачи — правила">
         <p>25 фиксированных линий, ставка делится на 25. Выплата — за 3–5 одинаковых символов слева направо (числа — во сколько раз больше ставки на линию). <b>Дед Мороз</b> — дикий символ на барабанах 2–4.</p>
         <div className="grid grid-cols-2 gap-2">
           {(["nutcracker", "globe", "cocoa", "ginger", "mitten", "cane"] as const).map((s) => (

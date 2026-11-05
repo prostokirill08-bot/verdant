@@ -10,16 +10,16 @@ export type GameMeta = {
 };
 
 export const GAMES: Record<GameSlug, GameMeta> = {
-  avalanche: { name: "Снежная лавина", category: "slots", cover: "/img/ny/covers/avalanche.webp", bg: "/img/ny/bg/avalanche.webp", theme: ["#8fdcff", "#5b8cff"], badge: "Новинка", blurb: "Символы раскалываются, как лёд; в бонусе множитель лавины растёт с каждым обвалом" },
-  salute: { name: "Новогодний салют", category: "slots", cover: "/img/ny/covers/salute.webp", bg: "/img/ny/bg/salute.webp", theme: ["#ff5f6f", "#ffd166"], badge: "Новинка", blurb: "1024 способа; в бонусе ракеты поднимаются по полю и взрываются салютом" },
+  avalanche: { name: "Лавина", category: "slots", cover: "/img/ny/covers/avalanche.webp", bg: "/img/ny/bg/avalanche.webp", theme: ["#8fdcff", "#5b8cff"], badge: "Новинка", blurb: "Символы раскалываются, как лёд; в бонусе множитель лавины растёт с каждым обвалом" },
+  salute: { name: "Салют", category: "slots", cover: "/img/ny/covers/salute.webp", bg: "/img/ny/bg/salute.webp", theme: ["#ff5f6f", "#ffd166"], badge: "Новинка", blurb: "1024 способа; в бонусе ракеты поднимаются по полю и взрываются салютом" },
   crystal: { name: "Хрустальный шар", category: "slots", cover: "/img/ny/covers/crystal.webp", bg: "/img/ny/bg/crystal.webp", theme: ["#a78bfa", "#ffd166"], badge: "Новинка", blurb: "Шары-загадки; в бонусе они прилипают и каждый спин дорожают" },
-  workshop: { name: "Мастерская Санты", category: "slots", cover: "/img/ny/covers/workshop.webp", bg: "/img/ny/bg/workshop.webp", theme: ["#ffb02e", "#e8263f"], badge: "Новинка", blurb: "Монеты летят в 5 сундуков — у каждого свой бонус" },
+  workshop: { name: "Сундуки удачи", category: "slots", cover: "/img/ny/covers/workshop.webp", bg: "/img/ny/bg/workshop.webp", theme: ["#ffb02e", "#e8263f"], badge: "Новинка", blurb: "Монеты летят в 5 сундуков — у каждого свой бонус" },
   atlas: { name: "Атлас звёзд", category: "slots", cover: "/img/ny/covers/atlas.webp", bg: "/img/ny/bg/atlas.webp", theme: ["#5b8cff", "#ffd166"], badge: "Новинка", blurb: "Звёздная книга Деда Мороза: символ раскрывается на весь барабан" },
-  "neon-garden": { name: "Зимний сад", category: "slots", cover: "/img/ny/covers/neon-garden.webp", bg: "/img/ny/bg/neon-garden.webp", theme: ["#ff4d6d", "#3ee08f"], badge: "Новинка", blurb: "Зимний сад: 3 подарка BONUS — фриспины с ×3" },
-  blackjack: { name: "Блэкджек у камина", category: "table", cover: "/img/ny/covers/blackjack.webp", theme: ["#e8263f", "#ffd166"], badge: "Новинка", blurb: "Набери 21 раньше дилера: удвоение, сплит, блэкджек 3:2" },
-  videopoker: { name: "Снежный покер", category: "table", cover: "/img/ny/covers/videopoker.webp", theme: ["#8fdcff", "#ffd166"], badge: "Новинка", blurb: "Видеопокер: оставь нужные карты и собери комбинацию — до ×800" },
+  "neon-garden": { name: "Волшебный сад", category: "slots", cover: "/img/ny/covers/neon-garden.webp", bg: "/img/ny/bg/neon-garden.webp", theme: ["#ff4d6d", "#3ee08f"], badge: "Новинка", blurb: "Волшебный сад: 3 подарка BONUS — фриспины с ×3" },
+  blackjack: { name: "Блэкджек", category: "table", cover: "/img/ny/covers/blackjack.webp", theme: ["#e8263f", "#ffd166"], badge: "Новинка", blurb: "Набери 21 раньше дилера: удвоение, сплит, блэкджек 3:2" },
+  videopoker: { name: "Видеопокер", category: "table", cover: "/img/ny/covers/videopoker.webp", theme: ["#8fdcff", "#ffd166"], badge: "Новинка", blurb: "Видеопокер: оставь нужные карты и собери комбинацию — до ×800" },
   baccarat: { name: "Баккара", category: "table", cover: "/img/ny/covers/baccarat.webp", theme: ["#22c55e", "#ffd166"], badge: "Новинка", blurb: "Игрок, Банкир или Ничья — у кого ближе к 9" },
-  sledrace: { name: "Гонка на санях", category: "originals", cover: "/img/ny/covers/sledrace.webp", theme: ["#5b8cff", "#ff8a3d"], badge: "Новинка", blurb: "Пять саночников с горы — угадай, кто приедет первым" },
+  sledrace: { name: "Большая гонка", category: "originals", cover: "/img/ny/covers/sledrace.webp", theme: ["#5b8cff", "#ff8a3d"], badge: "Новинка", blurb: "Пять саночников с горы — угадай, кто приедет первым" },
   crash: { name: "Crash", category: "originals", cover: "/img/ny/covers/crash.webp", theme: ["#ff5f3d", "#ffd166"], badge: "Хит", blurb: "Санта летит на санях — забери до падения" },
   mines: { name: "Mines", category: "originals", cover: "/img/ny/covers/mines.webp", theme: ["#22c55e", "#ff4d6d"], blurb: "Собирай подарки, обходи бомбы" },
   dice: { name: "Dice", category: "originals", cover: "/img/ny/covers/dice.webp", theme: ["#8fdcff", "#e8263f"], blurb: "Ледяные кости: выбери шанс и брось" },

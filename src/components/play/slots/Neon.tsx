@@ -127,7 +127,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
         <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/50 via-[#070b1f]/30 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-3 p-3 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-[clamp(22px,4.6vw,34px)] font-bold tracking-wide text-[#bfe6ff] drop-shadow-[0_0_14px_#5bb8ff]">❄️ ЗИМНИЙ САД</h2>
+            <h2 className="font-display text-[clamp(22px,4.6vw,34px)] font-bold tracking-wide text-[#bfe6ff] drop-shadow-[0_0_14px_#5bb8ff]">❄️ ВОЛШЕБНЫЙ САД</h2>
             <AnimatePresence>{fs && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl bg-black/55 px-3 py-1.5 text-[12px] leading-tight ring-1 ring-gold/50">
                 <b className="text-gold">Бесплатно: {fs.left}</b><br /><span className="text-white/70">все выигрыши ×{NEON.fsMultiplier}</span>
@@ -152,7 +152,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
         </div>
       </div>
       <RoundsPanel slug="neon-garden" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Зимний сад — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Волшебный сад — выплаты">
         <p>25 фиксированных линий, ставка делится на 25. Выплата — за 3–5 одинаковых символов слева направо (числа — во сколько раз больше ставки на линию).</p>
         <div className="grid grid-cols-2 gap-2">
           {(["seven", "strawberry", "watermelon", "plum", "lemon", "cherry"] as const).map((s) => (

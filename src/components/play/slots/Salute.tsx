@@ -162,7 +162,7 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
         <Image src="/img/ny/bg/salute.webp" alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a0614]/40 via-[#0b0716]/30 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">
-          <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_14px_rgb(255_95_111/0.9)]">🎆 НОВОГОДНИЙ САЛЮТ</h2>
+          <h2 className="font-display text-[clamp(20px,4vw,30px)] font-bold tracking-wide text-gold drop-shadow-[0_2px_14px_rgb(255_95_111/0.9)]">🎆 САЛЮТ</h2>
           <BonusTotal state={fs} color="#ff8a9a" title="🎆 Салют" sub={fs ? `Ракет на поле: ${rockets.length}` : undefined} />
           <div className="snow-cap relative rounded-2xl bg-[linear-gradient(180deg,#3a0f2e,#120818)] p-2 shadow-[inset_0_0_0_2px_rgb(255_209_102/0.5),0_20px_50px_-20px_#000] sm:p-3">
             <Reels grid={grid} rows={4} spinKey={spinKey} turbo={turbo || !!fs} filler={randomSym} onStopped={() => stop.current()} slowFrom={slowFrom}
@@ -185,7 +185,7 @@ export function SaluteGame({ cfg }: { cfg: GameConfig }) {
         </div>
       </div>
       <RoundsPanel slug="salute" version={version} describe={describe} />
-      <InfoModal open={info} onClose={() => setInfo(false)} title="Новогодний салют — выплаты">
+      <InfoModal open={info} onClose={() => setInfo(false)} title="Салют — выплаты">
         <p><b>1024 способа выиграть</b>: линий нет — платят одинаковые символы на соседних барабанах, начиная с первого слева, в любых рядах. Числа — во сколько раз выигрыш больше общей ставки за каждый способ.</p>
         <div className="grid grid-cols-2 gap-2">
           {["deer", "snowman", "lantern", "bell", "popper", "tangerine"].map((s) => (

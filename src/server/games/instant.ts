@@ -122,7 +122,7 @@ const baccarat: InstantGame<BacParams> = {
   },
 };
 
-/** Гонка на санях: ставка на одного из пяти саночников. */
+/** Большая гонка: ставка на одного из пяти саночников. */
 const sledrace: InstantGame<{ pick: number }> = {
   params: z.object({ pick: z.number().int().min(0).max(SLEDS.length - 1) }),
   floats: SLED_FLOATS,
@@ -150,7 +150,7 @@ const avalanche = slot(AVA.buyPrice, playAvalanche);
 const salute = slot(SAL.buyPrice, playSalute);
 const crystal = slot(CRY.buyPrice, playCrystal);
 
-/** «Мастерская Санты»: монеты наполняют сундуки, состояние сундуков хранится между спинами. */
+/** «Сундуки удачи»: монеты наполняют сундуки, состояние сундуков хранится между спинами. */
 const workshop: InstantGame<Record<string, never>> = {
   params: z.object({}).strip() as unknown as z.ZodType<Record<string, never>, z.ZodTypeDef, unknown>,
   floats: 0,
