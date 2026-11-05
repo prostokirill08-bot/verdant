@@ -8,6 +8,9 @@ import { hashSeed, newServerSeed } from "../src/server/games/fair";
 const db = new PrismaClient();
 
 const GAMES = [
+  { slug: "sweets", title: "Сладкий взрыв", tagline: "Конфеты лопаются группами, а в бонусе клетки-множители растут до ×128", sortOrder: 0 },
+  { slug: "catch", title: "Большой улов", tagline: "Рыбы с ценниками — в бонусе рыбак забирает весь улов, множитель до ×10", sortOrder: 0 },
+  { slug: "gates", title: "Звёздные врата", tagline: "Ключи навсегда растят барабаны — до 16 807 способов выиграть", sortOrder: 0 },
   { slug: "workshop", title: "Сундуки удачи", tagline: "Монеты летят в сундуки — каждый сундук открывает свой бонус", sortOrder: 0 },
   { slug: "blackjack", title: "Блэкджек", tagline: "Набери 21 раньше дилера: удвоение, сплит, блэкджек 3:2", sortOrder: 1 },
   { slug: "videopoker", title: "Видеопокер", tagline: "Видеопокер «валеты и выше»: оставь нужные карты — до ×800", sortOrder: 1 },
@@ -37,6 +40,7 @@ const ADDED: Record<string, string> = {
   atlas: "2026-11-03T00:47:02Z", "neon-garden": "2026-11-03T00:47:02Z",
   tower: "2026-11-03T04:13:30Z", hilo: "2026-11-03T04:13:30Z", wheel: "2026-11-03T04:13:30Z", keno: "2026-11-03T04:13:30Z", coinflip: "2026-11-03T04:13:30Z",
   workshop: "2026-11-03T11:12:13Z", blackjack: "2026-11-03T18:41:22Z", videopoker: "2026-11-03T18:41:22Z", baccarat: "2026-11-03T18:41:22Z", sledrace: "2026-11-03T18:41:22Z",
+  sweets: "2026-11-05T12:00:00Z", catch: "2026-11-05T12:00:00Z", gates: "2026-11-05T12:00:00Z",
   avalanche: "2026-11-04T21:12:34Z", salute: "2026-11-04T21:12:34Z", crystal: "2026-11-04T21:12:34Z",
 };
 

@@ -1,5 +1,6 @@
 "use client";
 import { playAvalanche, playCrystal, playSalute } from "@/lib/fair/slots2";
+import { playCatch, playGates, playSweets } from "@/lib/fair/slots3";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -105,11 +106,11 @@ function Verifier() {
     if (!s.trim()) return;
     if (!window.crypto?.subtle) { setErr("Браузер не поддерживает WebCrypto (нужен HTTPS)"); return; }
     const edge = Number(p.edgeBp) || 0; const nonce = Number(n) || 0;
-    const SLOT_PLAY = { atlas: playAtlas, "neon-garden": playNeon, avalanche: playAvalanche, salute: playSalute, crystal: playCrystal } as const;
+    const SLOT_PLAY = { atlas: playAtlas, "neon-garden": playNeon, avalanche: playAvalanche, salute: playSalute, crystal: playCrystal, sweets: playSweets, catch: playCatch, gates: playGates } as const;
     const slot = game in SLOT_PLAY;
     const EXTRA: Record<string, number> = { coinflip: X.COIN_MAX_FLIPS, wheel: 1, keno: 10, tower: X.TOWER_FLOATS, hilo: X.HILO_MAX_CARDS, blackjack: K.BJ_FLOATS, videopoker: K.VP_FLOATS, baccarat: K.BAC_FLOATS, sledrace: K.SLED_FLOATS };
     // каскады «Лавины» и длинные бонусы берут больше чисел — с запасом
-    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS * (game === "atlas" || game === "neon-garden" ? 1 : 4) : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
+    const need = game === "crash" ? 1 : slot ? SLOT_FLOATS * (game === "atlas" || game === "neon-garden" ? 1 : game === "sweets" ? 10 : 4) : EXTRA[game] ?? O.FLOATS_NEEDED[game as keyof typeof O.FLOATS_NEEDED];
     const fs = game === "crash" ? await browserFloats(s.trim(), "crash", 0, 1) : await browserFloats(s.trim(), c.trim(), nonce, need);
     if (game === "workshop") {
       // Нужны ставка и состояние сундуков до спина — они подставляются из ссылки «Проверить»
@@ -189,7 +190,7 @@ function Verifier() {
           <label className="grid gap-1"><Label>Ряды</Label><select value={p.rows} onChange={set("rows")} className={inp}>{O.PLINKO_ROWS.map((r) => <option key={r}>{r}</option>)}</select></label>
           <label className="grid gap-1"><Label>Риск</Label><select value={p.risk} onChange={set("risk")} className={inp}>{O.PLINKO_RISKS.map((r) => <option key={r} value={r}>{r === "low" ? "низкий" : r === "medium" ? "средний" : "высокий"}</option>)}</select></label>
         </>}
-        {["atlas", "neon-garden", "avalanche", "salute", "crystal"].includes(game) && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
+        {["atlas", "neon-garden", "avalanche", "salute", "crystal", "sweets", "catch", "gates"].includes(game) && <div><Label>Покупка бонуса</Label><Segmented value={p.buy ?? "false"} onChange={(v) => setP((x) => ({ ...x, buy: v }))} options={[["false", "Нет"], ["true", "Да"]]} /></div>}
         {game === "workshop" && <>
           <label className="grid gap-1"><Label>Ставка, коп.</Label><input value={p.bet ?? "100"} onChange={set("bet")} className={inp} /></label>
           <label className="grid gap-1"><Label>Сундуки до спина</Label><input value={p.meters ?? ""} onChange={set("meters")} className={inp} placeholder="3|0|12|5|1" /></label>

@@ -1,5 +1,5 @@
 // Каталог игр: категория, новогодняя обложка, цвет темы. Настройки (лимиты, вкл/выкл) — в БД.
-export const GAME_SLUGS = ["avalanche", "salute", "crystal", "workshop", "atlas", "neon-garden", "blackjack", "videopoker", "baccarat", "sledrace", "crash", "mines", "tower", "hilo", "wheel", "keno", "coinflip", "dice", "plinko", "limbo", "roulette"] as const;
+export const GAME_SLUGS = ["sweets", "catch", "gates", "avalanche", "salute", "crystal", "workshop", "atlas", "neon-garden", "blackjack", "videopoker", "baccarat", "sledrace", "crash", "mines", "tower", "hilo", "wheel", "keno", "coinflip", "dice", "plinko", "limbo", "roulette"] as const;
 export type GameSlug = (typeof GAME_SLUGS)[number];
 export type GameCategory = "slots" | "originals" | "table";
 
@@ -10,6 +10,9 @@ export type GameMeta = {
 };
 
 export const GAMES: Record<GameSlug, GameMeta> = {
+  sweets: { name: "Сладкий взрыв", category: "slots", cover: "/img/ny/covers/sweets.webp", bg: "/img/ny/bg/sweets.webp", theme: ["#ff8ad8", "#ffd166"], badge: "Новинка", blurb: "Группы конфет лопаются; в бонусе клетки-множители копятся до ×128" },
+  catch: { name: "Большой улов", category: "slots", cover: "/img/ny/covers/catch.webp", bg: "/img/ny/bg/catch.webp", theme: ["#7cf5b6", "#8fdcff"], badge: "Новинка", blurb: "Рыбы с ценниками; в бонусе рыбак забирает весь улов" },
+  gates: { name: "Звёздные врата", category: "slots", cover: "/img/ny/covers/gates.webp", bg: "/img/ny/bg/gates.webp", theme: ["#a78bfa", "#ffd166"], badge: "Новинка", blurb: "Ключи растят барабаны — до 16 807 способов выиграть" },
   avalanche: { name: "Лавина", category: "slots", cover: "/img/ny/covers/avalanche.webp", bg: "/img/ny/bg/avalanche.webp", theme: ["#8fdcff", "#5b8cff"], badge: "Новинка", blurb: "Символы раскалываются, как лёд; в бонусе множитель лавины растёт с каждым обвалом" },
   salute: { name: "Салют", category: "slots", cover: "/img/ny/covers/salute.webp", bg: "/img/ny/bg/salute.webp", theme: ["#ff5f6f", "#ffd166"], badge: "Новинка", blurb: "1024 способа; в бонусе ракеты поднимаются по полю и взрываются салютом" },
   crystal: { name: "Хрустальный шар", category: "slots", cover: "/img/ny/covers/crystal.webp", bg: "/img/ny/bg/crystal.webp", theme: ["#a78bfa", "#ffd166"], badge: "Новинка", blurb: "Шары-загадки; в бонусе они прилипают и каждый спин дорожают" },
@@ -38,7 +41,7 @@ export const CATEGORY_NAMES: Record<GameCategory, string> = { slots: "Слоты
 export const POPULAR: GameSlug[] = ["avalanche", "workshop", "salute", "crash", "crystal", "blackjack", "mines", "atlas", "plinko", "sledrace", "roulette"];
 /** RTP для карточки игры: у слотов и кено — по таблицам, у остальных — 100% минус преимущество. */
 export function rtpLabel(slug: GameSlug, edgeBp: number): string {
-  const fixed: Partial<Record<GameSlug, string>> = { avalanche: "97%", salute: "95,5%", crystal: "96,5%", workshop: "95,5%", atlas: "95,5%", "neon-garden": "95,8%", keno: "96–97,5%", plinko: "97–99,5%", wheel: "99%", roulette: "97,3%", blackjack: "99,3%", videopoker: "99,5%", baccarat: "98,9%" };
+  const fixed: Partial<Record<GameSlug, string>> = { sweets: "96%", catch: "96%", gates: "96%", avalanche: "97%", salute: "95,5%", crystal: "96,5%", workshop: "95,5%", atlas: "95,5%", "neon-garden": "95,8%", keno: "96–97,5%", plinko: "97–99,5%", wheel: "99%", roulette: "97,3%", blackjack: "99,3%", videopoker: "99,5%", baccarat: "98,9%" };
   return fixed[slug] ?? `${(100 - edgeBp / 100).toFixed(2).replace(".", ",")}%`;
 }
 export const isGameSlug = (s: string): s is GameSlug => (GAME_SLUGS as readonly string[]).includes(s);

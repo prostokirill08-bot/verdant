@@ -1,7 +1,7 @@
 import { route, HttpError } from "@/server/http";
 import { db } from "@/server/db";
 
-const SLOTS = new Set(["atlas", "neon-garden", "workshop", "avalanche", "salute", "crystal"]);
+const SLOTS = new Set(["atlas", "neon-garden", "workshop", "avalanche", "salute", "crystal", "sweets", "catch", "gates"]);
 
 // Сколько обычных спинов игрок сделал в слоте с последнего бонуса, выпавшего сам (купленные бонусы не считаются; в «Мастерской» — любой открытый сундук)
 export const GET = route({ rate: { key: "rounds", limit: 120, window: 60 } }, async ({ user, params }) => {
