@@ -1,7 +1,7 @@
 "use client";
 import { sfx, type Sfx } from "@/lib/sound";
 import { SoundToggle } from "@/components/ui/SoundToggle";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -190,21 +190,28 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
   }, []);
   const dur = short ? 1500 : mult >= 200 ? 7500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
   const target = Number(amount) / 100;
+  /** Доля досчитанной суммы (0…1). Хранится отдельно от DOM: при смене уровня блок с суммой создаётся заново и должен сразу показать текущее значение. */
+  const progress = useRef(0);
+  const draw = useCallback(() => {
+    if (amountEl.current) amountEl.current.textContent = fmt(target * progress.current);
+    if (multEl.current) multEl.current.textContent = (mult * progress.current).toFixed(2);
+  }, [target, mult]);
+  // После каждой перерисовки (смена уровня, финал) — заново пишем текущие цифры в новые элементы
+  useLayoutEffect(() => { if (show) draw(); });
 
   useEffect(() => {
-    if (!show) { setTierIdx(0); setFinished(false); skip.current = false; return; }
+    if (!show) { setTierIdx(0); setFinished(false); skip.current = false; progress.current = 0; return; }
+    progress.current = 0;
     document.documentElement.classList.add("bigwin-open");   // ставим на паузу фоновый снег под оверлеем
-    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0; let lastTick = 0;
+    const t0 = performance.now(); let raf = 0; let to: ReturnType<typeof setTimeout> | undefined; let lastTier = 0; let lastDraw = 0; let lastTick = 0; let ended = false;
     sfx(short ? "win" : "bigwin");
     const tick = (t: number) => {
+      if (ended) return;
       const p = skip.current ? 1 : Math.min(1, (t - t0) / dur);
       const e = 1 - Math.pow(1 - p, 2);
+      progress.current = e;
       // Цифры обновляем ~30 раз в секунду напрямую в DOM — без перерисовки всего оверлея
-      if (t - lastDraw > 33 || p === 1) {
-        lastDraw = t;
-        if (amountEl.current) amountEl.current.textContent = fmt(target * e);
-        if (multEl.current) multEl.current.textContent = (mult * e).toFixed(2);
-      }
+      if (t - lastDraw > 33 || p === 1) { lastDraw = t; draw(); }
       const ti = tierOf(mult * e);
       if (p < 1 && t - lastTick > 90) { lastTick = t; sfx("count", { pitch: 1 + e * 0.6 }); }   // «счётчик» набегающей суммы
       if (ti !== lastTier) {
@@ -212,11 +219,13 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
         try { navigator.vibrate?.(ti >= 3 ? [60, 40, 90] : 50); } catch {}
       }
       if (p < 1) raf = requestAnimationFrame(tick);
-      else { setFinished(true); sfx("coins"); to = setTimeout(() => done.current(), short ? 1100 : 2600); }
+      else { ended = true; clearTimeout(guard); setFinished(true); sfx("coins"); to = setTimeout(() => done.current(), short ? 1100 : 2600); }
     };
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); if (to) clearTimeout(to); document.documentElement.classList.remove("bigwin-open"); };
-  }, [show, target, mult, dur, short]);
+    // Страховка: если браузер притормозил анимацию (фоновая вкладка, видео поверх на iPhone) — досчитываем сразу
+    const guard = setTimeout(() => { if (!ended) { skip.current = true; tick(performance.now()); } }, dur + 1200);
+    return () => { cancelAnimationFrame(raf); clearTimeout(guard); if (to) clearTimeout(to); document.documentElement.classList.remove("bigwin-open"); };
+  }, [show, target, mult, dur, short, draw]);
 
   const tier = TIERS[tierIdx]!;
   const [c1, c2] = tier.c;
@@ -255,9 +264,9 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
               {tierIdx === 0 && label && !short ? "ИТОГ БОНУСА" : tier.title}
             </p>
             <p className="mt-2 font-mono text-[clamp(38px,11vw,104px)] font-bold leading-none tabular text-gold" style={{ textShadow: `0 0 18px ${c1}` }}>
-              <span ref={amountEl}>0,00</span> {SNOW}
+              <span ref={amountEl} /> {SNOW}
             </p>
-            <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×<span ref={multEl}>0.00</span> ставки</p>
+            <p className="mt-2 rounded-full bg-black/40 px-4 py-1 font-mono text-[clamp(16px,3.6vw,24px)] font-bold text-white ring-1 ring-white/20">×<span ref={multEl} /> ставки</p>
             {label && <p className="mt-3 text-[clamp(14px,3vw,18px)] font-semibold text-white/85">{label}</p>}
             <p className="mt-6 text-[12px] text-white/45">{finished ? "нажми, чтобы продолжить" : "нажми, чтобы досчитать"}</p>
           </div>
