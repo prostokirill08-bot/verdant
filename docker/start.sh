@@ -3,4 +3,5 @@
 set -e
 npx prisma migrate deploy
 npx tsx prisma/seed.ts
-exec npx tsx server.ts
+# Один процесс node (без обёрток npx/tsx: −130 МБ), кучу ограничиваем под 512 МБ бесплатного тарифа
+exec node --max-old-space-size=300 --import tsx server.ts
