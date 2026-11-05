@@ -10,6 +10,7 @@ import { getSetting, putSetting } from "../settings";
 import { notify, notifyMany } from "../progress/notify";
 import { points } from "@/lib/format";
 import { applyEntry, withUserTx } from "../wallet/ledger";
+import { WAGERING_ENABLED, WAGERING_OFF_TEXT } from "../flags";
 import { JACKPOT_BASE, jackpotPool, KEY_MIN_BET, KEY_PER_WAGER, KEYS_NEEDED, takeJackpot } from "./keys";
 
 // ---------- Сундук со снежными ключами ----------
@@ -24,6 +25,7 @@ export const CHEST_PRIZES: { amount: bigint | "grand"; weight: number }[] = [
 const WEIGHT = CHEST_PRIZES.reduce((s, p) => s + p.weight, 0);
 
 export async function openChest(userId: string) {
+  if (!WAGERING_ENABLED) throw new HttpError(403, WAGERING_OFF_TEXT, "wagering_off");
   const res = await withUserTx(userId, async (tx) => {
     const st = await tx.promoState.findUnique({ where: { userId } });
     if (!st || st.keys < KEYS_NEEDED) throw new HttpError(400, `Нужно ${KEYS_NEEDED} ключа — пока собрано ${st?.keys ?? 0}`, "no_keys");
@@ -100,6 +102,7 @@ export async function currentTournament() {
  * Повторный запуск ничего не делает: ключ журнала, (week, place) и статус турнира уникальны.
  */
 export async function payTournament(now = Date.now()) {
+  if (!WAGERING_ENABLED) return 0;   // призы не выплачиваем, пока ставки выключены
   const prev = weekBounds(now - 7 * DAY);
   if (now - prev.end.getTime() > 6 * DAY) return 0;
   const existing = await db.tournament.findUnique({ where: { id: prev.id } });

@@ -1,6 +1,7 @@
 import type { CrashRound, Prisma, Round, SeedPair } from "@prisma/client";
 import { HttpError } from "../http";
 import { createSeedPair } from "./fair";
+import { WAGERING_ENABLED, WAGERING_OFF_TEXT } from "../flags";
 
 type Tx = Prisma.TransactionClient;
 const jsonSafe = (v: unknown) => JSON.parse(JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? x.toString() : x)));
@@ -35,6 +36,7 @@ export async function nextNonce(tx: Tx, userId: string) {
 export async function loadGame(tx: Tx, slug: string, amount: bigint) {
   const game = await tx.game.findUnique({ where: { slug } });
   if (!game) throw new HttpError(404, "Игра не найдена", "not_found");
+  if (!WAGERING_ENABLED) throw new HttpError(403, WAGERING_OFF_TEXT, "wagering_off");
   if (!game.enabled) throw new HttpError(403, "Игра временно отключена", "game_disabled");
   if (amount < game.minBet || amount > game.maxBet) throw new HttpError(400, `Ставка от ${Number(game.minBet) / 100} до ${Number(game.maxBet) / 100} ₽`, "bet_limits");
   const settings = await tx.setting.findUnique({ where: { key: "platform" } });

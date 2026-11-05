@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { FavButton } from "@/components/games/FavButton";
+import { WAGERING_ENABLED, WAGERING_OFF_TEXT } from "@/server/flags";
 import { SoundChip } from "@/components/ui/SoundToggle";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,7 +23,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
   const game = await db.game.findUnique({ where: { slug } });
   if (!game) notFound();
   const meta = GAMES[slug];
-  const cfg = { slug, title: game.title, minBet: game.minBet.toString(), maxBet: game.maxBet.toString(), edgeBp: game.houseEdgeBp, enabled: game.enabled };
+  const cfg = { slug, title: game.title, minBet: game.minBet.toString(), maxBet: game.maxBet.toString(), edgeBp: game.houseEdgeBp, enabled: game.enabled && WAGERING_ENABLED };
   const slot = meta.category === "slots";
   return (
     <div className="relative grid min-w-0 gap-5 overflow-x-clip [&>*]:min-w-0">
@@ -45,7 +46,8 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
           <FavButton slug={slug} className="size-[34px]" size={17} />
         </div>
       </div>
-      {!game.enabled && <p className="relative rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-[14px] text-warn">Игра временно отключена администратором. Историю раундов можно посмотреть ниже.</p>}
+      {!WAGERING_ENABLED ? <p className="relative rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-[14px] text-warn" data-testid="wagering-off">{WAGERING_OFF_TEXT}. Игру можно посмотреть, историю раундов — ниже.</p>
+        : !game.enabled && <p className="relative rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-[14px] text-warn">Игра временно отключена администратором. Историю раундов можно посмотреть ниже.</p>}
       <div className="relative"><GamePlayer cfg={cfg} /></div>
     </div>
   );
