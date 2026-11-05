@@ -29,6 +29,7 @@ enum LedgerType {
   ADMIN_ADJUST  // ручная корректировка администратором
   PROMO         // призы акций: сундук со снежными ключами, турнир недели
   DEPOSIT       // пополнение через демо-кассу (реальные деньги не участвуют)
+  REWARD        // награды за достижения и ежедневные задания
 }
 
 enum RoundStatus {
@@ -53,6 +54,7 @@ model User {
   lockedUntil   DateTime?
   lastLoginAt   DateTime?
   lastBonusAt   DateTime?
+  prefs         Json       @default("{}")     // настройки интерфейса: звук, анимации, качество эффектов
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -66,6 +68,12 @@ model User {
   promo         PromoState?
   promoWins     PromoWin[]
   deposits      Deposit[]
+  favorites     Favorite[]
+  activity      ActivityDay[]
+  achievements  UserAchievement[]
+  quests        UserQuest[]
+  notifications Notification[]
+  tournaments   TournamentEntry[]
 }
 
 /** Пополнение через демо-кассу. Деньги не списываются: запись нужна для истории, лимитов и отчёта в админке. */
@@ -144,8 +152,11 @@ model Game {
   maxBet       BigInt   @default(1000000)  // 10 000 баллов
   houseEdgeBp  Int      @default(100)      // преимущество в базисных пунктах (100 = 1%)
   sortOrder    Int      @default(0)
+  category     String?                     // slots | originals | table — переопределение категории из админки
+  addedAt      DateTime @default(now())    // дата появления игры (сортировка «по новизне»)
   updatedAt    DateTime @updatedAt
   rounds       Round[]
+  favorites    Favorite[]
 }
 
 // Пара сидов provably fair: хэш серверного сида показан заранее, сам сид раскрывается при смене пары.
@@ -269,5 +280,144 @@ model PromoWin {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([week, place])
+  @@index([createdAt])
+}
+
+/// Избранные игры игрока (сохраняются между сессиями и устройствами).
+model Favorite {
+  userId    String
+  gameSlug  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameSlug], references: [slug], onDelete: Cascade)
+
+  @@id([userId, gameSlug])
+}
+
+/// Дни, в которые игрок заходил на платформу (по Москве, YYYY-MM-DD). Нужны для достижений и заданий.
+model ActivityDay {
+  userId    String
+  day       String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
+  @@index([day])
+}
+
+/// Описание достижения. metric — что считаем (rounds_total, wins_total …), target — сколько нужно.
+model AchievementDef {
+  code        String   @id
+  title       String
+  description String
+  icon        String                       // ключ встроенной иконки
+  metric      String
+  target      Int
+  reward      BigInt   @default(0)         // демо-кредиты (в сотых)
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  unlocked    UserAchievement[]
+}
+
+/// Полученное достижение. Составной ключ — достижение нельзя получить дважды.
+model UserAchievement {
+  userId     String
+  code       String
+  unlockedAt DateTime @default(now())
+  reward     BigInt   @default(0)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  def        AchievementDef @relation(fields: [code], references: [code], onDelete: Cascade)
+
+  @@id([userId, code])
+  @@index([code])
+}
+
+/// Шаблон ежедневного задания. pinned — показывается каждый день, остальные чередуются.
+model QuestDef {
+  code        String   @id
+  title       String
+  description String
+  metric      String                       // rounds_today, games_today, categories_today, new_game_today, visit_today …
+  target      Int
+  reward      BigInt   @default(0)
+  enabled     Boolean  @default(true)
+  pinned      Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  progress    UserQuest[]
+}
+
+/// Выполнение задания за конкретный день. Ключ (игрок, день, задание) — награду нельзя получить дважды.
+model UserQuest {
+  userId      String
+  day         String
+  code        String
+  completedAt DateTime @default(now())
+  claimedAt   DateTime?
+  reward      BigInt   @default(0)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  def         QuestDef @relation(fields: [code], references: [code], onDelete: Cascade)
+
+  @@id([userId, day, code])
+  @@index([day])
+}
+
+/// Внутренние уведомления: достижения, задания, турниры, ежедневная награда.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  kind      String                         // achievement | quest | tournament_start | tournament_end | daily_bonus | system
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+/// Завершённый (или идущий) турнир недели. id — неделя, например 2026-W45.
+model Tournament {
+  id          String    @id
+  title       String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      String    @default("ACTIVE") // ACTIVE | FINISHED
+  prizes      Json                         // призы по местам (строки, сотые доли кредита)
+  notifiedAt  DateTime?                    // уведомление о старте разослано
+  finishedAt  DateTime?
+  entries     TournamentEntry[]
+}
+
+/// Итоговая таблица турнира (фиксируется при завершении).
+model TournamentEntry {
+  tournamentId String
+  place        Int
+  userId       String
+  score        Decimal  @db.Decimal(14, 4)  // лучший множитель
+  game         String
+  prize        BigInt   @default(0)
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([tournamentId, place])
+  @@index([userId])
+}
+
+/// Системные ошибки сервера и клиента — видны в админке.
+model ErrorLog {
+  id        String   @id @default(cuid())
+  source    String                          // api | job | client
+  path      String?
+  message   String
+  stack     String?
+  userId    String?
+  createdAt DateTime @default(now())
+
   @@index([createdAt])
 }

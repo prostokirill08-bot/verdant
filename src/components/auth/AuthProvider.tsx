@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
-export type Me = { publicId: string; username: string; email: string; role: "USER" | "SUPPORT" | "ADMIN"; avatar: string; hidden?: boolean };
+export type Me = { publicId: string; username: string; email: string; role: "USER" | "SUPPORT" | "ADMIN"; avatar: string; hidden?: boolean; prefs?: Record<string, unknown> };
 type Ctx = { user: Me | null; balance: string; loading: boolean; refresh: () => Promise<void>; setBalance: (b: string) => void };
 
 const AuthCtx = createContext<Ctx>({ user: null, balance: "0", loading: true, refresh: async () => {}, setBalance: () => {} });

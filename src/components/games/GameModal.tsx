@@ -23,12 +23,22 @@ export function GameModalProvider({ children }: { children: React.ReactNode }) {
   const [slug, setSlug] = useState<GameSlug | null>(null);
   const [rows, setRows] = useState<Record<string, GameRow>>({});
   const [favs, setFavs] = useState<GameSlug[]>([]);
-  useEffect(() => setFavs(readFavs()), []);
-  const toggleFav = useCallback((s: GameSlug) => setFavs((f) => {
-    const next = f.includes(s) ? f.filter((x) => x !== s) : [...f, s];
-    try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
-    return next;
-  }), []);
+  const { user } = useAuth();
+  // Избранное: у вошедшего игрока хранится на сервере (общее для всех устройств), у гостя без входа — в браузере.
+  // После входа избранное из браузера один раз переносится в аккаунт.
+  useEffect(() => {
+    if (!user) { setFavs(readFavs()); return; }
+    const local = readFavs();
+    const req = local.length ? api<{ favorites: string[] }>("/api/favorites", { body: { merge: local } }) : api<{ favorites: string[] }>("/api/favorites");
+    req.then((r) => { setFavs(r.favorites.filter((x): x is GameSlug => x in GAMES)); try { localStorage.removeItem(FAV_KEY); } catch {} }).catch(() => setFavs(local));
+  }, [user?.publicId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggleFav = useCallback((s: GameSlug) => {
+    const on = !favs.includes(s);
+    const next = on ? [s, ...favs] : favs.filter((x) => x !== s);
+    setFavs(next);
+    if (user) api<{ favorites: string[] }>("/api/favorites", { body: { slug: s, on } }).then((r) => setFavs(r.favorites.filter((x): x is GameSlug => x in GAMES))).catch(() => setFavs(favs));
+    else try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
+  }, [favs, user]);
   const open = useCallback((s: GameSlug) => {
     setSlug(s);
     if (!Object.keys(rows).length) api<{ games: GameRow[] }>("/api/games").then((r) => setRows(Object.fromEntries(r.games.map((g) => [g.slug, g])))).catch(() => {});
@@ -90,7 +100,7 @@ function GameSheet({ slug, row, fav, onFav, onClose }: { slug: GameSlug; row?: G
           <div><p className="text-muted">Ставка</p><p className="font-mono text-soft">{row ? `${points(row.minBet)} – ${points(row.maxBet)}` : "—"}</p></div>
           <div><p className="text-muted">Честность</p><p className="text-accent">🛡️ проверяемый результат</p></div>
         </div>
-        {!user && <p className="relative mt-3 text-[12.5px] text-muted">«Демо» — сразу играть без регистрации на демо-рублях (аккаунт гостя хранится 3 дня). «Играть» — зарегистрироваться и сохранить баланс.</p>}
+        {!user && <p className="relative mt-3 text-[12.5px] text-muted">«Демо» — сразу играть без регистрации на демо-кредитах (аккаунт гостя хранится 3 дня). «Играть» — зарегистрироваться и сохранить баланс.</p>}
         {err && <p className="relative mt-2 text-[13px] text-danger">{err}</p>}
         <div className={`relative mt-4 grid gap-2 ${user ? "grid-cols-1" : "grid-cols-[1fr_1.4fr]"}`}>
           {!user && (

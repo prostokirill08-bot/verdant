@@ -4,12 +4,13 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { GAMES, type GameSlug } from "@/lib/games";
 import { useGameModal } from "./GameModal";
+import { FavButton } from "./FavButton";
 
 /** Плитка игры: обложка, название, бейдж; при наведении — подъём и свечение в цвете темы игры. */
 export function GameCard({ slug, title, enabled = true, index = 0, size = "md" }: { slug: GameSlug; title?: string; enabled?: boolean; index?: number; size?: "md" | "lg" }) {
   const g = GAMES[slug]; const { open } = useGameModal();
   return (
-    <motion.div className="snow-cap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 0.4) }}>
+    <motion.div className="relative" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 0.4) }}>
       <Link href={`/games/${slug}`} onClick={(e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); open(slug); }} className="group relative block overflow-hidden rounded-2xl bg-[#06120b] ring-1 ring-[#29402e]/80 transition-transform duration-200 hover:-translate-y-1.5 focus-visible:outline-2 focus-visible:outline-accent"
         style={{ boxShadow: `0 18px 40px -22px ${g.theme[0]}` }}>
         <div className={`relative ${size === "lg" ? "aspect-[4/3]" : "aspect-[4/3]"}`}>
@@ -22,9 +23,10 @@ export function GameCard({ slug, title, enabled = true, index = 0, size = "md" }
             <p className="font-display text-[14px] font-bold leading-tight drop-shadow sm:text-[15px]">{title ?? g.name}</p>
             <p className="mt-0.5 line-clamp-1 text-[12px] text-white/70">{g.blurb}</p>
           </div>
-          <span className="absolute right-2 top-2 grid size-9 scale-75 place-items-center rounded-full bg-accent text-accent-ink opacity-0 shadow-lg transition-all group-hover:scale-100 group-hover:opacity-100" aria-hidden>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z" /></svg>
+          <span className="absolute left-1/2 top-[40%] grid size-11 -translate-x-1/2 -translate-y-1/2 scale-75 place-items-center rounded-full bg-accent text-accent-ink opacity-0 shadow-lg transition-all group-hover:scale-100 group-hover:opacity-100" aria-hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z" /></svg>
           </span>
+          <FavButton slug={slug} className="absolute right-2 top-2 size-8" size={16} />
         </div>
       </Link>
     </motion.div>

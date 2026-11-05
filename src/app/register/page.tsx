@@ -23,7 +23,7 @@ export default function RegisterPage() {
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
   return (
-    <AuthCard title="Регистрация" subtitle="После регистрации — пополнение от 300 ₽ в демо-кассе">
+    <AuthCard title="Регистрация" subtitle="Стартовые демо-кредиты начисляются сразу после регистрации">
       <form onSubmit={submit} className="grid gap-4" noValidate>
         <Field id="email" label="Email" type="email" value={f.email} onChange={set("email")} autoComplete="email" required />
         <Field id="username" label="Ник" value={f.username} onChange={set("username")} autoComplete="username" hint="3–20 символов: латиница, цифры, _" required />
@@ -31,7 +31,7 @@ export default function RegisterPage() {
           hint={f.password ? (pwOk ? "Надёжный пароль" : "От 8 символов, буквы и цифры") : "От 8 символов, буквы и цифры"} required />
         <label className="flex items-start gap-3 text-[13.5px] text-soft">
           <input id="adult" type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 size-4 accent-[#e8263f]" />
-          Мне есть 18 лет. Понимаю, что демо-рубли виртуальные и не имеют денежной стоимости.
+          Мне есть 18 лет. Понимаю, что демо-кредиты виртуальные и не имеют денежной стоимости.
         </label>
         <FormError msg={err} />
         <Button type="submit" size="lg" loading={busy} disabled={!adult}>Создать аккаунт</Button>

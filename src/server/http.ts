@@ -4,6 +4,7 @@ import type { Role } from "@prisma/client";
 import { getSession, type SessionUser } from "./auth/session";
 import { rateLimit } from "./security/rateLimit";
 import { ipTag } from "./security/privacy";
+import { logError } from "./errors";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string, public code = "error") { super(message); }
@@ -65,6 +66,7 @@ export function route(opts: Opts, handler: (ctx: Ctx) => Promise<unknown>) {
       if (e instanceof HttpError) return json({ error: e.message, code: e.code }, e.status);
       if (e instanceof ZodError) return json({ error: e.issues[0]?.message ?? "Неверные данные", code: "validation" }, 400);
       console.error("[api]", req.method, req.nextUrl.pathname, e);
+      void logError({ source: "api", path: `${req.method} ${req.nextUrl.pathname}`, message: e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : null });
       return json({ error: "Внутренняя ошибка сервера", code: "internal" }, 500);
     }
   };

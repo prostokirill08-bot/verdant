@@ -6,9 +6,9 @@ import { Badge, inputCls, Loading, Msg, useAction, useAdminData, useIsAdmin } fr
 import { GameIcon } from "@/components/games/GameIcon";
 import { api } from "@/lib/api";
 import { points } from "@/lib/format";
-import { isGameSlug } from "@/lib/games";
+import { CATEGORY_NAMES, GAMES, isGameSlug } from "@/lib/games";
 
-type G = { slug: string; title: string; tagline: string; enabled: boolean; minBet: string; maxBet: string; houseEdgeBp: number; sortOrder: number; rounds: number; wagered: string; payout: string };
+type G = { slug: string; title: string; tagline: string; enabled: boolean; minBet: string; maxBet: string; houseEdgeBp: number; sortOrder: number; category: string | null; rounds: number; wagered: string; payout: string };
 
 export default function AdminGames() {
   const { data, error, reload } = useAdminData<{ games: G[] }>("/api/admin/games");
@@ -24,10 +24,10 @@ export default function AdminGames() {
 function GameCard({ g, onSaved }: { g: G; onSaved: () => void }) {
   const admin = useIsAdmin();
   const act = useAction();
-  const [f, setF] = useState({ title: g.title, tagline: g.tagline, minBet: unitsToInput(BigInt(g.minBet)), maxBet: unitsToInput(BigInt(g.maxBet)), edge: (g.houseEdgeBp / 100).toString(), sortOrder: String(g.sortOrder) });
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const [f, setF] = useState({ title: g.title, tagline: g.tagline, minBet: unitsToInput(BigInt(g.minBet)), maxBet: unitsToInput(BigInt(g.maxBet)), edge: (g.houseEdgeBp / 100).toString(), sortOrder: String(g.sortOrder), category: g.category ?? "" });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
   const save = (patch: Record<string, unknown>, ok: string) => act.run(() => api(`/api/admin/games/${g.slug}`, { method: "PATCH", body: patch }), ok).then((r) => r && onSaved());
-  const submit = () => save({ title: f.title, tagline: f.tagline, minBet: f.minBet, maxBet: f.maxBet, houseEdgeBp: Math.round(Number(f.edge.replace(",", ".")) * 100), sortOrder: Number(f.sortOrder) }, "Сохранено");
+  const submit = () => save({ title: f.title, tagline: f.tagline, minBet: f.minBet, maxBet: f.maxBet, houseEdgeBp: Math.round(Number(f.edge.replace(",", ".")) * 100), sortOrder: Number(f.sortOrder), category: f.category || null }, "Сохранено");
 
   return (
     <Panel className="grid gap-3 p-4">
@@ -42,6 +42,10 @@ function GameCard({ g, onSaved }: { g: G; onSaved: () => void }) {
         <L t="Описание" wide><input value={f.tagline} onChange={set("tagline")} className={inputCls} maxLength={120} /></L>
         <L t="Мин. ставка"><input value={f.minBet} onChange={set("minBet")} className={`${inputCls} font-mono`} inputMode="decimal" /></L>
         <L t="Макс. ставка"><input value={f.maxBet} onChange={set("maxBet")} className={`${inputCls} font-mono`} inputMode="decimal" /></L>
+        <L t="Категория в каталоге"><select value={f.category} onChange={set("category")} className={inputCls} data-testid={`cat-${g.slug}`}>
+          <option value="">По умолчанию ({isGameSlug(g.slug) ? CATEGORY_NAMES[GAMES[g.slug].category] : "—"})</option>
+          {(Object.keys(CATEGORY_NAMES) as (keyof typeof CATEGORY_NAMES)[]).map((c) => <option key={c} value={c}>{CATEGORY_NAMES[c]}</option>)}
+        </select></L>
         <L t="Преимущество, %"><input value={f.edge} onChange={set("edge")} className={`${inputCls} font-mono`} inputMode="decimal" /></L>
       </fieldset>
       {admin ? (

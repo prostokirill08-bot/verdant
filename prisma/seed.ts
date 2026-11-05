@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { DEFAULT_ACHIEVEMENTS, DEFAULT_QUESTS } from "../src/lib/progress";
 import { randomBytes } from "node:crypto";
 import { hashPassword } from "../src/server/security/password";
 import { publicId } from "../src/server/security/tokens";
@@ -30,8 +31,17 @@ const GAMES = [
   { slug: "roulette", title: "Roulette", tagline: "Классическая рулетка на 37 секторов", sortOrder: 6 },
 ];
 
+/** Даты появления игр (для сортировки «по новизне» в каталоге). */
+const ADDED: Record<string, string> = {
+  crash: "2026-11-02T23:02:14Z", mines: "2026-11-02T23:02:14Z", dice: "2026-11-02T23:02:14Z", plinko: "2026-11-02T23:02:14Z", limbo: "2026-11-02T23:02:14Z", roulette: "2026-11-02T23:02:14Z",
+  atlas: "2026-11-03T00:47:02Z", "neon-garden": "2026-11-03T00:47:02Z",
+  tower: "2026-11-03T04:13:30Z", hilo: "2026-11-03T04:13:30Z", wheel: "2026-11-03T04:13:30Z", keno: "2026-11-03T04:13:30Z", coinflip: "2026-11-03T04:13:30Z",
+  workshop: "2026-11-03T11:12:13Z", blackjack: "2026-11-03T18:41:22Z", videopoker: "2026-11-03T18:41:22Z", baccarat: "2026-11-03T18:41:22Z", sledrace: "2026-11-03T18:41:22Z",
+  avalanche: "2026-11-04T21:12:34Z", salute: "2026-11-04T21:12:34Z", crystal: "2026-11-04T21:12:34Z",
+};
+
 async function main() {
-  for (const g of GAMES) await db.game.upsert({ where: { slug: g.slug }, update: {}, create: g });
+  for (const g of GAMES) await db.game.upsert({ where: { slug: g.slug }, update: {}, create: { ...g, ...(ADDED[g.slug] ? { addedAt: new Date(ADDED[g.slug]!) } : {}) } });
   await db.setting.upsert({ where: { key: "platform" }, update: {}, create: { key: "platform", value: { maintenance: false, registrationOpen: true, startGrant: 100000, dailyBonus: 25000 } } });
 
   const email = process.env.ADMIN_EMAIL ?? "admin@verdant.local";
@@ -44,6 +54,9 @@ async function main() {
     } });
     console.log(`\nАдминистратор создан: ${email} / ${password}\nСохрани пароль — он показывается один раз.\n`);
   }
-  console.log("Игры:", (await db.game.count()), "шт.");
+  // Достижения и ежедневные задания: только добавляем отсутствующие — правки администратора не затираются
+  await db.achievementDef.createMany({ data: DEFAULT_ACHIEVEMENTS.map((a) => ({ ...a, reward: BigInt(a.reward) })), skipDuplicates: true });
+  await db.questDef.createMany({ data: DEFAULT_QUESTS.map((q) => ({ ...q, reward: BigInt(q.reward) })), skipDuplicates: true });
+  console.log("Игры:", (await db.game.count()), "шт. · достижений:", await db.achievementDef.count(), "· заданий:", await db.questDef.count());
 }
 main().finally(() => db.$disconnect());

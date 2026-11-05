@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = [["/account", "Обзор"], ["/account/history", "История операций"], ["/account/settings", "Настройки"]] as const;
+const TABS = [["/account", "Профиль"], ["/account/achievements", "Достижения"], ["/account/quests", "Задания"], ["/account/history", "История"], ["/account/notifications", "Уведомления"], ["/account/settings", "Настройки"]] as const;
 export function AccountNav() {
   const path = usePathname();
   return (

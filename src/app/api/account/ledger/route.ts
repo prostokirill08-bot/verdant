@@ -2,7 +2,7 @@ import { z } from "zod";
 import { route } from "@/server/http";
 import { db } from "@/server/db";
 
-const q = z.object({ cursor: z.string().max(40).optional(), type: z.enum(["ALL", "DEPOSIT", "DEMO_GRANT", "PROMO", "BET", "WIN", "REFUND", "ADMIN_ADJUST"]).default("ALL") });
+const q = z.object({ cursor: z.string().max(40).optional(), type: z.enum(["ALL", "DEPOSIT", "DEMO_GRANT", "PROMO", "BET", "WIN", "REFUND", "ADMIN_ADJUST", "REWARD"]).default("ALL") });
 
 /** История операций с постраничной загрузкой по курсору. */
 export const GET = route({ auth: true }, async ({ req, user }) => {

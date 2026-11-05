@@ -19,7 +19,7 @@ type Detail = {
   sessions: { id: string; ip: string | null; userAgent: string | null; createdAt: string }[];
   events: { id: string; action: string; ip: string | null; createdAt: string; meta: unknown }[];
 };
-const LEDGER: Record<string, string> = { BET: "Ставка", WIN: "Выигрыш", DEPOSIT: "Пополнение", PROMO: "Приз акции", DEMO_GRANT: "Демо-рубли", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
+const LEDGER: Record<string, string> = { BET: "Ставка", WIN: "Выигрыш", DEPOSIT: "Пополнение", PROMO: "Приз акции", DEMO_GRANT: "Демо-кредиты", REWARD: "Награда", REFUND: "Возврат", ADMIN_ADJUST: "Корректировка" };
 const RANK = { USER: 0, SUPPORT: 1, ADMIN: 2 } as const;
 
 export default function AdminUser({ params }: { params: Promise<{ id: string }> }) {
@@ -80,7 +80,7 @@ export default function AdminUser({ params }: { params: Promise<{ id: string }> 
             <Panel className="grid content-start gap-3 p-4">
               <h2 className="font-semibold">Корректировка баланса</h2>
               <Segmented value={dir} onChange={setDir} options={[["credit", "Начислить"], ["debit", "Списать"]]} />
-              <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, "").slice(0, 10))} placeholder="Сумма в рублях" inputMode="decimal" className={`${inputCls} font-mono`} />
+              <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, "").slice(0, 10))} placeholder="Сумма в кредитах" inputMode="decimal" className={`${inputCls} font-mono`} />
               <input value={adjReason} onChange={(e) => setAdjReason(e.target.value)} placeholder="Причина (обязательно)" className={inputCls} maxLength={200} />
               <Button onClick={adjust} loading={act.busy} disabled={!amount || adjReason.trim().length < 3}>Провести</Button>
               <p className="text-[12px] text-muted">Операция попадает в журнал баланса как «Корректировка» и в журнал действий админа.</p>

@@ -20,7 +20,7 @@ export async function registerUser(p: { email: string; username: string; passwor
   try {
     const user = await withTx(async (tx) => {
       const u = await tx.user.create({ data: { email: p.email, username: p.username, passwordHash, publicId: publicId(), wallet: { create: {} } } });
-      if (settings.startGrant > 0) await applyEntry(tx, { userId: u.id, type: "DEMO_GRANT", amount: BigInt(settings.startGrant), idempotencyKey: `signup:${u.id}`, note: "Стартовые демо-рубли" });
+      if (settings.startGrant > 0) await applyEntry(tx, { userId: u.id, type: "DEMO_GRANT", amount: BigInt(settings.startGrant), idempotencyKey: `signup:${u.id}`, note: "Стартовые демо-кредиты" });
       await createSeedPair(tx, u.id);
       return u;
     }, 6, false); // конфликт параллельных регистраций — повторяем; занятый email/ник — нет

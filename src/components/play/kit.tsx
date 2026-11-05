@@ -82,7 +82,7 @@ export function BetAmount({ value, onChange, cfg, disabled }: { value: string; o
     <div>
       <Label aside={<span className="font-mono text-soft">{units !== null ? points(units) : "—"}</span>}>Ставка</Label>
       <div className={`flex items-center gap-1 rounded-xl border bg-ink p-1 focus-within:border-accent ${err ? "border-danger/70" : "border-line"}`}>
-        <span className="pl-2 text-[15px]" aria-hidden>₽</span>
+        <span className="pl-2 text-[13px] font-semibold text-muted" aria-hidden>DC</span>
         <input value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.,]/g, "").slice(0, 12))} disabled={disabled} inputMode="decimal" aria-label="Сумма ставки" aria-invalid={!!err}
           className="h-9 w-0 min-w-0 flex-1 bg-transparent px-1.5 font-mono text-[15px] tabular outline-none disabled:opacity-60" />
         {([["½", (u: bigint) => u / 2n], ["2×", (u: bigint) => u * 2n], ["Макс", () => max * 1000n]] as const).map(([t, f]) => (
@@ -108,7 +108,7 @@ export function PlayButton({ children, onClick, disabled, loading, variant = "pr
   const path = usePathname();
   if (!authLoading && !user) return <Link href={`/login?next=${encodeURIComponent(path)}`} className="block"><Button size="lg" className="w-full">Войти, чтобы играть</Button></Link>;
   // Пустой баланс (меньше минимальной ставки 0,10 ₽) и нет идущего раунда — ведём в кассу
-  if (!authLoading && user && BigInt(balance || "0") < 10n && !loading && variant === "primary" && disabled) return <Link href="/deposit" className="block" data-testid="play-deposit"><Button size="lg" className="w-full">Пополнить баланс</Button></Link>;
+  if (!authLoading && user && BigInt(balance || "0") < 10n && !loading && variant === "primary" && disabled) return <Link href="/deposit" className="block" data-testid="play-deposit"><Button size="lg" className="w-full">Получить демо-кредиты</Button></Link>;
   return <Button size="lg" variant={variant} className="w-full" onClick={() => { haptic("tap"); sfx("bet"); onClick(); }} disabled={disabled || authLoading} loading={loading}>{children}</Button>;
 }
 

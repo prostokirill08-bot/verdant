@@ -9,6 +9,7 @@ import { applyEntry, verifyWallet, withUserTx } from "../wallet/ledger";
 import { getPlatform, platformSchema, setPlatform } from "../settings";
 import { amountSchema } from "../games/instant";
 import { requestKey } from "../games/play";
+import { resetCategoryCache } from "../catalog";
 
 const DAY = 86_400_000;
 
@@ -110,7 +111,7 @@ export async function setUserRole(actor: SessionUser, id: string, role: Role, ip
 
 export const adjustInput = z.object({
   direction: z.enum(["credit", "debit"]), amount: amountSchema, reason: z.string().trim().min(3, "Укажи причину").max(200), key: requestKey,
-}).refine((x) => x.amount > 0n && x.amount <= 100_000_000n, "Сумма от 0,01 до 1 000 000 ₽");
+}).refine((x) => x.amount > 0n && x.amount <= 100_000_000n, "Сумма от 0,01 до 1 000 000 DC");
 export async function adjustBalance(actor: SessionUser, id: string, p: z.infer<typeof adjustInput>, ip: string) {
   await target(actor, id);
   const amount = p.direction === "credit" ? p.amount : -p.amount;
@@ -150,6 +151,7 @@ export const gameInput = z.object({
   minBet: amountSchema.optional(), maxBet: amountSchema.optional(),
   houseEdgeBp: z.number().int().min(0, "Преимущество от 0 до 10%").max(1000, "Преимущество от 0 до 10%").optional(),
   sortOrder: z.number().int().min(0).max(100).optional(),
+  category: z.enum(["slots", "originals", "table"]).nullable().optional(),   // null — категория из каталога
 });
 export async function listGamesAdmin() {
   const [games, stats] = await Promise.all([
@@ -165,6 +167,7 @@ export async function updateGame(actor: SessionUser, slug: string, p: z.infer<ty
   if (min < 1n) throw new HttpError(400, "Минимальная ставка от 0,01", "bad_limits");
   if (min >= max) throw new HttpError(400, "Минимальная ставка должна быть меньше максимальной", "bad_limits");
   const upd = await db.game.update({ where: { slug }, data: p });
+  if (p.category !== undefined) resetCategoryCache();
   await audit("admin.game.update", { actorId: actor.id, targetType: "game", targetId: slug, ip, meta: JSON.parse(JSON.stringify(p, (_k, v) => (typeof v === "bigint" ? v.toString() : v))) });
   return upd;
 }

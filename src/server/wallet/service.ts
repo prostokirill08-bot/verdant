@@ -4,6 +4,8 @@ import { applyEntry, withTx } from "./ledger";
 import { BONUS_COOLDOWN_MS } from "./constants";
 import { getPlatform } from "../settings";
 import { audit } from "../security/audit";
+import { notify } from "../progress/notify";
+import { points } from "@/lib/format";
 
 /** Ежедневный бонус. Ключ идемпотентности привязан к дню UTC — двойной клик не начислит дважды. */
 export async function claimDailyBonus(userId: string, ip: string) {
@@ -16,7 +18,10 @@ export async function claimDailyBonus(userId: string, ip: string) {
       throw new HttpError(429, "Бонус уже получен. Следующий будет доступен " + new Date(u.lastBonusAt.getTime() + BONUS_COOLDOWN_MS).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" }) + " (МСК).", "bonus_cooldown");
     }
     const r = await applyEntry(tx, { userId, type: "DEMO_GRANT", amount, idempotencyKey: `bonus:${userId}:${day}`, note: "Ежедневный бонус" });
-    if (!r.duplicate) await tx.user.update({ where: { id: userId }, data: { lastBonusAt: new Date() } });
+    if (!r.duplicate) {
+      await tx.user.update({ where: { id: userId }, data: { lastBonusAt: new Date() } });
+      await notify(userId, { kind: "daily_bonus", title: "Ежедневная награда получена", body: `На баланс зачислено ${points(amount)} демо-кредитов. Следующая — через 24 часа.`, link: "/account" }, tx);
+    }
     return r;
   });
   if (!res.duplicate) await audit("wallet.bonus", { actorId: userId, ip });

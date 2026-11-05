@@ -25,3 +25,12 @@ export async function setPlatform(patch: Partial<PlatformSettings>) {
   await db.setting.upsert({ where: { key: "platform" }, update: { value: next }, create: { key: "platform", value: next } });
   return next;
 }
+
+/** Произвольная настройка по ключу (турнир, задания). */
+export async function getSetting<T>(key: string): Promise<T | null> {
+  const row = await db.setting.findUnique({ where: { key } });
+  return (row?.value as T | undefined) ?? null;
+}
+export async function putSetting(key: string, value: object) {
+  await db.setting.upsert({ where: { key }, update: { value }, create: { key, value } });
+}

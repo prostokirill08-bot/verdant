@@ -2,6 +2,7 @@ import { Prisma, type LedgerType } from "@prisma/client";
 import { db } from "../db";
 import { HttpError } from "../http";
 import { onBet } from "../promo/keys";
+import { markDirty } from "../progress/queue";
 
 type Tx = Prisma.TransactionClient;
 
@@ -25,6 +26,8 @@ export async function applyEntry(tx: Tx, p: { userId: string; type: LedgerType; 
   const entry = await tx.ledgerEntry.create({ data: { walletId: w.id, userId: p.userId, type: p.type, amount: p.amount, balanceAfter: w.balance, idempotencyKey: p.idempotencyKey, roundId: p.roundId, note: p.note } });
   // Акция «Снежные ключи»: шанс ключа и пополнение джекпота с каждой ставки
   if (p.type === "BET") await onBet(tx, p.userId, -p.amount);
+  // Достижения и задания проверяются после фиксации транзакции фоновой очередью
+  if (p.type === "BET" || p.type === "WIN") markDirty(p.userId);
   return { entry, duplicate: false };
 }
 

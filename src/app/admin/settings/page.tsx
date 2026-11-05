@@ -24,7 +24,7 @@ export default function AdminSettings() {
         <Toggle label="Технические работы" hint="Все ставки отклоняются, на сайте показывается предупреждение" on={f.maintenance} set={(v) => setF({ ...f, maintenance: v })} />
         <Toggle label="Регистрация открыта" hint="Если выключить, новые аккаунты создать нельзя" on={f.registrationOpen} set={(v) => setF({ ...f, registrationOpen: v })} />
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1"><span className="text-[12px] font-medium uppercase tracking-wider text-muted">Стартовые демо-рубли</span><input value={f.startGrant} onChange={(e) => setF({ ...f, startGrant: e.target.value })} className={`${inputCls} font-mono`} inputMode="decimal" /></label>
+          <label className="grid gap-1"><span className="text-[12px] font-medium uppercase tracking-wider text-muted">Стартовые демо-кредиты</span><input value={f.startGrant} onChange={(e) => setF({ ...f, startGrant: e.target.value })} className={`${inputCls} font-mono`} inputMode="decimal" /></label>
           <label className="grid gap-1"><span className="text-[12px] font-medium uppercase tracking-wider text-muted">Ежедневный бонус (0 — выкл.)</span><input value={f.dailyBonus} onChange={(e) => setF({ ...f, dailyBonus: e.target.value })} className={`${inputCls} font-mono`} inputMode="decimal" /></label>
         </div>
         <label className="grid gap-1"><span className="text-[12px] font-medium uppercase tracking-wider text-muted">Объявление для всех (пусто — скрыто)</span><input value={f.announcement} onChange={(e) => setF({ ...f, announcement: e.target.value.slice(0, 200) })} className={inputCls} placeholder="Например: в субботу турнир по Crash" /></label>

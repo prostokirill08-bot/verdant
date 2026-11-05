@@ -22,7 +22,7 @@ async function call<T = unknown>(method: string, payload: Record<string, unknown
   return data.result as T;
 }
 
-const DESCRIPTION = "VERDANT — оригинальные мини-игры: слоты, Crash, Mines, блэкджек и турнир недели.\n\nДемо-проект: игра идёт только на виртуальные демо-рубли, их нельзя купить или вывести.";
+const DESCRIPTION = "VERDANT — оригинальные мини-игры: слоты, Crash, Mines, блэкджек и турнир недели.\n\nДемо-проект: игра идёт только на виртуальные демо-кредиты, их нельзя купить или вывести.";
 
 /** Настройка бота при старте сервера: вебхук, кнопка меню «Играть», команды и описание. */
 export async function setupBot() {
@@ -66,7 +66,7 @@ export async function handleMessage(m: Message) {
   } else {
     await call("sendMessage", {
       chat_id: m.chat.id,
-      text: "Нажми «Играть» внизу или /start — откроется Verdant. /games — популярные игры.\n\nВсе ставки — на демо-рубли: их нельзя купить или вывести.",
+      text: "Нажми «Играть» внизу или /start — откроется Verdant. /games — популярные игры.\n\nВсе ставки — на демо-кредиты: их нельзя купить или вывести.",
       reply_markup: { inline_keyboard: [[open("🎮 Играть")]] },
     });
   }

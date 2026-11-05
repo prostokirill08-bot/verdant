@@ -98,3 +98,10 @@ html.bigwin-open .chest-full, html.bigwin-open .gift-wobble { animation-play-sta
 @keyframes bw-shake { 0%, 100% { transform: translate3d(0, 0, 0); } 15% { transform: translate3d(-12px, 5px, 0); } 30% { transform: translate3d(10px, -7px, 0); } 45% { transform: translate3d(-8px, 4px, 0); } 60% { transform: translate3d(6px, -3px, 0); } 80% { transform: translate3d(-3px, 1px, 0); } }
 .bw-pop { animation: bw-pop .5s cubic-bezier(.2, 1.4, .4, 1); }
 @keyframes bw-pop { from { transform: scale(.3) rotate(-8deg); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } to { transform: scale(1); } }
+
+/* ===== Настройки интерфейса: анимации и качество эффектов ===== */
+html.anim-off *, html.anim-off *::before, html.anim-off *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+html.anim-reduced .bw-rays, html.anim-reduced .bw-drop, html.anim-reduced .chest-full, html.anim-reduced .gift-wobble, html.anim-reduced .cell-hot { animation: none !important; }
+html.fx-low .bw-rays, html.fx-low .bw-drop, html.fx-low .bw-spark { display: none !important; }
+html.fx-low .blur-3xl, html.fx-low .blur-2xl { filter: none !important; opacity: .25; }
+html.fx-low .backdrop-blur-2xl, html.fx-low .backdrop-blur { backdrop-filter: none !important; }

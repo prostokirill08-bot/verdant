@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { points, SNOW } from "@/lib/format";
+import { richFx } from "@/lib/prefs";
 import { parsePoints, unitsToInput, type GameConfig } from "../kit";
 
 /** Оформление слотов в стиле сайта: тёмная изумрудная сцена, неоновая рамка барабанов, светящийся заголовок. */
@@ -192,7 +193,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
   useEffect(() => {
     setMounted(true);
     // Слабее эффекты на телефонах и при «уменьшить движение»
-    setLite(window.matchMedia("(max-width: 640px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches);
+    setLite(!richFx() || window.matchMedia("(max-width: 640px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches);
   }, []);
   const dur = short ? 1500 : mult >= 200 ? 7500 : mult >= 100 ? 6500 : mult >= 50 ? 5200 : mult >= 25 ? 4200 : mult >= 10 ? 3200 : 1800;
   const target = Number(amount) / 100;

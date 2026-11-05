@@ -32,7 +32,7 @@ async function newPlayer() {
   const r = await c.req("/api/auth/register", { email: `${u}@test.local`, username: u, password: "Passw0rd1", adult: true });
   if (r.s !== 200) throw new Error("register failed: " + JSON.stringify(r.j));
   // Стартовых денег нет — пополняем через демо-кассу
-  const d = await c.req("/api/account/deposit", { amount: "1000", method: "sbp", key: key() });
+  const d = await c.req("/api/account/deposit", { amount: "1000", method: "demo", key: key() });
   if (d.s !== 200) throw new Error("deposit failed: " + JSON.stringify(d.j));
   c.username = u; c.email = `${u}@test.local`; return c;
 }
@@ -44,18 +44,18 @@ ok("регистрация + пополнение", (await p.balance()) === 1000
 { // Стартовых денег нет; касса: лимиты, идемпотентность, история
   const c = new Client(); await c.req("/api/auth/guest", {});   // гость — чтобы не упираться в лимит регистраций
   ok("касса: новый аккаунт с балансом 0", (await c.balance()) === 0n);
-  ok("касса: меньше 300 ₽ → 400", (await c.req("/api/account/deposit", { amount: "299.99", method: "card", key: key() })).s === 400);
-  ok("касса: больше 300 000 ₽ → 400", (await c.req("/api/account/deposit", { amount: "300000.01", method: "card", key: key() })).s === 400);
+  ok("касса: меньше 300 ₽ → 400", (await c.req("/api/account/deposit", { amount: "299.99", method: "demo", key: key() })).s === 400);
+  ok("касса: больше 300 000 ₽ → 400", (await c.req("/api/account/deposit", { amount: "300000.01", method: "demo", key: key() })).s === 400);
   ok("касса: неизвестный способ → 400", (await c.req("/api/account/deposit", { amount: "500", method: "crypto", key: key() })).s === 400);
-  ok("касса: без входа → 401", (await new Client().req("/api/account/deposit", { amount: "500", method: "card", key: key() })).s === 401);
+  ok("касса: без входа → 401", (await new Client().req("/api/account/deposit", { amount: "500", method: "demo", key: key() })).s === 401);
   const k = key();
-  const d1 = await c.req("/api/account/deposit", { amount: "300", method: "card", key: k });
-  const d2 = await c.req("/api/account/deposit", { amount: "300", method: "card", key: k });
+  const d1 = await c.req("/api/account/deposit", { amount: "300", method: "demo", key: k });
+  const d2 = await c.req("/api/account/deposit", { amount: "300", method: "demo", key: k });
   ok("касса: 300 ₽ зачислены, повтор не зачисляет", d1.s === 200 && d2.j.duplicate === true && (await c.balance()) === 30000n);
-  ok("касса: 300 000 ₽ за раз", (await c.req("/api/account/deposit", { amount: "300000", method: "sbp", key: key() })).s === 200);
-  await c.req("/api/account/deposit", { amount: "300000", method: "sbp", key: key() });
-  await c.req("/api/account/deposit", { amount: "300000", method: "sbp", key: key() });
-  const over = await c.req("/api/account/deposit", { amount: "100000", method: "sbp", key: key() });
+  ok("касса: 300 000 ₽ за раз", (await c.req("/api/account/deposit", { amount: "300000", method: "demo", key: key() })).s === 200);
+  await c.req("/api/account/deposit", { amount: "300000", method: "demo", key: key() });
+  await c.req("/api/account/deposit", { amount: "300000", method: "demo", key: key() });
+  const over = await c.req("/api/account/deposit", { amount: "100000", method: "demo", key: key() });
   ok("касса: суточный лимит 1 000 000 ₽", over.s === 400 && over.j.code === "deposit_limit", JSON.stringify(over.j));
   const info = (await c.req("/api/account/deposit")).j;
   ok("касса: история и остаток лимита", info.items?.length === 4 && info.dayUsed === "90030000");
@@ -105,7 +105,7 @@ ok("слот «Неоновый сад»: покупка бонуса", (await p
   ok("слот «Мастерская Санты»: сундуки между спинами", last?.result.base.grid.length === 5 && m === last.result.after.map((x) => x.have).join(",") && last.params.meters !== undefined);
 }
 { // Новые слоты: обычное вращение и покупка бонуса; списание и выплата сходятся с журналом
-  const sp = await newPlayer(); await sp.req("/api/account/deposit", { amount: "5000", method: "sbp", key: key() });
+  const sp = await newPlayer(); await sp.req("/api/account/deposit", { amount: "5000", method: "demo", key: key() });
   let a = await sp.req("/api/games/avalanche/bet", { amount: "1", params: { buy: false }, key: key() });
   ok("слот «Снежная лавина»: поле 6×5 и каскады", a.s === 200 && a.j.round.result.base.steps[0].grid.length === 6 && a.j.round.result.base.steps[0].grid[0].length === 5);
   a = await sp.req("/api/games/avalanche/bet", { amount: "1", params: { buy: true }, key: key() });
@@ -201,7 +201,7 @@ console.log("— Карточные игры и гонка");
   ok("акции: гость видит сводку без входа", (await new Client().req("/api/promo")).s === 200);
   { // Шанс ключа пропорционален ставке: ставка от 2 000 ₽ даёт ключ наверняка
     const kp = new Client(); await kp.req("/api/auth/guest", {});
-    await kp.req("/api/account/deposit", { amount: "3000", method: "sbp", key: key() });
+    await kp.req("/api/account/deposit", { amount: "3000", method: "demo", key: key() });
     const k0 = (await kp.req("/api/promo/keys")).j.keys;
     await kp.req("/api/games/dice/bet", { amount: "2000", params: { target: 50, over: true }, key: key() });
     ok("ключи: ставка 2 000 ₽ — ключ гарантирован", (await kp.req("/api/promo/keys")).j.keys === k0 + 1 && pr.j.keys.perWager === "200000");
@@ -294,7 +294,7 @@ if (TG) {
   ok("telegram: повторный вход — тот же аккаунт", (await t.req("/api/auth/telegram", { initData })).j.same === true);
   const t2 = new Client(); await t2.req("/api/auth/telegram", { initData });
   ok("telegram: с другого устройства — тот же аккаунт", (await t2.req("/api/auth/me")).j.user?.publicId === me.user?.publicId);
-  await t.req("/api/account/deposit", { amount: "300", method: "sbp", key: key() });
+  await t.req("/api/account/deposit", { amount: "300", method: "demo", key: key() });
   ok("telegram: можно играть", (await t.req("/api/games/dice/bet", { amount: "1", params: { target: 50, over: true }, key: key() })).s === 200);
   ok("telegram: поддельная подпись → 401", (await new Client().req("/api/auth/telegram", { initData: initData.replace(String(tgId), String(tgId + 1)) })).s === 401);
   // Привязка: вошёл в обычный аккаунт внутри Telegram → Telegram привязывается к нему
@@ -334,6 +334,106 @@ console.log("— Приватность");
   // Заголовки безопасности
   const hd = (await fetch(B + "/")).headers;
   ok("заголовки: no-referrer, HSTS, без X-Powered-By", hd.get("referrer-policy") === "no-referrer" && /max-age=/.test(hd.get("strict-transport-security") ?? "") && !hd.get("x-powered-by"));
+}
+
+// ---------- VERDANT 2.0: профиль, избранное, достижения, задания, уведомления, рейтинги, админка ----------
+console.log("— VERDANT 2.0");
+{
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const v = await newPlayer();
+  ok("v2: без входа достижения → 401", (await new Client().req("/api/achievements")).s === 401);
+  ok("v2: без входа задания → 401", (await new Client().req("/api/quests")).s === 401);
+  // Избранное: добавить, повтор не дублирует, неизвестная игра → 400, удалить, перенос из браузера
+  let f = await v.req("/api/favorites", { slug: "dice", on: true });
+  f = await v.req("/api/favorites", { slug: "dice", on: true });
+  ok("v2: избранное — добавление без дублей", f.s === 200 && f.j.favorites.filter((x) => x === "dice").length === 1);
+  ok("v2: избранное — неизвестная игра → 400", (await v.req("/api/favorites", { slug: "nope", on: true })).s === 400);
+  f = await v.req("/api/favorites", { merge: ["mines", "plinko"] });
+  ok("v2: избранное — перенос из браузера", f.j.favorites.includes("mines") && f.j.favorites.includes("plinko"));
+  f = await v.req("/api/favorites", { slug: "dice", on: false });
+  ok("v2: избранное — удаление", !f.j.favorites.includes("dice"));
+  ok("v2: избранное сохраняется между сессиями", (await v.req("/api/favorites")).j.favorites.length === 2);
+  // Задание «Посетить платформу» и прогресс раундов: сначала визит (auth/me), потом 3 раунда в 2 категориях
+  await v.req("/api/auth/me");
+  for (const [slug, params] of [["dice", { target: 50, over: true }], ["dice", { target: 50, over: true }], ["roulette", { bets: [{ bet: { kind: "red" }, amount: "1" }] }]]) {
+    await v.req(`/api/games/${slug}/bet`, { amount: "1", params, key: key() });
+  }
+  await sleep(4500);   // фоновая очередь проверяет прогресс раз в 2 секунды
+  const ach = await v.req("/api/achievements");
+  const first = ach.j.items?.find((a) => a.code === "first_game");
+  ok("v2: достижение «Первый запуск» выдано сервером", !!first?.unlockedAt, JSON.stringify(first));
+  const ledger = (await v.req("/api/account/ledger?type=REWARD")).j.items ?? [];
+  ok("v2: награда за достижение в журнале (REWARD)", ledger.some((e) => /Первый запуск/.test(e.note ?? "")));
+  const q = await v.req("/api/quests");
+  const visit = q.j.items?.find((x) => x.code === "visit");
+  ok("v2: задание «Посетить платформу» выполнено", visit?.completed === true, JSON.stringify(visit));
+  const before = await v.balance();
+  const c1 = await v.req("/api/quests/claim", { code: "visit", day: visit.day });
+  const c2 = await v.req("/api/quests/claim", { code: "visit", day: visit.day });
+  ok("v2: награда за задание начислена один раз", c1.s === 200 && c2.s === 409 && (await v.balance()) === before + BigInt(c1.j.reward), JSON.stringify([c1.j, c2.j]));
+  const par = await Promise.all([1, 2, 3].map(() => v.req("/api/quests/claim", { code: "visit", day: visit.day })));
+  ok("v2: параллельные запросы награды не начисляют повторно", par.every((r) => r.s === 409));
+  const notDone = q.j.items?.find((x) => !x.completed && x.day === visit.day);
+  if (notDone) ok("v2: невыполненное задание забрать нельзя", (await v.req("/api/quests/claim", { code: notDone.code, day: notDone.day })).s === 400);
+  ok("v2: чужой/неверный день → 400", (await v.req("/api/quests/claim", { code: "visit", day: "2020-01-01" })).s === 400);
+  // Уведомления: есть «достижение», отметка прочитанного работает только для своих
+  const n = await v.req("/api/notifications");
+  ok("v2: уведомление о достижении", n.j.items?.some((x) => x.kind === "achievement"), JSON.stringify(n.j.items?.map((x) => x.kind)));
+  const other = await newPlayer();
+  const foreign = await other.req("/api/notifications/read", { ids: [n.j.items[0].id] });
+  ok("v2: чужое уведомление не отмечается", foreign.j.marked === 0 && (await v.req("/api/notifications?count=1")).j.unread === n.j.unread);
+  const rd = await v.req("/api/notifications/read", { all: true });
+  ok("v2: «прочитать все»", rd.j.unread === 0);
+  // Профиль, история раундов, сессии
+  const ov = await v.req("/api/me/overview");
+  ok("v2: профиль — статистика и любимая игра", ov.j.profile?.rounds === 3 && ov.j.profile?.favorite?.slug === "dice" && ov.j.favorites?.length === 2, JSON.stringify(ov.j.profile));
+  ok("v2: профиль — игровая сессия", ov.j.sessions?.length === 1 && ov.j.sessions[0].rounds === 3);
+  const rh = await v.req("/api/account/rounds?game=roulette");
+  ok("v2: история раундов с фильтром по игре", rh.j.items?.length === 1 && rh.j.items[0].gameSlug === "roulette");
+  ok("v2: недавние игры", (await v.req("/api/me/recent")).j.recent?.[0]?.slug === "roulette");
+  // Настройки интерфейса
+  const pr = await v.req("/api/account/prefs", { animations: "off", quality: "low" }, "PATCH");
+  ok("v2: настройки сохраняются в аккаунте", pr.s === 200 && (await v.req("/api/auth/me")).j.user?.prefs?.quality === "low");
+  ok("v2: неверная настройка → 400", (await v.req("/api/account/prefs", { quality: "ultra" }, "PATCH")).s === 400);
+  // Рейтинги и турниры
+  const lb = await new Client().req("/api/leaderboard");
+  ok("v2: рейтинг — турнир недели", lb.s === 200 && Array.isArray(lb.j.tournament?.rows) && Array.isArray(lb.j.history));
+  const lr = await new Client().req("/api/leaderboard?board=rounds");
+  ok("v2: общий рейтинг по раундам", lr.s === 200 && Array.isArray(lr.j.rows) && lr.j.rows.every((r) => !("uid" in r) && !("userId" in r)));
+  const mine = lr.j.rows.find((r) => r.user === v.username);
+  if (mine) ok("v2: публичный профиль участника", (await new Client().req(`/api/players/${mine.publicId}`)).j.user === v.username);
+  ok("v2: несуществующий профиль → 404", (await new Client().req("/api/players/VRD-NOPE00")).s === 404);
+  // Каталог и ошибки клиента
+  ok("v2: каталог с сортировкой", (await fetch(B + "/games?sort=new&cat=slots")).status === 200);
+  ok("v2: отчёт об ошибке браузера", (await new Client().req("/api/errors", { message: "e2e test error", path: "/e2e" })).s === 200);
+  // Права: обычный игрок не видит админ-API
+  for (const path of ["/api/admin/achievements", "/api/admin/quests", "/api/admin/ledger", "/api/admin/errors", "/api/admin/tournaments"]) {
+    ok(`v2: ${path} закрыт для игрока`, (await v.req(path)).s === 404);
+  }
+  ok("v2: игрок не может создать достижение", (await v.req("/api/admin/achievements", { code: "hack", title: "Hack", description: "x x", icon: "star", metric: "rounds_total", target: 1, reward: "1000", enabled: true, sortOrder: 1 })).s === 404);
+  if (ADMIN.password) {
+    const a = new Client(); await a.req("/api/auth/login", { login: ADMIN.login, password: ADMIN.password });
+    const code = "e2e_" + key().slice(0, 6);
+    const cr = await a.req("/api/admin/achievements", { code, title: "E2E достижение", description: "Проверка", icon: "star", metric: "rounds_total", target: 2, reward: "5", enabled: true, sortOrder: 99 });
+    ok("v2 админ: создание достижения", cr.s === 200, JSON.stringify(cr.j));
+    await v.req("/api/games/dice/bet", { amount: "1", params: { target: 50, over: true }, key: key() });
+    await sleep(4500);
+    ok("v2 админ: новое достижение выдаётся существующим игрокам", !!(await v.req("/api/achievements")).j.items.find((x) => x.code === code)?.unlockedAt);
+    ok("v2 админ: удаление достижения", (await a.req(`/api/admin/achievements/${code}`, undefined, "DELETE")).s === 200);
+    const qs = await a.req("/api/admin/quests");
+    ok("v2 админ: список заданий", qs.s === 200 && qs.j.items.length >= 4 && qs.j.today.length >= 1);
+    const lg = await a.req(`/api/admin/ledger?type=REWARD&q=${v.username}`);
+    ok("v2 админ: журнал операций с фильтром", lg.s === 200 && lg.j.items.length >= 1 && lg.j.items.every((e) => e.type === "REWARD"));
+    const er = await a.req("/api/admin/errors?source=client");
+    ok("v2 админ: ошибки браузера в журнале", er.j.items?.some((e) => e.message === "e2e test error"));
+    const tr = await a.req("/api/admin/tournaments");
+    ok("v2 админ: турнир — настройки и таблица", tr.s === 200 && typeof tr.j.settings?.enabled === "boolean");
+    ok("v2 админ: неверные призы → 400", (await a.req("/api/admin/tournaments", { prizes: [-5] }, "PUT")).s === 400);
+    ok("v2 админ: подведение итогов идемпотентно", (await a.req("/api/admin/tournaments/finalize", {})).s === 200 && (await a.req("/api/admin/tournaments/finalize", {})).j.paid === 0);
+    const gm = await a.req("/api/admin/games/keno", { category: "table" }, "PATCH");
+    ok("v2 админ: смена категории игры", gm.s === 200 && gm.j.game?.category === "table");
+    await a.req("/api/admin/games/keno", { category: null }, "PATCH");
+  }
 }
 
 const h = await fetch(B + "/api/health").then((x) => x.json());

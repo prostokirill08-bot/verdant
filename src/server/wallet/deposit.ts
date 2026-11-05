@@ -4,18 +4,18 @@ import { audit } from "../security/audit";
 import { applyEntry, withUserTx } from "./ledger";
 
 /**
- * Демо-касса. Пополнение начисляет демо-рубли через тот же журнал баланса, что и игры.
+ * Демо-касса. Начисляет виртуальные демо-кредиты (без оплаты и без реальных денег) через тот же журнал баланса, что и игры.
  * Реальные платежи не проводятся и данные карт не запрашиваются: модуль показывает, как устроен
  * кассовый сценарий (лимиты, идемпотентность, история, отчёт), без связи с деньгами.
  */
 export const DEPOSIT_MIN = 300_00n;            // 300 ₽ за одно пополнение
 export const DEPOSIT_MAX = 300_000_00n;        // 300 000 ₽ за одно пополнение
 export const DEPOSIT_DAY_LIMIT = 1_000_000_00n; // не больше 1 000 000 ₽ за 24 часа
-export const DEPOSIT_METHODS = ["card", "sbp", "wallet"] as const;
+export const DEPOSIT_METHODS = ["demo", "card", "sbp", "wallet"] as const;   // card/sbp/wallet — только для старых записей
 const DAY = 24 * 3600 * 1000;
 
 export async function createDeposit(userId: string, amount: bigint, method: string, key: string, ip: string) {
-  if (amount < DEPOSIT_MIN || amount > DEPOSIT_MAX) throw new HttpError(400, "Сумма пополнения — от 300 до 300 000 ₽", "deposit_range");
+  if (amount < DEPOSIT_MIN || amount > DEPOSIT_MAX) throw new HttpError(400, "Сумма — от 300 до 300 000 демо-кредитов", "deposit_range");
   const res = await withUserTx(userId, async (tx) => {
     const prev = await tx.deposit.findUnique({ where: { key: `${userId}:${key}` } });
     if (prev) {
@@ -24,7 +24,7 @@ export async function createDeposit(userId: string, amount: bigint, method: stri
     }
     const day = await tx.deposit.aggregate({ where: { userId, createdAt: { gte: new Date(Date.now() - DAY) } }, _sum: { amount: true } });
     const left = DEPOSIT_DAY_LIMIT - (day._sum.amount ?? 0n);
-    if (amount > left) throw new HttpError(400, left > 0n ? `Лимит на сутки — 1 000 000 ₽. Сейчас можно пополнить ещё на ${(Number(left) / 100).toLocaleString("ru-RU")} ₽` : "Суточный лимит пополнений исчерпан — 1 000 000 ₽ за 24 часа", "deposit_limit");
+    if (amount > left) throw new HttpError(400, left > 0n ? `Лимит на сутки — 1 000 000 демо-кредитов. Сейчас можно пополнить ещё на ${(Number(left) / 100).toLocaleString("ru-RU")} ₽` : "Суточный лимит пополнений исчерпан — 1 000 000 ₽ за 24 часа", "deposit_limit");
     const deposit = await tx.deposit.create({ data: { userId, amount, method, key: `${userId}:${key}` } });
     const { entry } = await applyEntry(tx, { userId, type: "DEPOSIT", amount, idempotencyKey: `dep:${deposit.id}`, note: "Пополнение через демо-кассу" });
     return { deposit, balance: entry.balanceAfter, duplicate: false };

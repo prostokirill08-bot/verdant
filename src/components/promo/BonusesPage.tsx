@@ -17,7 +17,7 @@ type Summary = {
   keys: { have: number; need: number; perWager: string; minBet: string; opened: number };
   jackpot: { pool: string; base: string };
   chest: { amount: string; chance: number }[];
-  tournament: { week: string; startsAt: string; endsAt: string; prizes: string[]; top: { place: number; user: string; avatar: string; mult: number; game: string; prize: string }[]; me: { place: number | null; best: number | null } | null };
+  tournament: { week: string; title?: string; startsAt: string; endsAt: string; prizes: string[]; top: { place: number; user: string; avatar: string; mult: number; game: string; prize: string }[]; me: { place: number | null; best: number | null } | null };
   wins: { id: string; kind: string; amount: string; place: number | null; at: string; user: string; avatar: string }[];
 };
 type Opened = { prize: string; grand: boolean; keys: number; balance: string };
@@ -59,7 +59,7 @@ export function BonusesPage() {
     <div className="grid min-w-0 gap-6 [&>*]:min-w-0">
       <div>
         <h1 className="font-display text-[28px] font-bold">Бонусы <span className="text-gradient">и турнир</span></h1>
-        <p className="mt-1 text-muted">Все призы — в демо-рублях: их нельзя купить или вывести.</p>
+        <p className="mt-1 text-muted">Все призы — в виртуальных демо-кредитах: их нельзя купить или вывести.</p>
       </div>
 
       {/* ---------- Сундук с ключами ---------- */}
@@ -113,8 +113,8 @@ export function BonusesPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/75 to-transparent" />
           <div className="relative grid gap-3 p-5 sm:p-8">
             <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-gold">🏆 Турнир недели</p>
-            <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">Emerald Challenge</h2>
-            <p className="max-w-lg text-[15px] text-white/80">Побеждает самый крупный множитель одного выигрыша за неделю (ставка от 1 ₽, любая игра). Призы начисляются автоматически в понедельник.</p>
+            <h2 className="font-display text-[clamp(24px,4vw,36px)] font-bold leading-tight">{t?.title ?? "Турнир недели"}</h2>
+            <p className="max-w-lg text-[15px] text-white/80">Побеждает самый крупный множитель одного выигрыша за неделю (ставка от 1 DC, любая игра). Призы начисляются автоматически в понедельник.</p>
             {t && <div><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">До конца турнира</p><Countdown to={t.endsAt} label="До конца турнира" compact /></div>}
           </div>
         </div>
@@ -149,6 +149,7 @@ export function BonusesPage() {
               </tbody>
             </table>
             {t && !t.top.length && <p className="p-6 text-center text-muted">На этой неделе ещё никто не выиграл — стань первым!</p>}
+            <div className="mt-3 flex flex-wrap gap-3 text-[13.5px]"><Link href="/leaderboard" className="font-semibold text-accent hover:underline">Полная таблица и история турниров →</Link><Link href="/account/quests" className="font-semibold text-accent hover:underline">Задания дня →</Link></div>
           </div>
         </div>
       </section>
@@ -158,7 +159,7 @@ export function BonusesPage() {
         <section className="snow-cap relative overflow-hidden rounded-[28px] border border-line bg-[linear-gradient(120deg,#16245e,#0f1633_55%,#4a0f22)] p-6">
           <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-gold">🎁 Каждый день</p>
           <h2 className="mt-1 font-display text-[22px] font-bold">Подарок дня от Котонавта</h2>
-          <p className="mt-1 max-w-xs text-[14px] text-white/75">Раз в сутки забирай демо-рубли в кабинете.</p>
+          <p className="mt-1 max-w-xs text-[14px] text-white/75">Раз в сутки забирай демо-кредиты в кабинете.</p>
           <Link href={user ? "/account" : "/register"} className="mt-4 inline-block"><Button>{user ? "Забрать подарок" : "Начать играть"}</Button></Link>
           <Image src="/img/verdant/games/coinflip.webp" alt="" width={200} height={200} className="pointer-events-none absolute -bottom-4 right-0 w-[130px] [mask-image:radial-gradient(circle,#000_55%,transparent_72%)]" />
         </section>

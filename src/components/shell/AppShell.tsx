@@ -18,6 +18,7 @@ import { TelegramLink } from "./TelegramLink";
 import { SoundIcon, useSound } from "@/components/ui/SoundToggle";
 import { setSound } from "@/lib/sound";
 import { Logo } from "./Logo";
+import { NotificationBell } from "./Notifications";
 
 function NavLink({ href, children, active, onClick }: { href: string; children: React.ReactNode; active: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
@@ -59,6 +60,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLink href="/bonuses" active={path === "/bonuses"}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><rect x="3" y="9" width="18" height="12" rx="2" /><path d="M12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z" /></svg>Бонусы и турнир
           </NavLink>
+          <NavLink href="/leaderboard" active={path.startsWith("/leaderboard")}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" /></svg>Рейтинг
+          </NavLink>
           <NavLink href="/fair" active={path === "/fair"}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z" /><path d="m9 12 2 2 4-4" /></svg>Честность
           </NavLink>
@@ -76,9 +80,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {user && (
           <div className="grid gap-1">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/70">Аккаунт</p>
-            <NavLink href="/account" active={path === "/account"}>Кабинет</NavLink>
-            <NavLink href="/deposit" active={path === "/deposit"}>Пополнить баланс</NavLink>
-            <NavLink href="/account/history" active={path === "/account/history"}>История операций</NavLink>
+            <NavLink href="/account" active={path === "/account"}>Профиль</NavLink>
+            <NavLink href="/account/achievements" active={path === "/account/achievements"}>Достижения</NavLink>
+            <NavLink href="/account/quests" active={path === "/account/quests"}>Задания дня</NavLink>
+            <NavLink href="/deposit" active={path === "/deposit"}>Демо-кредиты</NavLink>
+            <NavLink href="/account/history" active={path === "/account/history"}>История</NavLink>
             <NavLink href="/account/settings" active={path === "/account/settings"}>Настройки</NavLink>
             {user.role !== "USER" && <NavLink href="/admin" active={path.startsWith("/admin")}>Админ-панель</NavLink>}
           </div>
@@ -91,24 +97,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Верхняя панель */}
         <header className="sticky top-0 z-30 flex h-[66px] items-center gap-2 border-b border-[#23452d]/60 bg-[#050b09]/90 px-4 backdrop-blur-2xl sm:px-6">
           
-          <div className="lg:hidden"><Logo /></div>
+          <div className="shrink-0 lg:hidden"><Logo compact /></div>
           <nav className="verdant-topnav mx-auto hidden items-center gap-1 rounded-full border border-[#2b432f] bg-[#0a140d] p-1 lg:flex" aria-label="Основная навигация">
-            {[["/", "ГЛАВНАЯ"], ["/games", "БИБЛИОТЕКА"], ["/bonuses", "БОНУСЫ"], ["/fair", "ЧЕСТНОСТЬ"]].map(([href,label]) => <Link key={href} href={href!} className={`rounded-full px-4 py-2 text-[10.5px] font-extrabold tracking-[.1em] transition ${path === href ? "bg-[#8bea4e] text-[#091208]" : "text-[#9aab9d] hover:bg-white/[.05] hover:text-white"}`}>{label}</Link>)}
+            {[["/", "ГЛАВНАЯ"], ["/games", "БИБЛИОТЕКА"], ["/bonuses", "БОНУСЫ"], ["/leaderboard", "РЕЙТИНГ"], ["/fair", "ЧЕСТНОСТЬ"]].map(([href,label]) => <Link key={href} href={href!} className={`rounded-full px-4 py-2 text-[10.5px] font-extrabold tracking-[.1em] transition ${path === href ? "bg-[#8bea4e] text-[#091208]" : "text-[#9aab9d] hover:bg-white/[.05] hover:text-white"}`}>{label}</Link>)}
           </nav>
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
             <span className={user ? "hidden sm:block" : ""}><OnlineBadge /></span>
             <KeysBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
-                <div className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-white/[.09] bg-white/[.035] pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3">
+                <div className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/[.09] bg-white/[.035] pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3">
                   <Link href="/account/history" className="flex min-w-0 items-center gap-2" title="Баланс">
                     <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
-                    <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[15px] font-semibold tabular">{points(balance)}</motion.span>
+                    <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[14px] font-semibold tabular min-[400px]:text-[15px]">{points(balance)}</motion.span>
                   </Link>
-                  <Link href="/deposit" className="grid size-7 place-items-center rounded-lg bg-[linear-gradient(180deg,#42e39a,#168b58)] text-[#04150c] shadow-[0_4px_16px_-7px_#39d98a] hover:brightness-110" aria-label="Пополнить баланс" title="Пополнить" data-testid="deposit-plus">
+                  <Link href="/deposit" className="grid size-7 place-items-center max-[400px]:hidden rounded-lg bg-[linear-gradient(180deg,#42e39a,#168b58)] text-[#04150c] shadow-[0_4px_16px_-7px_#39d98a] hover:brightness-110" aria-label="Получить демо-кредиты" title="Пополнить" data-testid="deposit-plus">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
                   </Link>
                 </div>
+                <NotificationBell />
                 <div className="relative">
                   <button onClick={() => setMenu((v) => !v)} className="rounded-full focus-visible:outline-2 focus-visible:outline-accent" aria-haspopup="menu" aria-expanded={menu} aria-label="Меню аккаунта">
                     <Avatar name={user.username} avatar={user.avatar} />
@@ -118,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <motion.div role="menu" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
                         className="absolute right-0 top-12 w-56 rounded-2xl border border-white/10 bg-[#0b1811] p-1.5 shadow-2xl">
                         <div className="px-3 py-2"><p className="font-semibold">{user.username}</p><p className="font-mono text-[12px] text-muted">{user.publicId}</p></div>
-                        {[["/account", "Кабинет"], ["/deposit", "Пополнить баланс"], ["/account/history", "История операций"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
+                        {[["/account", "Профиль"], ["/account/achievements", "Достижения"], ["/account/quests", "Задания дня"], ["/deposit", "Демо-кредиты"], ["/account/history", "История"], ["/account/settings", "Настройки"], ...(user.role !== "USER" ? [["/admin", "Админ-панель"]] : [])].map(([h, t]) => (
                           <Link key={h} href={h!} onClick={() => setMenu(false)} role="menuitem" className="block rounded-xl px-3 py-2 text-[14px] text-soft hover:bg-raised hover:text-white">{t}</Link>
                         ))}
                         <button onClick={() => setSound(!sound.on)} role="menuitemcheckbox" aria-checked={sound.on} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[14px] text-soft hover:bg-raised hover:text-white">Звук <span className={`flex items-center gap-1.5 text-[12.5px] ${sound.on ? "text-accent" : "text-muted"}`}><SoundIcon on={sound.on} />{sound.on ? "вкл" : "выкл"}</span></button>
@@ -149,7 +156,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Нижняя навигация (телефон) */}
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/[.08] bg-[#07110c]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden" aria-label="Навигация">
-        {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], ["/bonuses", "Бонусы", "M3 9h18v12H3zM12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/account/history" : "/register", user ? "История" : "Регистрация", "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
+        {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], ["/bonuses", "Бонусы", "M3 9h18v12H3zM12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/leaderboard" : "/register", user ? "Рейтинг" : "Регистрация", user ? "M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" : "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
           const active = h === "/" ? path === "/" : path.startsWith(h);
           return (
             <Link key={t} href={h} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? "text-accent" : "text-muted"}`}>

@@ -5,6 +5,8 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AppShell } from "@/components/shell/AppShell";
 import { GameModalProvider } from "@/components/games/GameModal";
 import { TelegramBridge } from "@/components/shell/TelegramBridge";
+import { PrefsProvider } from "@/components/shell/PrefsProvider";
+import { ErrorReporter } from "@/components/shell/ErrorReporter";
 
 const geist = Geist({ subsets: ["latin", "cyrillic"], variable: "--font-geist", display: "swap" });
 const geistMono = Geist_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-geist-mono", display: "swap" });
@@ -12,7 +14,7 @@ const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-
 
 export const metadata: Metadata = {
   title: { default: "VERDANT — Game Hub", template: "%s · VERDANT" },
-  description: "Игровая демо-платформа: слоты, Crash, Mines, Plinko и другие игры на виртуальных демо-рублях.",
+  description: "Игровая демо-платформа: слоты, Crash, Mines, Plinko и другие игры на виртуальных демо-кредитах.",
 };
 export const viewport: Viewport = { themeColor: "#050906", width: "device-width", initialScale: 1 };
 
@@ -22,7 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh">
         <AuthProvider>
           <TelegramBridge />
-          <GameModalProvider><AppShell>{children}</AppShell></GameModalProvider>
+          <ErrorReporter />
+          <PrefsProvider><GameModalProvider><AppShell>{children}</AppShell></GameModalProvider></PrefsProvider>
         </AuthProvider>
       </body>
     </html>
