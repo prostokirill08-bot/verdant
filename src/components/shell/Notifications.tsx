@@ -107,7 +107,7 @@ export function NotificationBell() {
       <AnimatePresence>
         {open && (
           <motion.div role="dialog" aria-label="Уведомления" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}
-            className="fixed inset-x-3 top-[70px] z-50 max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1633] p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[380px]">
+            className="glass-panel fixed inset-x-3 top-[70px] z-50 max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1633] p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[380px]">
             <NotificationList onChange={(n) => { setUnread(n); last.current = n; }} onNavigate={() => setOpen(false)} />
           </motion.div>
         )}

@@ -24,14 +24,14 @@ export function WinsTicker() {
   const row = [...wins, ...wins];
   return (
     <section aria-label="Последние выигрыши" className="relative overflow-hidden rounded-2xl border border-line bg-panel/70 py-2.5 backdrop-blur">
-      <div className="absolute inset-y-0 left-0 z-10 flex items-center gap-2 bg-gradient-to-r from-panel via-panel to-transparent pl-4 pr-4 text-[12px] sm:pr-8 font-bold uppercase tracking-wider text-accent">
+      <div className="absolute inset-y-0 left-0 z-10 flex items-center gap-2 bg-[linear-gradient(90deg,var(--color-panel)_72%,transparent)] pl-4 pr-6 text-[12px] sm:pr-12 font-bold uppercase tracking-wider text-accent">
         <span className="size-2 animate-pulse rounded-full bg-accent" /><span className="hidden sm:inline">Выигрыши</span>
       </div>
       <div className="flex w-max gap-3 pl-10 sm:pl-44 [animation:ticker_60s_linear_infinite] hover:[animation-play-state:paused]">
         {row.map((w, i) => {
           const g = GAMES[w.game as keyof typeof GAMES];
           return (
-            <Link key={w.id + i} href={`/games/${w.game}`} onClick={(e) => { if (!isGameSlug(w.game) || e.metaKey || e.ctrlKey) return; e.preventDefault(); openGame(w.game); }} className="flex w-[124px] shrink-0 flex-col items-center gap-1 rounded-xl bg-raised/60 px-2 pb-2 pt-1.5 text-center hover:bg-raised">
+            <Link key={w.id + i} href={`/games/${w.game}`} onClick={(e) => { if (!isGameSlug(w.game) || e.metaKey || e.ctrlKey) return; e.preventDefault(); openGame(w.game); }} className="ticker-item flex w-[124px] shrink-0 flex-col items-center gap-1 rounded-xl bg-raised/60 px-2 pb-2 pt-1.5 text-center hover:bg-raised">
               <Image src={g.cover} alt="" width={40} height={52} className="h-[52px] w-10 rounded-lg object-cover ring-1 ring-white/10" />
               <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: tier(w.multiplier)[2] }}>{tier(w.multiplier)[1]}</span>
               <span className="font-mono text-[13.5px] font-bold leading-none text-white">{points(w.payout)}</span>

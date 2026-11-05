@@ -108,7 +108,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
   const buyCost = units * BigInt(buyPrice ?? 0);
   return (
     <div className="grid min-w-0 gap-3">
-      <div className="flex min-w-0 items-center justify-between gap-1 rounded-2xl bg-black/55 p-1.5 sm:gap-2 sm:p-2 ring-1 ring-white/10">
+      <div className="slot-controls flex min-w-0 items-center justify-between gap-1 rounded-2xl p-1.5 sm:gap-2 sm:p-2">
         <div className="min-w-0 px-1 sm:px-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Ставка</p>
           <p className="truncate font-mono text-[14px] font-bold tabular sm:text-[18px]">{points(units)}</p>
@@ -117,7 +117,7 @@ export function SlotControls({ cfg, bet, setBet, busy, onSpin, onBuy, buyPrice, 
           <RoundBtn label="Уменьшить ставку" onClick={() => step(-1)} disabled={busy || auto > 0}>−</RoundBtn>
           <motion.button type="button" onClick={auto > 0 ? () => setAuto(0) : onSpin} disabled={(busy && auto === 0) || !cfg.enabled || (!enough && auto === 0)} whileTap={{ scale: 0.92 }}
             aria-label={auto > 0 ? "Остановить автоигру" : "Крутить"}
-            className="relative grid size-[58px] shrink-0 place-items-center rounded-full sm:size-[74px] text-white shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] disabled:opacity-50"
+            className="spin-orb relative grid size-[58px] shrink-0 place-items-center rounded-full sm:size-[74px] text-white disabled:opacity-50"
             style={{ background: `radial-gradient(circle at 35% 30%, ${accent[1]}, ${accent[0]})`, boxShadow: `0 0 0 4px rgb(255 255 255 / 0.12), 0 12px 34px -10px ${accent[0]}` }}>
             {auto > 0 ? <span className="grid leading-none"><span className="font-mono text-[18px] font-bold">∞</span><span className="text-[9px] font-bold uppercase">стоп</span></span> : (
               <motion.svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" animate={busy ? { rotate: 360 } : { rotate: 0 }} transition={busy ? { repeat: Infinity, duration: 0.6, ease: "linear" } : {}}>
@@ -150,7 +150,7 @@ function RoundBtn({ children, onClick, disabled, label }: { children: React.Reac
 function Pill({ children, onClick, active, disabled, gold }: { children: React.ReactNode; onClick: () => void; active?: boolean; disabled?: boolean; gold?: boolean }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
-      className={`h-11 w-full min-w-0 truncate rounded-xl px-1 text-[12px] font-bold sm:px-2 sm:text-[12.5px] transition-colors disabled:opacity-40 ${gold ? "bg-[linear-gradient(180deg,#fde68a,#f59e0b)] text-[#3a2300]" : active ? "bg-white text-ink" : "bg-black/40 text-white ring-1 ring-white/10 hover:bg-black/60"}`}>{children}</button>
+      className={`slot-pill h-11 w-full min-w-0 truncate rounded-xl px-1 text-[12px] font-bold sm:px-2 sm:text-[12.5px] transition-colors disabled:opacity-40 ${gold ? "slot-pill-gold text-[#3a2300]" : active ? "bg-white text-ink" : "bg-black/40 text-white ring-1 ring-white/10 hover:bg-black/60"}`}>{children}</button>
   );
 }
 
@@ -258,7 +258,7 @@ export function WinOverlay({ show, mult, amount, onDone, label, short = false }:
             })}
           </div>
           {/* Надпись, сумма и множитель */}
-          <div key={`sh${tierIdx}`} className={`relative z-10 grid place-items-center px-4 text-center ${tierIdx ? "bw-shake" : ""}`}>
+          <div key={`sh${tierIdx}`} className={`win-medallion relative z-10 grid place-items-center px-7 py-9 text-center ${tierIdx ? "bw-shake" : ""}`}>
             <p key={`t${tierIdx}`} className="bw-pop font-display text-[clamp(30px,8vw,84px)] font-bold leading-[1.05] tracking-wide"
               style={{ backgroundImage: `linear-gradient(180deg, ${c2}, ${c1})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
               {tierIdx === 0 && label && !short ? "ИТОГ БОНУСА" : tier.title}

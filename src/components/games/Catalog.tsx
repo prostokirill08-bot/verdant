@@ -59,15 +59,15 @@ export function Catalog({ games, initial }: { games: CatalogItem[]; initial: { c
   const showShelves = cat === "all" && !q.trim();
   const empty = cat === "fav" ? "Пока пусто — нажми ♥ на карточке игры, чтобы добавить её сюда." : cat === "recent" ? (user ? "Ты ещё не играл — выбери любую игру." : "Войди, чтобы видеть недавние игры.") : `Ничего не нашлось${q ? ` по запросу «${q}»` : ""}.`;
   return (
-    <div className="grid gap-5">
+    <div className="catalog-shell grid gap-5">
       <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#28325f] bg-[#0f1633] px-3 focus-within:border-[#3ee08f] sm:max-w-sm">
+          <label className="catalog-search flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#28325f] bg-[#0f1633] px-3 focus-within:border-[#3ee08f] sm:max-w-sm">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="shrink-0 text-muted" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
             <input id="game-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по названию" aria-label="Поиск игр" className="w-full min-w-0 bg-transparent text-[15px] outline-none placeholder:text-muted" />
             {q && <button type="button" onClick={() => setQ("")} className="text-muted hover:text-white" aria-label="Очистить поиск">✕</button>}
           </label>
-          <label className="flex h-11 items-center gap-2 rounded-xl border border-[#28325f] bg-[#0f1633] px-3 text-[13.5px]">
+          <label className="catalog-sort flex h-11 items-center gap-2 rounded-xl border border-[#28325f] bg-[#0f1633] px-3 text-[13.5px]">
             <span className="text-muted">Сортировка</span>
             <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Сортировка" data-testid="catalog-sort" className="bg-transparent font-semibold text-white outline-none [&>option]:bg-[#0f1633]">
               {SORTS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}

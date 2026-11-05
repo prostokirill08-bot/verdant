@@ -22,7 +22,7 @@ import { NotificationBell } from "./Notifications";
 
 function NavLink({ href, children, active, onClick }: { href: string; children: React.ReactNode; active: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <Link href={href} onClick={onClick} className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-colors ${active ? "bg-raised text-white" : "text-muted hover:bg-raised/60 hover:text-white"}`}>
+    <Link href={href} onClick={onClick} className={`group relative flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-all duration-200 ${active ? "nav-active text-white" : "text-muted hover:bg-white/[.045] hover:text-white"}`}>
       {children}
     </Link>
   );
@@ -48,7 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh">
       {/* Боковая панель (компьютер) */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-line bg-panel/80 px-3 py-5 backdrop-blur lg:flex">
+      <aside className="sidebar-shell sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-white/[.07] px-3 py-5 backdrop-blur-xl lg:flex">
         <div className="px-2"><Logo /></div>
         <nav className="grid gap-1">
           <NavLink href="/" active={path === "/"}>
@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Верхняя панель */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
+        <header className="topbar-shell sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/[.07] px-4 backdrop-blur-xl sm:px-6">
           <div className="garland absolute inset-x-0 -bottom-[14px]" aria-hidden />
           <div className="shrink-0 lg:hidden"><Logo compact /></div>
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <KeysBadge />
             {loading ? <span className="h-9 w-40 animate-pulse rounded-xl bg-panel" /> : user ? (
               <>
-                <div className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-line bg-panel pl-2.5 pr-1.5 hover:border-accent/50 sm:pl-3">
+                <div className="balance-chip flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/10 pl-2.5 pr-1.5 sm:pl-3">
                   <Link href="/account/history" className="flex min-w-0 items-center gap-2" title="Баланс">
                     <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-muted sm:inline">Баланс</span>
                     <motion.span key={balance} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-[14px] font-semibold tabular min-[400px]:text-[15px]">{points(balance)}</motion.span>
@@ -144,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {platform?.maintenance && <p className="border-b border-warn/30 bg-warn/10 px-4 py-2 text-center text-[13.5px] text-warn" role="status">Идут технические работы — ставки временно недоступны.</p>}
         {guest && (
           <p className="border-b border-gold/25 bg-gold/10 px-4 py-2 text-center text-[13px] text-gold" data-testid="guest-bar">
-            🎅 Демо-гость: баланс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
+            Демо-гость: баланс хранится 3 дня. <Link href="/register" className="font-semibold underline underline-offset-2">Зарегистрируйся</Link>, чтобы сохранить игру.
           </p>
         )}
         {platform?.announcement && <p className="border-b border-accent/20 bg-accent/10 px-4 py-2 text-center text-[13.5px] text-accent" role="status">{platform.announcement}</p>}
@@ -152,7 +152,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Нижняя навигация (телефон) */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Навигация">
+      <nav className="mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/10 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Навигация">
         {([["/", "Главная", "M4 11 12 4l8 7v9H4z"], ["/games", "Игры", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"], ["/bonuses", "Бонусы", "M3 9h18v12H3zM12 9v12M3 13h18M12 9C10 5 6 5 7 8c.6 1.5 5 1 5 1zm0 0c2-4 6-4 5-1-.6 1.5-5 1-5 1z"], [user ? "/account" : "/login", user ? "Кабинет" : "Вход", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"], [user ? "/leaderboard" : "/register", user ? "Рейтинг" : "Регистрация", user ? "M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" : "M12 7v5l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"]] as const).map(([h, t, d]) => {
           const active = h === "/" ? path === "/" : path.startsWith(h);
           return (

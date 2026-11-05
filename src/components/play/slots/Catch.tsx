@@ -139,7 +139,7 @@ export function CatchGame({ cfg }: { cfg: GameConfig }) {
   const nextAt = level ? Math.min(CAT.levels.length - 1, level.lv + 1) * CAT.perLevel : 0;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #7cf5b6" }}>
+      <div className="slot-cabinet relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #7cf5b6" }}><div className="ornate-frame" aria-hidden />
         <Image src="/img/ny/bg/catch.webp" alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#06202e]/45 via-[#071a26]/35 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[720px] gap-4 p-3 sm:p-6">

@@ -15,7 +15,7 @@ export function LeaderRows({ rows, unit, empty }: { rows: LbRow[]; unit: "mult" 
       {rows.map((r) => {
         const name = r.publicId ? <Link href={`/players/${r.publicId}`} className="truncate font-semibold hover:text-accent">{r.user}</Link> : <span className="truncate font-semibold text-soft">{r.user}</span>;
         return (
-          <li key={r.place} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ring-1 ${r.isMe ? "bg-accent/10 ring-accent/40" : "bg-ink/50 ring-line"}`}>
+          <li key={r.place} className={`leader-row flex items-center gap-3 rounded-2xl px-3 py-2.5 ring-1 ${r.isMe ? "bg-accent/10 ring-accent/40" : "bg-ink/50 ring-line"}`}>
             <span className={`grid size-8 shrink-0 place-items-center rounded-xl font-mono text-[13px] font-bold ${medal(r.place)}`}>{r.place}</span>
             <Avatar name={r.user} avatar={r.avatar} size={32} />
             <div className="flex min-w-0 flex-1 flex-col">

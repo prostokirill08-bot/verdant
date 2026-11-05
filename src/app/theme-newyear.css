@@ -1,0 +1,43 @@
+/* Optional seasonal layer. Disable after the holidays by removing this import in layout.tsx. */
+body::before, body::after { content: ""; position: fixed; inset: -200px 0 0; z-index: 40; pointer-events: none; background-repeat: repeat; }
+body::before {
+  opacity: .42;
+  background-image: radial-gradient(2.5px 2.5px at 30px 40px, #fff 98%, transparent), radial-gradient(2px 2px at 150px 120px, #eaf4ff 98%, transparent), radial-gradient(3px 3px at 260px 60px, #fff 98%, transparent), radial-gradient(2px 2px at 380px 170px, #fff 98%, transparent);
+  background-size: 420px 220px; animation: snow-fall 18s linear infinite;
+}
+body::after {
+  opacity: .25;
+  background-image: radial-gradient(1.5px 1.5px at 70px 20px, #fff 98%, transparent), radial-gradient(1.2px 1.2px at 200px 90px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 320px 150px, #dfefff 98%, transparent);
+  background-size: 360px 200px; animation: snow-fall-slow 30s linear infinite;
+}
+@keyframes snow-fall { from { transform: translate3d(0,0,0); } to { transform: translate3d(40px,220px,0); } }
+@keyframes snow-fall-slow { from { transform: translate3d(0,0,0); } to { transform: translate3d(-30px,200px,0); } }
+.garland { position: relative; height: 14px; overflow: hidden; pointer-events: none; }
+.garland::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 12px 8px,#ff4d5e 0 3px,transparent 5px),radial-gradient(circle at 36px 8px,#ffd166 0 3px,transparent 5px),radial-gradient(circle at 60px 8px,#3ee08f 0 3px,transparent 5px),radial-gradient(circle at 84px 8px,#8fdcff 0 3px,transparent 5px); background-size: 96px 14px; filter: drop-shadow(0 0 3px rgb(255 209 102 / .7)); animation: twinkle 1.8s steps(2) infinite; }
+.garland::after { content: ""; position: absolute; left: 0; right: 0; top: 2px; height: 1px; background: rgb(255 255 255 / .18); }
+@keyframes twinkle { 50% { opacity: .58; } }
+.snow-cap { position: relative; }
+.snow-cap::before { content: ""; position: absolute; left: 6px; right: 6px; top: -6px; height: 14px; z-index: 2; pointer-events: none; background: radial-gradient(14px 9px at 12% 70%,#fff 96%,transparent),radial-gradient(18px 10px at 30% 60%,#f3f8ff 96%,transparent),radial-gradient(12px 8px at 52% 75%,#fff 96%,transparent),radial-gradient(20px 10px at 74% 60%,#f3f8ff 96%,transparent),radial-gradient(12px 8px at 92% 72%,#fff 96%,transparent),linear-gradient(#fff,#fff) bottom/100% 5px no-repeat; border-radius: 10px 10px 2px 2px; }
+.newyear-decor { position: fixed; inset: 0; z-index: 39; pointer-events: none; overflow: hidden; }
+.newyear-decor::before { content: "✦"; position: absolute; top: 12%; right: 5%; color: rgb(255 209 102 / .25); font-size: 18px; text-shadow: 0 0 22px rgb(255 209 102 / .45); }
+html.bigwin-open body::before, html.bigwin-open body::after, html.bigwin-open .garland::before { animation-play-state: paused; visibility: hidden; }
+@media (max-width: 640px) { body::before { opacity: .3; } body::after { opacity: .18; } }
+html.fx-low body::before, html.fx-low body::after, html.anim-off body::before, html.anim-off body::after { display: none !important; }
+html.anim-reduced body::before, html.anim-reduced body::after { animation: none !important; }
+html.fx-low .newyear-decor, html.anim-off .newyear-decor { display: none !important; }
+
+/* Logo hat */
+.ny-hat { display: block; }
+
+/* Garland bulbs along the top of ornate frames (slots, hero) */
+.ornate-frame::before {
+  content: ""; position: absolute; left: 40px; right: 40px; top: -3px; height: 10px;
+  background:
+    radial-gradient(circle at 7px 5px, #ff4d5e 0 2.6px, transparent 3.6px) 0 0 / 56px 10px repeat-x,
+    radial-gradient(circle at 21px 5px, #ffd166 0 2.6px, transparent 3.6px) 0 0 / 56px 10px repeat-x,
+    radial-gradient(circle at 35px 5px, #3ee08f 0 2.6px, transparent 3.6px) 0 0 / 56px 10px repeat-x,
+    radial-gradient(circle at 49px 5px, #8fdcff 0 2.6px, transparent 3.6px) 0 0 / 56px 10px repeat-x;
+  animation: twinkle 1.8s steps(2) infinite;
+}
+@media (max-width: 640px) { .ornate-frame::before { left: 30px; right: 30px; } }
+html.anim-off .ornate-frame::before, html.bigwin-open .ornate-frame::before { animation: none; }

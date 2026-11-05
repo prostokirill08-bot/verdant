@@ -24,7 +24,7 @@ export function HomePersonal({ games }: { games: G[] }) {
   return (
     <>
       {last && (
-        <Link href={`/games/${last.slug}`} data-testid="continue-game" className="group flex items-center gap-3 rounded-2xl border border-accent/25 bg-[linear-gradient(90deg,rgb(62_224_143/0.12),transparent)] p-3 pr-4 transition-colors hover:border-accent/60">
+        <Link href={`/games/${last.slug}`} data-testid="continue-game" className="continue-game premium-panel group flex items-center gap-3 rounded-2xl border border-accent/25 p-3 pr-4 transition-colors hover:border-accent/60">
           <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10"><Image src={GAMES[last.slug].cover} alt="" fill sizes="64px" className="object-cover" /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[11.5px] font-bold uppercase tracking-[0.12em] text-accent">Продолжить игру</span>

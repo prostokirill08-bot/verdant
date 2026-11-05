@@ -191,7 +191,7 @@ export function SweetsGame({ cfg }: { cfg: GameConfig }) {
   const spotCount = Object.values(spots).filter((v) => v >= 2).length;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #ff8ad8" }}>
+      <div className="slot-cabinet relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #ff8ad8" }}><div className="ornate-frame" aria-hidden />
         <Image src="/img/ny/bg/sweets.webp" alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#2a0b2e]/45 via-[#120a26]/35 to-[#070b1f]/92" />
         <div className="relative mx-auto grid max-w-[680px] gap-4 p-3 sm:p-6">

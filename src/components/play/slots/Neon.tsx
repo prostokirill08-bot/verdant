@@ -122,7 +122,7 @@ export function NeonGame({ cfg }: { cfg: GameConfig }) {
   const busy = playing || reqBusy;
   return (
     <div className="grid min-w-0 gap-4 [&>*]:min-w-0">
-      <div className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #5bb8ff" }}>
+      <div className="slot-cabinet relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: "0 30px 80px -40px #5bb8ff" }}><div className="ornate-frame" aria-hidden />
         <Image src="/img/ny/bg/neon-garden.webp" alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070b1f]/50 via-[#070b1f]/30 to-[#070b1f]/90" />
         <div className="relative mx-auto grid max-w-[720px] gap-3 p-3 sm:p-6">

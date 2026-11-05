@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Unbounded } from "next/font/google";
 import "./globals.css";
+import "./theme-newyear.css"; // Удалить эту строку после праздников — основной дизайн останется без изменений
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AppShell } from "@/components/shell/AppShell";
 import { GameModalProvider } from "@/components/games/GameModal";
 import { TelegramBridge } from "@/components/shell/TelegramBridge";
 import { PrefsProvider } from "@/components/shell/PrefsProvider";
 import { ErrorReporter } from "@/components/shell/ErrorReporter";
+import { NewYearDecor } from "@/components/shell/NewYearDecor";
 
 const geist = Geist({ subsets: ["latin", "cyrillic"], variable: "--font-geist", display: "swap" });
 const geistMono = Geist_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-geist-mono", display: "swap" });
@@ -22,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" className={`${geist.variable} ${geistMono.variable} ${unbounded.variable}`}>
       <body className="min-h-dvh">
+        <NewYearDecor />
         <AuthProvider>
           <TelegramBridge />
           <ErrorReporter />

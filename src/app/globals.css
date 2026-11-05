@@ -1,109 +1,263 @@
 @import "tailwindcss";
 
-/* Verdant · Новогодняя тема: ночное зимнее небо, красный с золотом, ёлочный зелёный для выигрышей */
+/* VERDANT — premium winter-night design tokens. Seasonal effects live in theme-newyear.css. */
 @theme {
-  --color-ink: #070b1f;        /* фон — ночное небо */
-  --color-panel: #0f1633;      /* панели */
-  --color-raised: #1a2349;     /* поля, кнопки, наведение */
-  --color-line: #28325f;       /* границы */
-  --color-accent: #3ee08f;     /* выигрыши — ёлочный зелёный */
+  --color-ink: #070b1f;
+  --color-panel: #0f1633;
+  --color-raised: #1a2349;
+  --color-line: #28325f;
+  --color-accent: #3ee08f;
   --color-accent-strong: #7cf5b6;
   --color-accent-ink: #03170c;
-  --color-brand: #e8263f;      /* праздничный красный */
+  --color-brand: #e8263f;
   --color-pink: #ff6b8b;
-  --color-cyan: #8fdcff;       /* лёд */
+  --color-cyan: #8fdcff;
   --color-gold: #ffd166;
   --color-muted: #8e9ac7;
   --color-soft: #dbe3ff;
   --color-danger: #ff4d6d;
   --color-warn: #ffd166;
-
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: var(--font-unbounded), var(--font-geist), sans-serif;
-
-  --radius-xl: 14px;
-  --radius-2xl: 20px;
-  --shadow-glow: 0 0 0 1px rgb(255 209 102 / 0.35), 0 8px 30px -8px rgb(232 38 63 / 0.5);
+  --radius-xl: 16px;
+  --radius-2xl: 22px;
+  --shadow-glow: 0 0 0 1px rgb(255 209 102 / .22), 0 18px 48px -22px rgb(232 38 63 / .5);
+  --shadow-panel: 0 22px 55px -34px rgb(0 0 0 / .9), inset 0 1px 0 rgb(255 255 255 / .055);
+  --shadow-green: 0 12px 36px -18px rgb(62 224 143 / .42);
+  --glass-bg: rgb(15 22 51 / .76);
+  --glass-border: rgb(255 255 255 / .09);
+  --glass-blur: 18px;
 }
 
 :root { color-scheme: dark; }
-html, body { background: var(--color-ink); color: #fff; }
+html, body { min-height: 100%; background: var(--color-ink); color: #fff; }
+html { background-color: var(--color-ink); }
 body {
-  font-family: var(--font-sans); -webkit-font-smoothing: antialiased;
-  /* Звёздное небо и тёплое сияние снизу */
+  overflow-x: clip;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
   background-image:
     radial-gradient(1.2px 1.2px at 20px 30px, #fff 99%, transparent), radial-gradient(1px 1px at 140px 80px, #cfe4ff 99%, transparent),
     radial-gradient(1.4px 1.4px at 260px 20px, #fff 99%, transparent), radial-gradient(1px 1px at 330px 140px, #fff7d6 99%, transparent),
-    radial-gradient(1100px 600px at 15% -15%, rgb(56 88 200 / 0.35), transparent 60%),
-    radial-gradient(900px 500px at 100% 110%, rgb(232 38 63 / 0.16), transparent 60%);
-  background-size: 360px 180px, 360px 180px, 360px 180px, 360px 180px, auto, auto;
+    radial-gradient(1100px 600px at 15% -15%, rgb(56 88 200 / .35), transparent 60%),
+    radial-gradient(900px 500px at 100% 110%, rgb(232 38 63 / .16), transparent 60%),
+    radial-gradient(800px 520px at 50% 60%, rgb(62 224 143 / .05), transparent 65%),
+    linear-gradient(180deg, #070b1f 0%, #080c22 46%, #070a1c 100%);
+  background-size: 360px 180px, 360px 180px, 360px 180px, 360px 180px, auto, auto, auto, auto;
   background-attachment: fixed;
 }
 
-/* Снег: два слоя с разной скоростью. Только украшение — клики проходят сквозь. */
-body::before, body::after {
-  content: ""; position: fixed; inset: -200px 0 0; z-index: 40; pointer-events: none;
-  background-repeat: repeat;
-}
-body::before {
-  opacity: .55;
-  background-image:
-    radial-gradient(2.5px 2.5px at 30px 40px, #fff 98%, transparent), radial-gradient(2px 2px at 150px 120px, #eaf4ff 98%, transparent),
-    radial-gradient(3px 3px at 260px 60px, #fff 98%, transparent), radial-gradient(2px 2px at 380px 170px, #fff 98%, transparent);
-  background-size: 420px 220px;
-  animation: snow-fall 18s linear infinite;
-}
-body::after {
-  opacity: .35;
-  background-image:
-    radial-gradient(1.5px 1.5px at 70px 20px, #fff 98%, transparent), radial-gradient(1.2px 1.2px at 200px 90px, #fff 98%, transparent),
-    radial-gradient(1.5px 1.5px at 320px 150px, #dfefff 98%, transparent);
-  background-size: 360px 200px;
-  animation: snow-fall-slow 30s linear infinite;
-}
-@keyframes snow-fall { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(40px, 220px, 0); } }
-@keyframes snow-fall-slow { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-30px, 200px, 0); } }
+/* Fine grain is a static texture; no animated filters or paint-heavy effects. */
+body::selection { background: #ffd166; color: #1a1300; }
+* { scrollbar-width: thin; scrollbar-color: #28325f transparent; }
+::selection { background: #ffd166; color: #1a1300; }
 
-/* Гирлянда: ряд лампочек, мигают по очереди */
-.garland { position: relative; height: 14px; overflow: hidden; pointer-events: none; }
-.garland::before {
-  content: ""; position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 12px 8px, #ff4d5e 0 4px, transparent 5px),
-    radial-gradient(circle at 36px 8px, #ffd166 0 4px, transparent 5px),
-    radial-gradient(circle at 60px 8px, #3ee08f 0 4px, transparent 5px),
-    radial-gradient(circle at 84px 8px, #8fdcff 0 4px, transparent 5px);
-  background-size: 96px 14px;
-  filter: drop-shadow(0 0 4px rgb(255 209 102 / .9));
-  animation: twinkle 1.6s steps(2) infinite;
-}
-.garland::after { content: ""; position: absolute; left: 0; right: 0; top: 2px; height: 1px; background: rgb(255 255 255 / .18); }
-@keyframes twinkle { 50% { filter: drop-shadow(0 0 1px rgb(255 209 102 / .3)) brightness(.65); } }
-
-/* «Снежная шапка» на карточках */
+/* Reusable premium surfaces */
 .snow-cap { position: relative; }
-.snow-cap::before {
-  content: ""; position: absolute; left: 6px; right: 6px; top: -6px; height: 14px; z-index: 2; pointer-events: none;
-  background:
-    radial-gradient(14px 9px at 12% 70%, #fff 96%, transparent), radial-gradient(18px 10px at 30% 60%, #f3f8ff 96%, transparent),
-    radial-gradient(12px 8px at 52% 75%, #fff 96%, transparent), radial-gradient(20px 10px at 74% 60%, #f3f8ff 96%, transparent),
-    radial-gradient(12px 8px at 92% 72%, #fff 96%, transparent), linear-gradient(#fff, #fff) bottom / 100% 5px no-repeat;
-  border-radius: 10px 10px 2px 2px;
-  filter: drop-shadow(0 2px 2px rgb(0 0 0 / .25));
+.glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
-
-.text-gradient { background: linear-gradient(90deg, #ffe7a3, #fff 45%, #ff8a9b 80%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.premium-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / .085);
+  background: linear-gradient(145deg, rgb(26 35 73 / .94), rgb(12 18 44 / .96) 58%, rgb(14 22 52 / .94));
+  box-shadow: var(--shadow-panel);
+}
+.premium-panel::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / .3), transparent);
+}
+.premium-edge { border: 1px solid rgb(255 255 255 / .09); box-shadow: inset 0 1px 0 rgb(255 255 255 / .07), 0 16px 38px -28px #000; }
+.text-gradient { background: linear-gradient(100deg, #f6d99a 0%, #fff 44%, #e6a6a7 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .bg-brand-gradient { background: linear-gradient(135deg, #ff4d5e, #b5122f); }
 .btn-shine { position: relative; overflow: hidden; }
-.btn-shine::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%); transform: translateX(-120%); animation: shine 3.2s ease-in-out infinite; }
+.btn-shine::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / .28) 50%, transparent 70%); transform: translateX(-120%); animation: shine 3.2s ease-in-out infinite; }
 @keyframes shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .animate-floaty { animation: floaty 5s ease-in-out infinite; }
 .tabular { font-variant-numeric: tabular-nums; }
 
-* { scrollbar-width: thin; scrollbar-color: var(--color-raised) transparent; }
-::selection { background: #ffd166; color: #1a1300; }
+/* Shared visual language for panels, forms and dialogs throughout account/admin/game pages. */
+:where(.rounded-2xl.border.border-line.bg-panel, .rounded-3xl.border.border-line.bg-panel) { box-shadow: var(--shadow-panel); }
+:where(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { accent-color: var(--color-accent); }
+:where(button, a) { -webkit-tap-highlight-color: transparent; }
+:where(button, input, select, textarea, a):focus-visible { outline-color: var(--color-accent); }
+
+/* ===== VERDANT premium finish ===== */
+.sidebar-shell {
+  background: linear-gradient(180deg, rgb(15 23 52 / .96), rgb(8 12 34 / .98));
+  box-shadow: 18px 0 55px -42px #000, inset -1px 0 0 rgb(255 255 255 / .025);
+}
+.topbar-shell { background: linear-gradient(180deg, rgb(10 15 40 / .94), rgb(8 12 33 / .86)); box-shadow: 0 12px 35px -30px #000; }
+.nav-active {
+  background: linear-gradient(100deg, rgb(62 224 143 / .17), rgb(62 224 143 / .055));
+  box-shadow: inset 2px 0 0 var(--color-accent), inset 0 1px 0 rgb(255 255 255 / .06);
+}
+.nav-active::after { content: ""; position: absolute; right: 11px; width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 12px rgb(62 224 143 / .8); }
+.brand-mark {
+  background: linear-gradient(145deg, #e1c28a 0%, #9d7844 24%, #253b3a 25%, #0e2528 100%);
+  border: 1px solid rgb(255 209 102 / .52);
+  box-shadow: 0 8px 24px -10px rgb(62 224 143 / .55), inset 0 1px 0 rgb(255 255 255 / .34), inset 0 -5px 12px rgb(0 0 0 / .35);
+}
+.brand-mark svg:first-child { filter: drop-shadow(0 1px 2px rgb(0 0 0 / .55)); }
+.balance-chip {
+  background: linear-gradient(145deg, rgb(30 40 84 / .96), rgb(12 18 46 / .96));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .09), 0 8px 22px -16px #000;
+}
+.mobile-nav { background: linear-gradient(180deg, rgb(14 21 50 / .97), rgb(7 11 31 / .99)); box-shadow: 0 -14px 38px -28px #000; }
+.mobile-nav a { min-height: 54px; justify-content: center; transition: color .18s ease, transform .18s ease; }
+.mobile-nav a:active { transform: translateY(-2px); }
+.hero-shell {
+  border: 1px solid rgb(255 209 102 / .2);
+  background: linear-gradient(125deg, #16224f, #0a1030 55%, #2a1430);
+  box-shadow: 0 32px 80px -48px rgb(0 0 0 / .95), inset 0 1px 0 rgb(255 255 255 / .12);
+}
+.hero-shell::before { content: ""; position: absolute; z-index: 2; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 15%, rgb(255 255 255 / .045) 42%, transparent 58%); }
+.hero-stage::after { content: ""; position: absolute; pointer-events: none; inset: 0; background: radial-gradient(ellipse at 78% 28%, rgb(255 209 102 / .12), transparent 36%), linear-gradient(0deg, rgb(5 10 19 / .45), transparent 45%); mix-blend-mode: screen; }
+.hero-shell h1 { text-shadow: 0 5px 26px rgb(0 0 0 / .55); }
+.game-card {
+  background: linear-gradient(145deg, #1c2550, #0c1232 65%);
+  box-shadow: 0 20px 40px -28px #000, inset 0 1px 0 rgb(255 255 255 / .12);
+  isolation: isolate;
+}
+.game-card::before { content: ""; position: absolute; z-index: 2; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(135deg, rgb(255 255 255 / .14), transparent 22%, transparent 70%, rgb(255 209 102 / .07)); opacity: .55; }
+.game-card-glow { z-index: 1; pointer-events: none; }
+.game-card img { transform-origin: 50% 44%; }
+.game-card:hover { box-shadow: 0 24px 48px -26px rgb(0 0 0 / .95), 0 0 0 1px rgb(255 255 255 / .13); }
+.shelf-title {
+  background: linear-gradient(105deg, rgb(28 37 80 / .96), rgb(13 19 46 / .9));
+  border: 1px solid rgb(255 255 255 / .08);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .07), 0 10px 26px -22px #000;
+}
+.slot-controls {
+  border: 1px solid rgb(255 255 255 / .1);
+  background: linear-gradient(145deg, rgb(26 35 76 / .98), rgb(8 12 33 / .98));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .1), 0 14px 34px -28px #000;
+}
+.spin-orb {
+  box-shadow: 0 0 0 5px rgb(255 255 255 / .08), 0 0 0 7px rgb(0 0 0 / .24), 0 14px 34px -10px rgb(0 0 0 / .85), inset 0 2px 0 rgb(255 255 255 / .42), inset 0 -5px 12px rgb(0 0 0 / .25);
+  transition: transform .18s ease, filter .18s ease;
+}
+.spin-orb:active { transform: scale(.95); filter: brightness(1.12); }
+.slot-pill { border: 1px solid rgb(255 255 255 / .09); box-shadow: inset 0 1px 0 rgb(255 255 255 / .07), 0 7px 16px -13px #000; }
+.slot-pill-gold { background: linear-gradient(180deg, #ffe4a2, #c58b37); box-shadow: inset 0 1px 0 rgb(255 255 255 / .7), 0 8px 20px -12px rgb(255 209 102 / .7); }
+.win-medallion {
+  min-width: min(92vw, 680px);
+  border: 1px solid rgb(255 255 255 / .2);
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgb(255 255 255 / .1), rgb(7 12 23 / .36));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .2), 0 30px 90px -35px #000;
+}
+:where(.rounded-2xl.bg-panel, .rounded-3xl.bg-panel) { box-shadow: inset 0 1px 0 rgb(255 255 255 / .045), 0 18px 40px -32px #000; }
+:where(.rounded-xl.bg-ink, .rounded-2xl.bg-ink) { box-shadow: inset 0 2px 10px rgb(0 0 0 / .2), inset 0 1px 0 rgb(255 255 255 / .025); }
+
+@media (hover: hover) and (pointer: fine) {
+  .game-card { transition: transform .22s ease, box-shadow .22s ease; }
+  .game-card:hover img { transform: scale(1.045); }
+}
+@media (max-width: 640px) {
+  .win-medallion { min-width: 0; width: calc(100vw - 28px); border-radius: 24px; padding: 28px 14px; }
+  .hero-shell { border-radius: 22px; }
+  .sidebar-shell, .glass-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-card, .mobile-nav a, .spin-orb { transition: none !important; }
+}
+html.fx-low .glass-panel, html.fx-low .sidebar-shell, html.fx-low .topbar-shell { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+html.fx-low .game-card, html.fx-low .premium-panel, html.fx-low .win-medallion { box-shadow: none !important; }
+html.fx-low .hero-shell::before, html.fx-low .hero-stage::after { display: none !important; }
+html.anim-off .btn-shine::after { display: none !important; }
+
+
+.achievement-icon { box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), 0 12px 28px -16px rgb(62 224 143 / .6); }
+.progress-track { border: 1px solid rgb(255 255 255 / .06); box-shadow: inset 0 2px 4px rgb(0 0 0 / .4); }
+.progress-track > div { box-shadow: 0 0 12px rgb(62 224 143 / .28), inset 0 1px 0 rgb(255 255 255 / .22); }
+.leader-row { background-image: linear-gradient(105deg, rgb(255 255 255 / .025), transparent 48%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), 0 12px 28px -25px #000; }
+.continue-game { background-image: linear-gradient(105deg, rgb(62 224 143 / .13), rgb(18 26 60 / .84) 48%, rgb(15 22 51 / .92)); }
+html.fx-low .achievement-icon, html.fx-low .progress-track > div { box-shadow: none !important; }
+
+
+.stat-card { background: linear-gradient(145deg, rgb(26 35 76 / .96), rgb(12 17 44 / .96)); box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 18px 38px -28px #000; }
+.catalog-search, .catalog-sort { background: linear-gradient(145deg, rgb(22 30 66 / .96), rgb(10 14 38 / .96)); box-shadow: inset 0 2px 8px rgb(0 0 0 / .22), 0 1px 0 rgb(255 255 255 / .04); }
+.catalog-shell [role="tab"] { border-radius: 999px; }
+.catalog-shell [role="tab"][aria-selected="true"] { background: linear-gradient(180deg, #7cf5b6, #3ee08f) !important; box-shadow: 0 8px 24px -12px rgb(62 224 143 / .72), inset 0 1px 0 rgb(255 255 255 / .6); }
+.game-card button[data-testid^="fav-"] { border: 1px solid rgb(255 255 255 / .2); backdrop-filter: blur(8px); box-shadow: 0 6px 18px -10px #000; }
+
+/* ===== Detail layer: ornate frames, card frames, dividers (works without the seasonal theme) ===== */
+:root {
+  --orn-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg %3E%3Cg fill='none' stroke='%23ffd166' stroke-linecap='round'%3E%3Cpath d='M3 44V12Q3 3 12 3h32' stroke-width='1.6'/%3E%3Cpath d='M9 32V16q0-7 7-7h16' stroke-width='1' opacity='.6'/%3E%3Cpath d='M3 22c6 0 9 3 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M22 3c0 6 3 9 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M15 15c5 0 8 3 8 8' stroke-width='1.1'/%3E%3C/g%3E%3Cpath d='M3 3h7L3 10z' fill='%23ffd166'/%3E%3Ccircle cx='23' cy='23' r='2' fill='%23ffd166'/%3E%3Ccircle cx='44' cy='3' r='1.6' fill='%23ffd166'/%3E%3Ccircle cx='3' cy='44' r='1.6' fill='%23ffd166'/%3E%3C/g%3E%3C/svg%3E");
+  --orn-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg transform='matrix%28-1 0 0 1 48 0%29'%3E%3Cg fill='none' stroke='%23ffd166' stroke-linecap='round'%3E%3Cpath d='M3 44V12Q3 3 12 3h32' stroke-width='1.6'/%3E%3Cpath d='M9 32V16q0-7 7-7h16' stroke-width='1' opacity='.6'/%3E%3Cpath d='M3 22c6 0 9 3 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M22 3c0 6 3 9 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M15 15c5 0 8 3 8 8' stroke-width='1.1'/%3E%3C/g%3E%3Cpath d='M3 3h7L3 10z' fill='%23ffd166'/%3E%3Ccircle cx='23' cy='23' r='2' fill='%23ffd166'/%3E%3Ccircle cx='44' cy='3' r='1.6' fill='%23ffd166'/%3E%3Ccircle cx='3' cy='44' r='1.6' fill='%23ffd166'/%3E%3C/g%3E%3C/svg%3E");
+  --orn-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg transform='matrix%281 0 0 -1 0 48%29'%3E%3Cg fill='none' stroke='%23ffd166' stroke-linecap='round'%3E%3Cpath d='M3 44V12Q3 3 12 3h32' stroke-width='1.6'/%3E%3Cpath d='M9 32V16q0-7 7-7h16' stroke-width='1' opacity='.6'/%3E%3Cpath d='M3 22c6 0 9 3 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M22 3c0 6 3 9 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M15 15c5 0 8 3 8 8' stroke-width='1.1'/%3E%3C/g%3E%3Cpath d='M3 3h7L3 10z' fill='%23ffd166'/%3E%3Ccircle cx='23' cy='23' r='2' fill='%23ffd166'/%3E%3Ccircle cx='44' cy='3' r='1.6' fill='%23ffd166'/%3E%3Ccircle cx='3' cy='44' r='1.6' fill='%23ffd166'/%3E%3C/g%3E%3C/svg%3E");
+  --orn-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg transform='matrix%28-1 0 0 -1 48 48%29'%3E%3Cg fill='none' stroke='%23ffd166' stroke-linecap='round'%3E%3Cpath d='M3 44V12Q3 3 12 3h32' stroke-width='1.6'/%3E%3Cpath d='M9 32V16q0-7 7-7h16' stroke-width='1' opacity='.6'/%3E%3Cpath d='M3 22c6 0 9 3 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M22 3c0 6 3 9 9 9' stroke-width='1.1' opacity='.75'/%3E%3Cpath d='M15 15c5 0 8 3 8 8' stroke-width='1.1'/%3E%3C/g%3E%3Cpath d='M3 3h7L3 10z' fill='%23ffd166'/%3E%3Ccircle cx='23' cy='23' r='2' fill='%23ffd166'/%3E%3Ccircle cx='44' cy='3' r='1.6' fill='%23ffd166'/%3E%3Ccircle cx='3' cy='44' r='1.6' fill='%23ffd166'/%3E%3C/g%3E%3C/svg%3E");
+}
+/* Ornate frame: drop <div className="ornate-frame" aria-hidden /> into any relative rounded container */
+.ornate-frame {
+  position: absolute; inset: 7px; z-index: 15; pointer-events: none; border-radius: 22px;
+  border: 1px solid rgb(255 209 102 / .32);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .35), inset 0 0 24px rgb(0 0 0 / .25), 0 0 0 1px rgb(0 0 0 / .25);
+  background: var(--orn-tl) top left / 44px no-repeat, var(--orn-tr) top right / 44px no-repeat,
+              var(--orn-bl) bottom left / 44px no-repeat, var(--orn-br) bottom right / 44px no-repeat;
+}
+.ornate-frame::after {
+  content: ""; position: absolute; left: 50%; top: -5px; width: 9px; height: 9px; transform: translateX(-50%) rotate(45deg);
+  background: linear-gradient(135deg, #fff1c4, #ffd166 45%, #b8862a); box-shadow: 0 0 10px rgb(255 209 102 / .7);
+}
+.slot-cabinet { outline: 1px solid rgb(255 209 102 / .38); outline-offset: 3px; }
+.slot-cabinet > .ornate-frame { inset: 5px; border-radius: 23px; }
+@media (max-width: 640px) {
+  .ornate-frame { inset: 5px; background-size: 32px, 32px, 32px, 32px; border-radius: 20px; }
+}
+
+/* Game cards: inner keyline frame that turns gold on hover, light sweep */
+.game-card::after {
+  content: ""; position: absolute; z-index: 2; inset: 5px; border-radius: 12px; pointer-events: none;
+  border: 1px solid rgb(255 255 255 / .13); transition: border-color .25s ease;
+}
+.game-card:hover::after, .game-card:focus-visible::after { border-color: rgb(255 209 102 / .7); }
+.card-sheen { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.card-sheen::before {
+  content: ""; position: absolute; top: -20%; bottom: -20%; width: 45%; left: -60%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / .22), transparent); transform: skewX(-18deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .game-card:hover .card-sheen::before { left: 130%; transition: left .8s ease; }
+}
+
+/* Shelf heading rule with a gem */
+.shelf-rule { position: relative; flex: 1; height: 1px; min-width: 24px; background: linear-gradient(90deg, rgb(255 209 102 / .55), rgb(255 209 102 / .12) 60%, transparent); }
+.shelf-rule::before { content: ""; position: absolute; left: -1px; top: -3.5px; width: 8px; height: 8px; transform: rotate(45deg); background: linear-gradient(135deg, #fff1c4, #ffd166 50%, #b8862a); box-shadow: 0 0 8px rgb(255 209 102 / .6); }
+
+/* Section divider for pages */
+.orn-divider { display: flex; align-items: center; gap: 10px; color: rgb(255 209 102 / .8); }
+.orn-divider::before, .orn-divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgb(255 209 102 / .45)); }
+.orn-divider::after { transform: scaleX(-1); }
+
+/* Panels: soft top light + faint diamond lattice texture */
+:where(.rounded-2xl.border.border-line.bg-panel, .rounded-3xl.border.border-line.bg-panel, .premium-panel, .stat-card) {
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / .035), transparent 38%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Cpath d='M11 0 22 11 11 22 0 11z' fill='none' stroke='%23ffffff' stroke-opacity='.03'/%3E%3C/svg%3E");
+}
+.stat-card { position: relative; overflow: hidden; }
+.stat-card::after { content: ""; position: absolute; right: -18px; top: -18px; width: 70px; height: 70px; border-radius: 50%; background: radial-gradient(circle, rgb(255 209 102 / .14), transparent 70%); pointer-events: none; }
+
+html.fx-low .card-sheen, html.anim-off .card-sheen { display: none; }
+html.fx-low .ornate-frame { box-shadow: none; }
+
+.shelf-title { white-space: nowrap; }
+.shelf-rule { min-width: 0; }
+.ticker-item { background-image: linear-gradient(180deg, rgb(255 255 255 / .06), transparent 50%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .06), inset 0 1px 0 rgb(255 255 255 / .1); }
+.ticker-item:hover { box-shadow: inset 0 0 0 1px rgb(255 209 102 / .45); }
+
+/* Seasonal logo hat: hidden unless theme-newyear.css is loaded */
+.ny-hat { display: none; }
 
 /* Выигрышный символ пульсирует (только transform), ожидание бонуса мигает (только opacity) */
 .cell-hot { will-change: transform; animation: cell-pulse .7s ease-in-out infinite; }
@@ -161,3 +315,4 @@ html.fx-low .backdrop-blur-2xl, html.fx-low .backdrop-blur { backdrop-filter: no
 /* Снег на фоне: в «Экономном» качестве и без анимаций не показываем */
 html.fx-low body::before, html.fx-low body::after, html.anim-off body::before, html.anim-off body::after { display: none !important; }
 html.anim-reduced body::before, html.anim-reduced body::after { animation: none !important; }
+

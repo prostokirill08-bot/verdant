@@ -22,8 +22,8 @@ export function HeroCarousel({ loggedIn }: { loggedIn: boolean }) {
   useEffect(() => { const t = setInterval(() => setI((x) => (x + 1) % slides.length), 6500); return () => clearInterval(t); }, [slides.length]);
   const s = slides[i]!;
   return (
-    <section className="relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: `0 30px 80px -40px ${s.tint}` }}>
-      <div className="relative min-h-[440px] sm:min-h-[460px]">
+    <section className="hero-shell relative overflow-hidden rounded-[28px] ring-1 ring-white/10" style={{ boxShadow: `0 30px 80px -40px ${s.tint}` }}>
+      <div className="hero-stage relative min-h-[440px] sm:min-h-[460px]">
         <AnimatePresence mode="popLayout">
           <motion.div key={s.img} initial={{ opacity: 0, scale: 1.06 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }} className="absolute inset-0">
             <Image src={s.img} alt="" fill priority sizes="(max-width: 1024px) 100vw, 1000px" className="object-cover object-[70%_center]" />
@@ -41,7 +41,8 @@ export function HeroCarousel({ loggedIn }: { loggedIn: boolean }) {
           </motion.div>
         </AnimatePresence>
       </div>
-      <div className="absolute bottom-4 right-5 flex gap-1.5">
+      <div className="ornate-frame" aria-hidden />
+      <div className="absolute bottom-4 right-5 z-20 flex gap-1.5">
         {slides.map((_, k) => <button key={k} onClick={() => setI(k)} aria-label={`Слайд ${k + 1}`} className={`h-2 rounded-full transition-all ${k === i ? "w-7 bg-white" : "w-2 bg-white/40 hover:bg-white/70"}`} />)}
       </div>
     </section>

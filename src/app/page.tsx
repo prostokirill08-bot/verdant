@@ -42,7 +42,7 @@ export default async function Home() {
 
       <dl className="grid grid-cols-3 gap-2 sm:gap-3">
         {[["Раундов за сутки", rounds24.toLocaleString("ru-RU"), "#5b8cff"], ["Игроков", players.toLocaleString("ru-RU"), "#e8263f"], ["Лучший множитель", best ? `${Number(best.multiplier).toFixed(2)}×` : "—", "#ffd166"]].map(([k, v, c]) => (
-          <div key={k} className="relative overflow-hidden rounded-2xl border border-line bg-panel p-3 sm:p-4">
+          <div key={k} className="stat-card relative overflow-hidden rounded-2xl border border-line bg-panel p-3 sm:p-4">
             <div className="pointer-events-none absolute -right-6 -top-6 size-20 rounded-full blur-2xl" style={{ background: `${c}55` }} />
             <dt className="text-[11.5px] text-muted sm:text-[12.5px]">{k}</dt><dd className="mt-1 font-mono text-[17px] font-bold tabular sm:text-[24px]">{v}</dd>
           </div>
