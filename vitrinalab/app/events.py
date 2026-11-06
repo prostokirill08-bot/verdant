@@ -59,3 +59,19 @@ def set_setting(s: Session, key: str, value: str) -> None:
 
 def flag(s: Session, key: str) -> bool:
     return get_setting(s, key) == "1"
+
+
+def owner_code() -> str:
+    """Код для команды /owner в боте: так владелец привязывает свой Telegram без поиска chat id."""
+    import hashlib
+    import hmac
+
+    from .config import get_settings
+
+    return hmac.new(get_settings().app_secret.encode(), b"owner", hashlib.sha256).hexdigest()[:8]
+
+
+def owner_chat_id(s: Session) -> str:
+    from .config import get_settings
+
+    return get_settings().telegram_owner_chat_id or get_setting(s, "owner_chat_id")

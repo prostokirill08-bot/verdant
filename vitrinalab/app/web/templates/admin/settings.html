@@ -11,7 +11,7 @@
 <table class="tbl">
 <tr><td>LLM</td><td>{{ conf.llm_provider }}</td></tr><tr><td>Генерация фонов</td><td>{{ conf.image_provider }}</td></tr>
 <tr><td>Платежи</td><td>{{ conf.payment_provider }}</td></tr><tr><td>Telegram-бот</td><td>{{ 'подключён' if conf.telegram_bot_token else 'не подключён' }}</td></tr>
-<tr><td>Отчёты владельцу в Telegram</td><td>{{ conf.telegram_owner_chat_id or 'не указан chat id' }}</td></tr><tr><td>Канал для постов</td><td>{{ conf.telegram_channel_id or 'не указан' }}</td></tr>
+<tr><td>Отчёты владельцу в Telegram</td><td>{% if conf.telegram_owner_chat_id or vals.owner_chat_id %}чат {{ conf.telegram_owner_chat_id or vals.owner_chat_id }}{% else %}не привязан — отправьте боту <code>/owner {{ owner_code }}</code>{% endif %}</td></tr><tr><td>Канал для постов</td><td>{{ conf.telegram_channel_id or 'не указан' }}</td></tr>
 <tr><td>E-mail (SMTP)</td><td>{{ 'подключён' if conf.smtp_host else 'не подключён' }}</td></tr><tr><td>Дневной лимит на AI</td><td>{{ conf.daily_ai_budget_rub }} ₽</td></tr>
 </table>
 <h2>Запустить сейчас</h2>

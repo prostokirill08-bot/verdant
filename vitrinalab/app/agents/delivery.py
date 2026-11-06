@@ -6,7 +6,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..events import record
+from ..events import owner_chat_id, record
 from ..integrations import mailer, telegram
 from ..models import Escalation, Message, Order, Task, utcnow
 from ..pricing import TARIFFS, TURNAROUND
@@ -116,10 +116,11 @@ def notify_owner(s: Session, payload: dict, task: Task) -> None:
         text = f"{icon} {esc.title}\n\n{esc.details[:1500]}\n\nАдминка: {cfg.public_url}/admin/escalations"
     else:
         text = payload.get("text", "")
-    if not (cfg.telegram_owner_chat_id and telegram.enabled()):
+    chat = owner_chat_id(s)
+    if not (chat and telegram.enabled()):
         log.info("owner notification (Telegram не настроен): %s", text[:200])
         return
     try:
-        telegram.send_message(cfg.telegram_owner_chat_id, text)
+        telegram.send_message(chat, text)
     except telegram.TelegramError as e:
         raise RetryLater(str(e)) from e

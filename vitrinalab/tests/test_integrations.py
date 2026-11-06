@@ -134,3 +134,25 @@ def test_yookassa_webhook_verifies_and_is_idempotent(monkeypatch):
         p = s.scalar(select(Payment))
         p.status = "pending"
         assert service.handle_yookassa_notification(s, body) == "mismatch"
+
+
+def test_owner_registration_via_bot(tg):
+    from app.agents import sales
+    from app.events import owner_chat_id, owner_code
+
+    with session_scope() as s:
+        sales.handle_update(s, _upd("/owner wrong"))
+        assert owner_chat_id(s) == ""
+        sales.handle_update(s, _upd(f"/owner {owner_code()}", uid=2))
+    with session_scope() as s:
+        assert owner_chat_id(s) == "777"
+    assert "владельца" in tg[-1][1]
+
+
+def test_check_offline_runs(capsys):
+    from app import check
+
+    check.results.clear()
+    check.main(offline=True)
+    out = capsys.readouterr().out
+    assert "База данных" in out and "Рендер слайдов" in out and "1440×1920" in out

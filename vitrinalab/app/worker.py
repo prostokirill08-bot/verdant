@@ -11,9 +11,7 @@ import signal
 import socket
 import sqlite3
 import threading
-import time
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from .config import get_settings
 from .db import init_db, session_scope
@@ -81,6 +79,10 @@ def telegram_poller() -> None:
     if not (cfg.telegram_bot_token and cfg.telegram_polling):
         log.info("Telegram polling выключен")
         return
+    try:
+        telegram.setup_bot(cfg.brand_name)
+    except Exception as e:  # noqa: BLE001 — не критично
+        log.warning("setup_bot: %s", e)
     with session_scope() as s:
         offset = int(get_setting(s, "tg_offset") or 0)
     while not STOP.is_set():

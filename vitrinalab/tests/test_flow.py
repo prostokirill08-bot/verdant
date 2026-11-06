@@ -134,3 +134,28 @@ def test_lead_analysis_creates_draft_for_approval(client):
 
 def test_healthz_reports_missing_worker(client):
     assert client.get("/healthz").status_code == 503
+
+
+def test_pilot_and_external_payment(client, product_photo):
+    from app.models import Expense
+
+    tokens = []
+    for _ in range(2):
+        with open(product_photo, "rb") as f:
+            r = client.post("/order", data={"product_name": "Кружка", "features": FEATURES, "email": "p@example.com", "consent": "1"}, files={"photo": ("p.jpg", f, "image/jpeg")}, follow_redirects=False)
+        tokens.append(r.headers["location"].split("/o/")[1])
+    run_pending()
+    with session_scope() as s:
+        ids = [s.scalar(select(Order.id).where(Order.token == t)) for t in tokens]
+    csrf = _csrf(client)
+    page = client.get(f"/admin/orders/{ids[0]}", auth=AUTH)
+    assert page.status_code == 200 and "Пилот (бесплатно)" in page.text
+    client.post(f"/admin/orders/{ids[0]}/action", data={"action": "pilot", "tariff_code": "start", "csrf": csrf}, auth=AUTH)
+    client.post(f"/admin/orders/{ids[1]}/action", data={"action": "external_paid", "tariff_code": "start", "amount_rub": "2490", "fee_rub": "498", "source": "kwork", "csrf": csrf}, auth=AUTH)
+    run_pending()
+    with session_scope() as s:
+        assert all(s.get(Order, i).status == "delivered" for i in ids)
+        fs = summarize(s, all_time())
+        assert fs.revenue_kop == 249000 and fs.paid_orders == 1 and fs.fees_kop == 49800
+        assert "kwork" in fs.by_channel
+        assert s.scalar(select(Expense).where(Expense.category == "fees")).amount_kop == 49800

@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from ..agents.finance import all_time, day_bounds, summarize, unit_economics, unregistered_receipts
 from ..config import get_settings
 from ..db import session_scope
-from ..events import DEFAULTS, get_setting, record, set_setting
+from ..events import DEFAULTS, get_setting, owner_code, record, set_setting
 from ..models import (
     AgentRun,
     Client,
@@ -30,7 +30,7 @@ from ..models import (
     Task,
     utcnow,
 )
-from ..payments.service import mark_paid
+from ..payments.service import mark_paid, set_tariff
 from ..queue import enqueue
 
 security = HTTPBasic()
@@ -267,11 +267,38 @@ def order_detail(request: Request, oid: int):
 
 
 @router.post("/orders/{oid}/action")
-def order_action(oid: int, action: str = Form(...), csrf: str = Form(...)):
+def order_action(
+    oid: int,
+    action: str = Form(...),
+    csrf: str = Form(...),
+    tariff_code: str = Form("standard"),
+    amount_rub: float = Form(0),
+    fee_rub: float = Form(0),
+    source: str = Form(""),
+):
     check_csrf(csrf)
     with session_scope() as s:
         o = s.get(Order, oid)
-        if action == "confirm_manual_payment":
+        if action in ("pilot", "external_paid") and (o.paid_at or o.status in ("in_production", "delivered")):
+            raise HTTPException(400, "Заказ уже оплачен или в работе")
+        if action == "pilot":
+            # бесплатный пилот: производство без оплаты, выручка не меняется
+            set_tariff(o, tariff_code)
+            o.price_kop = 0
+            o.notes = (o.notes + " пилот").strip()
+            o.status, o.paid_at = "paid", utcnow()
+            enqueue(s, "produce_order", {"order_id": o.id}, idempotency_key=f"produce_order:{o.id}")
+        elif action == "external_paid":
+            # оплата прошла на бирже (Kwork/FL): фиксируем выручку и комиссию площадки
+            set_tariff(o, tariff_code)
+            amount = int(round((amount_rub or o.price_kop / 100) * 100))
+            p = Payment(order_id=o.id, provider="external", provider_payment_id=f"ext-{o.id}-{utcnow():%Y%m%d%H%M%S}", amount_kop=amount, status="pending")
+            s.add(p)
+            s.flush()
+            if source:
+                o.client.source = source[:40]
+            mark_paid(s, p, fee_kop=int(round(fee_rub * 100)))
+        elif action == "confirm_manual_payment":
             p = next((p for p in o.payments if p.status == "pending" and p.provider == "manual"), None)
             if p is None:
                 raise HTTPException(400, "Нет ожидающего ручного платежа")
@@ -380,8 +407,9 @@ def settings_page(request: Request):
 
     with session_scope() as s:
         vals = {k: get_setting(s, k) for k in DEFAULTS}
+        vals["owner_chat_id"] = get_setting(s, "owner_chat_id")
         preview = render_text(collect(s), ["(план формирует CEO-агент при отправке)"])
-        return render(request, "settings.html", vals=vals, preview=preview, conf=get_settings())
+        return render(request, "settings.html", vals=vals, preview=preview, conf=get_settings(), owner_code=owner_code())
 
 
 @router.post("/settings")

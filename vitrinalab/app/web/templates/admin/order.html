@@ -7,6 +7,20 @@
 <button class="btn small ghost" name="action" value="rerun">Перезапустить производство</button>
 <button class="btn small ghost" name="action" value="redeliver">Отправить результат повторно</button>
 <button class="btn small ghost" name="action" value="cancel" onclick="return confirm('Отменить заказ?')">Отменить</button></form>
+{% if not o.paid_at and o.status not in ('cancelled',) %}
+<details class="panel" style="margin-top:12px"><summary><b>Пилот или оплата на бирже</b></summary>
+<form method="post" action="/admin/orders/{{ o.id }}/action" style="margin-top:10px"><input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="formgrid">
+  <div><label>Тариф</label><select name="tariff_code">{% for t in TARIFFS.values() %}<option value="{{ t.code }}" {{ 'selected' if t.code == (o.tariff or 'standard') }}>{{ t.name }} — {{ rub(t.price_kop) }}</option>{% endfor %}</select></div>
+  <div><label>Получено на бирже, ₽</label><input type="number" step="0.01" name="amount_rub"></div>
+  <div><label>Комиссия биржи, ₽</label><input type="number" step="0.01" name="fee_rub" value="0"></div>
+  <div><label>Источник</label><select name="source"><option value="">не менять</option><option>kwork</option><option>fl</option><option>profi</option></select></div>
+</div>
+<p class="hint">«Пилот» — бесплатное производство, выручка не меняется. «Оплачено на бирже» — выручка = полученная сумма, комиссия — в расходах.</p>
+<button class="btn small ghost" name="action" value="pilot" onclick="return confirm('Запустить бесплатный пилот?')">Пилот (бесплатно)</button>
+<button class="btn small" name="action" value="external_paid" onclick="return confirm('Оплата на бирже получена?')">Оплачено на бирже</button>
+</form></details>
+{% endif %}
 <h2>Платежи</h2>
 <table class="tbl"><tr><th>#</th><th>Провайдер</th><th>ID</th><th>Сумма</th><th>Комиссия</th><th>Статус</th><th>Чек НПД</th></tr>
 {% for p in payments %}<tr><td>{{ p.id }}</td><td>{{ p.provider }}</td><td class="hint">{{ p.provider_payment_id }}</td><td class="num">{{ rub(p.amount_kop) }}</td><td class="num">{{ rub(p.fee_kop) }}</td><td>{{ p.status }}</td><td>{{ 'да' if p.receipt_registered else 'нет' }}</td></tr>{% else %}<tr><td>нет</td></tr>{% endfor %}</table>

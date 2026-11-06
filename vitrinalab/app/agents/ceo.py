@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..events import escalate, record
+from ..events import escalate, owner_chat_id, record
 from ..integrations import telegram
 from ..models import Escalation, Message, Order, Task, utcnow
 from ..queue import enqueue, handler
@@ -112,8 +112,8 @@ def daily_report(s: Session, payload: dict, task: Task) -> None:
         run.row.summary = text[:500]
     s.add(Message(channel="telegram", direction="out", text=text, status="sent", agent="ceo", kind="report", sent_at=utcnow()))
     record(s, "daily_report", "ceo", None)
-    if cfg.telegram_owner_chat_id and telegram.enabled():
-        telegram.send_message(cfg.telegram_owner_chat_id, text)
+    if owner_chat_id(s) and telegram.enabled():
+        telegram.send_message(owner_chat_id(s), text)
     if cfg.owner_email:
         from ..integrations import mailer
 

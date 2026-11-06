@@ -1,0 +1,12 @@
+# HTTPS-сертификат Let's Encrypt выпускается и продлевается автоматически
+{$DOMAIN} {
+	encode gzip
+	request_body {
+		max_size 20MB
+	}
+	reverse_proxy web:8000
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

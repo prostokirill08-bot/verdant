@@ -48,10 +48,26 @@ def reset_engine() -> None:
     _SessionLocal = None
 
 
-def init_db() -> None:
+def init_db(retries: int = 30, delay: float = 2.0) -> None:
+    """Создать таблицы. Ждёт, пока БД начнёт принимать подключения (старт контейнеров)."""
+    import logging
+    import time
+
+    from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
+
     from . import models  # noqa: F401  регистрирует таблицы
 
-    Base.metadata.create_all(get_engine())
+    for attempt in range(1, retries + 1):
+        try:
+            Base.metadata.create_all(get_engine())
+            return
+        except (OperationalError, IntegrityError, ProgrammingError) as e:
+            # OperationalError — БД ещё стартует; Integrity/Programming — веб и воркер
+            # одновременно создают таблицы в Postgres: повтор увидит уже созданные
+            if attempt == retries:
+                raise
+            logging.getLogger("vitrinalab.db").warning("БД недоступна (%s/%s): %s", attempt, retries, str(e).splitlines()[0])
+            time.sleep(delay + (attempt % 3) * 0.3)
 
 
 @contextmanager

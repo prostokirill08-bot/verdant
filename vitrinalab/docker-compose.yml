@@ -1,4 +1,5 @@
-# Запуск: cp .env.example .env && docker compose up -d --build
+# Запуск на сервере: sudo bash deploy/bootstrap.sh <домен>
+# Вручную: cp .env.example .env && docker compose up -d --build
 services:
   web:
     build: .
@@ -6,8 +7,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://vitrina:${POSTGRES_PASSWORD:-vitrina}@db:5432/vitrina
     volumes: [data:/app/data]
-    ports: ["127.0.0.1:8000:8000"]   # наружу — через nginx/Caddy с HTTPS
-    depends_on: [db]
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
     restart: unless-stopped
   worker:
     build: .
@@ -16,7 +18,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://vitrina:${POSTGRES_PASSWORD:-vitrina}@db:5432/vitrina
     volumes: [data:/app/data]
-    depends_on: [db]
+    depends_on:
+      db: {condition: service_healthy}
     restart: unless-stopped
   db:
     image: postgres:16-alpine
@@ -25,7 +28,23 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vitrina}
       POSTGRES_DB: vitrina
     volumes: [pg:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vitrina -d vitrina"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  caddy:
+    image: caddy:2.8-alpine
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web]
     restart: unless-stopped
 volumes:
   data:
   pg:
+  caddy_data:

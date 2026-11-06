@@ -9,7 +9,8 @@ RUN mkdir -p /models && curl -fsSL -o /models/u2netp.onnx https://github.com/dan
 ENV CUTOUT_MODEL_PATH=/models/u2netp.onnx DATA_DIR=/app/data
 COPY app ./app
 COPY scripts ./scripts
-RUN useradd -m -u 1001 app && mkdir -p /app/data && chown -R app /app
-USER app
+# в образе Playwright уже есть непривилегированный пользователь pwuser
+RUN mkdir -p /app/data && chown -R pwuser /app
+USER pwuser
 EXPOSE 8000
 CMD ["uvicorn", "app.web.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]

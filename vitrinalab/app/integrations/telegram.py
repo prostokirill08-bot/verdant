@@ -75,3 +75,21 @@ def download_file(file_id: str, dest: Path) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(r.content)
     return dest
+
+
+def setup_bot(brand: str) -> None:
+    """Описание и команды бота через официальный Bot API (идемпотентно)."""
+    _call("setMyCommands", {"commands": [
+        {"command": "start", "description": "Начать: бесплатное превью карточки"},
+        {"command": "human", "description": "Связаться с руководителем"},
+    ]})
+    _call("setMyShortDescription", {"short_description": f"{brand}: инфографика и SEO для карточек WB и Ozon за 24 часа. AI-ассистент."[:120]})
+    _call("setMyDescription", {"description": (
+        f"Я — AI-ассистент студии {brand}. Пришлите фото товара и факты о нём — "
+        "через пару минут покажу бесплатное превью обложки для Wildberries или Ozon. "
+        "Полный комплект: слайды 1440×1920, SEO-название и описание, варианты обложки. Срок — до 24 часов."
+    )[:512]})
+
+
+def get_me() -> dict:
+    return _call("getMe")

@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..events import escalate, record
+from ..events import escalate, owner_code, record, set_setting
 from ..integrations import telegram
 from ..models import Client, Message, Order, OrderItem, utcnow
 from ..payments.service import PaymentError, create_payment, set_tariff
@@ -105,6 +105,17 @@ def handle_update(s: Session, upd: dict) -> None:
     bot = Bot(s, client)
     cfg = get_settings()
     state = dict(client.state or {"step": "start"})
+
+    if text.startswith("/owner"):
+        code = text.split(maxsplit=1)[1].strip() if " " in text else ""
+        if code and code == owner_code():
+            set_setting(s, "owner_chat_id", client.telegram_chat_id)
+            client.notes = "ВЛАДЕЛЕЦ"
+            record(s, "owner_registered", "client", client.id)
+            bot.say("Готово: этот чат привязан как чат владельца. Сюда будут приходить ежедневные отчёты и эскалации.", agent="ceo")
+        else:
+            bot.say("Неверный код.", agent="ceo")
+        return
 
     if text.startswith("/start"):
         payload = text.split(maxsplit=1)[1] if " " in text else ""
