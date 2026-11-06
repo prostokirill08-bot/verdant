@@ -349,3 +349,16 @@ def test_only_one_poller_holds_lease():
     assert worker.acquire_poller_lease("A") is True
     assert worker.acquire_poller_lease("B") is False  # A ещё держит аренду
     assert worker.acquire_poller_lease("A") is True   # продление своей аренды
+
+
+def test_same_chat_message_in_two_updates_processed_once(monkeypatch):
+    """Telegram прислал одно сообщение пользователя в двух разных обновлениях — ответ должен быть один."""
+    from app import worker
+    from app.agents import sales
+
+    seen = []
+    monkeypatch.setattr(sales, "handle_update", lambda s, upd: seen.append(upd["update_id"]))
+    m = {"message_id": 55, "chat": {"id": 777, "type": "private"}, "text": "/start"}
+    worker.process_updates([{"update_id": 20, "message": m}, {"update_id": 21, "message": m}])
+    worker.process_updates([{"update_id": 22, "message": {**m, "message_id": 56}}])
+    assert seen == [20, 22]

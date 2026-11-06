@@ -112,13 +112,43 @@ def claim_update(update_id: int) -> bool:
         return res.rowcount == 1
 
 
+def claim_message(chat_id: int, message_id: int) -> bool:
+    """Вторая защита от дублей: одно и то же сообщение чата (по message_id) обрабатывается один раз."""
+    from sqlalchemy import update as sql_update
+
+    from .models import Setting
+
+    key = f"tgm:{chat_id}"
+    with session_scope() as s:
+        row = s.get(Setting, key)
+        if row is None:
+            try:
+                with s.begin_nested():
+                    s.add(Setting(key=key, value=str(message_id)))
+                return True
+            except Exception:  # noqa: BLE001 — строку создал параллельный процесс
+                row = s.get(Setting, key)
+        last = int(row.value or 0)
+        if message_id <= last:
+            return False
+        res = s.execute(sql_update(Setting).where(Setting.key == key, Setting.value == row.value).values(value=str(message_id)))
+        return res.rowcount == 1
+
+
 def process_updates(updates: list[dict]) -> int:
     """Обработать пачку сообщений. Возвращает, сколько обработано этим процессом."""
     from .agents import sales
 
     done = 0
     for upd in updates:
+        msg = upd.get("message") or {}
+        chat_id, message_id = (msg.get("chat") or {}).get("id"), msg.get("message_id")
+        log.info("tg update %s chat=%s message=%s", upd.get("update_id"), chat_id, message_id)
         if not claim_update(upd["update_id"]):
+            log.info("tg update %s пропущено: уже обработано", upd.get("update_id"))
+            continue
+        if chat_id is not None and message_id is not None and not claim_message(chat_id, message_id):
+            log.info("tg message %s/%s пропущено: это сообщение уже обработано", chat_id, message_id)
             continue
         done += 1
         try:
