@@ -81,6 +81,13 @@ def telegram_poller() -> None:
         return
     try:
         telegram.setup_bot(cfg.brand_name)
+        from .agents.owner import COMMANDS
+        from .events import owner_chat_id
+
+        with session_scope() as s:
+            chat = owner_chat_id(s)
+        if chat:
+            telegram.set_owner_commands(chat, COMMANDS)
     except Exception as e:  # noqa: BLE001 — не критично
         log.warning("setup_bot: %s", e)
     with session_scope() as s:

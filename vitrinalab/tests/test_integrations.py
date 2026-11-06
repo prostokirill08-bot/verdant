@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from app.db import session_scope
-from app.models import Client, Order, Payment
+from app.models import Client, Message, Order, Payment
 from app.queue import run_pending
 from tests.conftest import FEATURES
 
@@ -23,6 +23,7 @@ def tg(monkeypatch, product_photo):
     monkeypatch.setattr(telegram, "send_photo", lambda chat, path, caption="", markup=None: sent.append(("photo", caption, markup)) or {})
     monkeypatch.setattr(telegram, "send_document", lambda chat, path, caption="": sent.append(("doc", str(path), None)) or {})
     monkeypatch.setattr(telegram, "answer_callback", lambda *a, **k: None)
+    monkeypatch.setattr(telegram, "set_owner_commands", lambda *a, **k: None)
     monkeypatch.setattr(telegram, "download_file", lambda fid, dest: (dest.parent.mkdir(parents=True, exist_ok=True), shutil.copy(product_photo, dest))[1])
     return sent
 
@@ -200,3 +201,90 @@ def test_bot_legal_and_package(tg):
         sales.handle_update(s, _upd("Тарелка\nДиаметр: 20 см\nФарфор", uid=5))
         assert len(s.scalars(select(OrderItem)).all()) == 2
     assert "Осталось мест в пакете: 8" in tg[-1][1]
+
+
+def _owner_msg(text, uid=100, chat=999):
+    return {"update_id": uid, "message": {"message_id": uid, "chat": {"id": chat, "type": "private"}, "from": {"id": chat, "first_name": "Владелец"}, "text": text}}
+
+
+def _cb(data, chat=999):
+    return {"id": "cb", "data": data, "message": {"chat": {"id": chat}}}
+
+
+def test_owner_controls_business_from_telegram(tg):
+    from app.agents import sales
+    from app.agents.finance import all_time, summarize
+    from app.events import owner_code
+    from app.models import ContentPost, Lead
+
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg(f"/owner {owner_code()}"))
+    assert "/stats" in tg[-1][1]
+
+    # два неоплаченных заказа от клиента 777
+    with session_scope() as s:
+        c = Client(telegram_chat_id="777", name="Анна", is_legal=True)
+        s.add(c)
+        s.flush()
+        for _ in range(2):
+            s.add(Order(client_id=c.id, status="preview_ready"))
+        s.add(Lead(name="Магазин", contact="@shop"))
+        s.flush()
+        lead_id = s.scalar(select(Lead.id))
+        s.add(Message(lead_id=lead_id, direction="out", text="Здравствуйте! Это AI-ассистент…", status="pending_approval", kind="outreach"))
+        s.add(ContentPost(topic="t", text="Пост", status="pending_approval"))
+        o1, o2 = [o.id for o in s.scalars(select(Order).order_by(Order.id))]
+
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg("/stats", uid=101))
+    assert "Сегодня" in tg[-1][1] and "За всё время" in tg[-1][1]
+
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg("/orders", uid=102))
+    assert any(f"opilot:{o1}" in str(m[2]) for m in tg)
+
+    # чужой чат нажимает кнопку владельца — ничего не происходит
+    with session_scope() as s:
+        sales.handle_callback(s, _cb(f"opilot:{o1}:start", chat=777))
+        assert s.get(Order, o1).status == "preview_ready"
+
+    # пилот кнопками: выбор тарифа → запуск
+    with session_scope() as s:
+        sales.handle_callback(s, _cb(f"opilot:{o1}"))
+        sales.handle_callback(s, _cb(f"opilot:{o1}:start"))
+        assert s.get(Order, o1).status == "paid" and s.get(Order, o1).price_kop == 0
+
+    # оплата с биржи: тариф кнопкой → сумма и комиссия текстом
+    with session_scope() as s:
+        sales.handle_callback(s, _cb(f"oext:{o2}:standard"))
+        sales.handle_update(s, _owner_msg("3990 798 kwork", uid=103))
+    with session_scope() as s:
+        fs = summarize(s, all_time())
+        assert fs.revenue_kop == 399000 and fs.fees_kop == 79800 and "kwork" in fs.by_channel
+
+    # одобрения
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg("/approvals", uid=104))
+        mid = s.scalar(select(Message.id).where(Message.kind == "outreach"))
+        pid = s.scalar(select(ContentPost.id))
+        sales.handle_callback(s, _cb(f"oapp:m:{mid}"))
+        sales.handle_callback(s, _cb(f"osent:m:{mid}"))
+        sales.handle_callback(s, _cb(f"oapp:p:{pid}"))
+    with session_scope() as s:
+        assert s.get(Message, mid).status == "sent" and s.get(Lead, lead_id).status == "contacted"
+        assert s.get(ContentPost, pid).status == "approved"
+
+    # чеки
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg("/receipts", uid=105))
+        pay_id = s.scalar(select(Payment.id).where(Payment.status == "succeeded"))
+    assert f"orcpt:{pay_id}" in str(tg[-1][2])
+    with session_scope() as s:
+        sales.handle_callback(s, _cb(f"orcpt:{pay_id}"))
+        assert s.get(Payment, pay_id).receipt_registered
+
+    # клиент не может вызвать команды владельца
+    n = len(tg)
+    with session_scope() as s:
+        sales.handle_update(s, _upd("/stats", uid=106))
+    assert "За всё время" not in tg[-1][1]

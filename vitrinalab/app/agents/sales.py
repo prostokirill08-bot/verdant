@@ -19,7 +19,7 @@ from ..models import Client, Escalation, Message, Order, OrderItem, Payment, utc
 from ..payments.service import PaymentError, create_payment, mark_paid, set_tariff
 from ..pricing import TARIFFS, rub
 from ..queue import enqueue
-from . import support
+from . import owner, support
 from .base import agent_run, ask_llm
 from .copywriter import split_facts
 from .knowledge import HUMAN_RE, faq_answer, safe_reply, sales_system
@@ -113,9 +113,20 @@ def handle_update(s: Session, upd: dict) -> None:
             set_setting(s, "owner_chat_id", client.telegram_chat_id)
             client.notes = "ВЛАДЕЛЕЦ"
             record(s, "owner_registered", "client", client.id)
-            bot.say("Готово: этот чат привязан как чат владельца. Сюда будут приходить ежедневные отчёты и эскалации.", agent="ceo")
+            try:
+                telegram.set_owner_commands(client.telegram_chat_id, owner.COMMANDS)
+            except Exception as e:  # noqa: BLE001 — меню необязательно, команды работают и без него
+                log.warning("set_owner_commands: %s", e)
+            bot.say(
+                "Готово: этот чат привязан как чат владельца. Сюда будут приходить ежедневные отчёты, эскалации и кнопки подтверждения.\n\n"
+                "Управление бизнесом прямо отсюда:\n" + "\n".join(f"{c} — {d}" for c, d in owner.COMMANDS.items()),
+                agent="ceo",
+            )
         else:
             bot.say("Неверный код.", agent="ceo")
+        return
+
+    if owner.is_owner(s, client.telegram_chat_id) and owner.handle_command(s, client.telegram_chat_id, text):
         return
 
     if text.startswith("/start"):
@@ -275,6 +286,10 @@ def handle_callback(s: Session, cq: dict) -> None:
     if parts[0] in ("okpay", "nopay"):
         if chat_id == owner_chat_id(s) and len(parts) == 2 and parts[1].isdigit():
             _owner_payment_action(s, chat_id, parts[0], int(parts[1]))
+        return
+    if parts[0] in owner.OWNER_PREFIXES:
+        if owner.is_owner(s, chat_id):
+            owner.handle_callback(s, chat_id, data)
         return
     client = s.scalar(select(Client).where(Client.telegram_chat_id == chat_id))
     if client is None:

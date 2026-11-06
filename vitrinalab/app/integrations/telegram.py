@@ -91,5 +91,13 @@ def setup_bot(brand: str) -> None:
     )[:512]})
 
 
+def set_owner_commands(chat_id: str, commands: dict[str, str]) -> None:
+    """Меню команд владельца — видно только в его чате."""
+    _call("setMyCommands", {
+        "commands": [{"command": c.lstrip("/"), "description": d[:256]} for c, d in commands.items()],
+        "scope": {"type": "chat", "chat_id": int(chat_id)},
+    })
+
+
 def get_me() -> dict:
     return _call("getMe")

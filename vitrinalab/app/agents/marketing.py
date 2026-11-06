@@ -59,7 +59,13 @@ def content_plan(s: Session, payload: dict, task: Task) -> None:
                 validate=lambda t: isinstance(t, str) and 100 < len(t) < 1200 and "лучш" not in t.lower(),
                 temperature=0.7,
             )
-            s.add(ContentPost(topic=topic, text=text, status="approved" if auto else "pending_approval", scheduled_at=start + timedelta(days=i * 2)))
+            post = ContentPost(topic=topic, text=text, status="approved" if auto else "pending_approval", scheduled_at=start + timedelta(days=i * 2))
+            s.add(post)
+            s.flush()
+            if not auto:
+                from .owner import notify_pending_post
+
+                notify_pending_post(s, post)
         run.row.summary = "3 поста в контент-план"
     record(s, "content_planned", "content", None, count=3)
 

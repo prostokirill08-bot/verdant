@@ -90,8 +90,13 @@ def analyze_lead(s: Session, payload: dict, task: Task) -> None:
             validate=lambda t: isinstance(t, str) and 80 < len(t) < 900 and "нет" in t,
         )
         run.row.summary = f"lead {lead.id}: score {score}"
-    s.add(Message(lead_id=lead.id, channel=lead.contact_channel or "manual", direction="out", text=draft, status="pending_approval", agent="sales", kind="outreach"))
+    msg = Message(lead_id=lead.id, channel=lead.contact_channel or "manual", direction="out", text=draft, status="pending_approval", agent="sales", kind="outreach")
+    s.add(msg)
+    s.flush()
     lead.status = "draft_ready"
+    from .owner import notify_pending_message
+
+    notify_pending_message(s, msg)
     record(s, "lead_analyzed", "lead", lead.id, score=score, segment=segment)
 
 

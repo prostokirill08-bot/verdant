@@ -30,7 +30,7 @@ from ..models import (
     Task,
     utcnow,
 )
-from ..payments.service import mark_paid, set_tariff
+from .. import ops
 from ..queue import enqueue
 
 security = HTTPBasic()
@@ -190,21 +190,7 @@ def approvals(request: Request):
 def message_action(mid: int, action: str = Form(...), text: str = Form(""), csrf: str = Form(...)):
     check_csrf(csrf)
     with session_scope() as s:
-        m = s.get(Message, mid)
-        if text.strip():
-            m.text = text.strip()
-        if action == "approve":
-            m.status = "approved"
-        elif action == "reject":
-            m.status = "rejected"
-            if m.lead_id:
-                s.get(Lead, m.lead_id).status = "rejected"
-        elif action == "sent":  # владелец отправил вручную
-            m.status = "sent"
-            m.sent_at = utcnow()
-            if m.lead_id:
-                s.get(Lead, m.lead_id).status = "contacted"
-            record(s, "outreach_sent", "lead", m.lead_id, channel=m.channel)
+        ops.message_action(s, s.get(Message, mid), action, text)
     return back("/admin/approvals")
 
 
@@ -224,10 +210,7 @@ def lead_reply(lead_id: int, text: str = Form(...), csrf: str = Form(...)):
 def post_action(pid: int, action: str = Form(...), text: str = Form(""), csrf: str = Form(...)):
     check_csrf(csrf)
     with session_scope() as s:
-        p = s.get(ContentPost, pid)
-        if text.strip():
-            p.text = text.strip()
-        p.status = {"approve": "approved", "reject": "rejected"}.get(action, p.status)
+        ops.post_action(s, s.get(ContentPost, pid), action, text)
     return back("/admin/approvals")
 
 
@@ -279,42 +262,21 @@ def order_action(
     check_csrf(csrf)
     with session_scope() as s:
         o = s.get(Order, oid)
-        if action in ("pilot", "external_paid") and (o.paid_at or o.status in ("in_production", "delivered")):
-            raise HTTPException(400, "Заказ уже оплачен или в работе")
-        if action == "pilot":
-            # бесплатный пилот: производство без оплаты, выручка не меняется
-            set_tariff(o, tariff_code)
-            o.price_kop = 0
-            o.notes = (o.notes + " пилот").strip()
-            o.status, o.paid_at = "paid", utcnow()
-            enqueue(s, "produce_order", {"order_id": o.id}, idempotency_key=f"produce_order:{o.id}")
-        elif action == "external_paid":
-            # оплата прошла на бирже (Kwork/FL): фиксируем выручку и комиссию площадки
-            set_tariff(o, tariff_code)
-            amount = int(round((amount_rub or o.price_kop / 100) * 100))
-            p = Payment(order_id=o.id, provider="external", provider_payment_id=f"ext-{o.id}-{utcnow():%Y%m%d%H%M%S}", amount_kop=amount, status="pending")
-            s.add(p)
-            s.flush()
-            if source:
-                o.client.source = source[:40]
-            mark_paid(s, p, fee_kop=int(round(fee_rub * 100)))
-        elif action == "confirm_manual_payment":
-            p = next((p for p in o.payments if p.status == "pending" and p.provider == "manual"), None)
-            if p is None:
-                raise HTTPException(400, "Нет ожидающего ручного платежа")
-            mark_paid(s, p)
-        elif action == "rerun":
-            for it in o.items:
-                it.attempts = 0
-                if it.status in ("needs_human", "done"):
-                    it.status = "producing"
-                enqueue(s, "produce_item", {"item_id": it.id}, idempotency_key=f"produce:{it.id}:manual:{utcnow():%Y%m%d%H%M%S}")
-            o.status = "in_production"
-        elif action == "redeliver":
-            enqueue(s, "deliver_order", {"order_id": o.id}, idempotency_key=f"deliver:{o.id}:manual:{utcnow():%Y%m%d%H%M%S}")
-        elif action == "cancel":
-            o.status = "cancelled"
-        record(s, f"admin_{action}", "order", oid)
+        try:
+            if action == "pilot":
+                ops.start_pilot(s, o, tariff_code)
+            elif action == "external_paid":
+                ops.external_paid(s, o, tariff_code, amount_rub, fee_rub, source)
+            elif action == "confirm_manual_payment":
+                ops.confirm_manual_payment(s, o)
+            elif action == "rerun":
+                ops.rerun(s, o)
+            elif action == "redeliver":
+                ops.redeliver(s, o)
+            elif action == "cancel":
+                ops.cancel(s, o)
+        except ops.OpError as e:
+            raise HTTPException(400, str(e))
     return back(f"/admin/orders/{oid}")
 
 
@@ -379,7 +341,7 @@ def add_expense(category: str = Form(...), amount_rub: float = Form(...), descri
 def receipt_done(pid: int, csrf: str = Form(...)):
     check_csrf(csrf)
     with session_scope() as s:
-        s.get(Payment, pid).receipt_registered = True
+        ops.receipt_done(s, s.get(Payment, pid))
     return back("/admin/finance")
 
 
