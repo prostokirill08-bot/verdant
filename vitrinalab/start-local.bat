@@ -19,7 +19,7 @@ docker compose -f docker-compose.local.yml up -d --build || (echo Ошибка. 
 echo Ждём запуска...
 :wait
 timeout /t 3 >nul
-curl -s http://localhost:8000/healthz | find "\"ok\":true" >nul || goto wait
+curl -s http://localhost:8000/healthz | findstr /c:"true" >nul || goto wait
 echo.
 docker compose -f docker-compose.local.yml exec -T worker python -m app.check
 echo.
