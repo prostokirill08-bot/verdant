@@ -131,11 +131,15 @@ def main() -> None:
                 scheduler_tick()
             except Exception:  # noqa: BLE001
                 log.exception("scheduler tick failed")
-        tid = claim_next(worker_id)
-        if tid is None:
-            STOP.wait(1.0)
-            continue
-        run_task(tid)
+        try:
+            tid = claim_next(worker_id)
+            if tid is None:
+                STOP.wait(1.0)
+                continue
+            run_task(tid)
+        except Exception:  # noqa: BLE001 — например, «database is locked»: подождать и продолжить
+            log.exception("worker loop error, retrying in 3s")
+            STOP.wait(3.0)
     from .imaging.render import Renderer
 
     Renderer.shutdown()

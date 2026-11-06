@@ -10,6 +10,9 @@ import httpx
 from ..config import get_settings
 
 log = logging.getLogger("vitrinalab.telegram")
+# httpx логирует полный URL, а в URL Bot API — токен. Оставляем только предупреждения и ошибки.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 class TelegramError(Exception):

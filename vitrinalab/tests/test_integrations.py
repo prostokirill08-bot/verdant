@@ -270,3 +270,28 @@ def test_owner_controls_business_from_telegram(tg):
     with session_scope() as s:
         sales.handle_update(s, _upd("/stats", uid=106))
     assert "За всё время" not in tg[-1][1]
+
+
+def test_new_product_after_delivered_order_creates_new_order(tg):
+    """Регрессия: описание нового товара после доставленного заказа уходило в поддержку, и заказ не создавался."""
+    from app.agents import sales
+
+    with session_scope() as s:
+        c = Client(telegram_chat_id="777", name="Анна")
+        s.add(c)
+        s.flush()
+        s.add(Order(client_id=c.id, status="delivered", tariff="start"))
+    with session_scope() as s:
+        sales.handle_update(s, _upd(photo=True, uid=2))
+        sales.handle_update(s, _upd("Набор ёлочных игрушек\nВ наборе: 12 шт\nМатериал: дерево\nWB", uid=3))
+    with session_scope() as s:
+        assert len(s.scalars(select(Order)).all()) == 2
+    assert "превью" in tg[-1][1].lower()
+
+
+def test_bot_token_not_logged():
+    import logging
+
+    import app.integrations.telegram  # noqa: F401
+
+    assert logging.getLogger("httpx").getEffectiveLevel() >= logging.WARNING

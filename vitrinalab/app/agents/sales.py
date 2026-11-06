@@ -166,7 +166,8 @@ def handle_update(s: Session, upd: dict) -> None:
         if photo_id or (text and "?" not in text):  # вопрос — ответим, а не примем за пожелание
             return _design_input(s, bot, client, order, msg, photo_id, text)
 
-    if order and order.status in ("paid", "in_production", "ready", "delivered", "revision", "needs_human"):
+    new_product_flow = state.get("step") == "await_details" and not photo_id  # клиент прислал фото нового товара и теперь пишет его описание
+    if order and order.status in ("paid", "in_production", "ready", "delivered", "revision", "needs_human") and not new_product_flow:
         # оплаченный пакет (Каталог / на месяц): товары присылают по одному прямо в чат
         if _package_slots(order) > 0 and (photo_id or state.get("step") == "pkg_details"):
             return _package_item(s, bot, client, order, state, msg, photo_id, text)
