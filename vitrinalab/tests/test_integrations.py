@@ -295,3 +295,35 @@ def test_bot_token_not_logged():
     import app.integrations.telegram  # noqa: F401
 
     assert logging.getLogger("httpx").getEffectiveLevel() >= logging.WARNING
+
+
+def test_owner_reset_clears_business_data_keeps_settings(tg, env):
+    from app.agents import sales
+    from app.agents.finance import all_time, summarize
+    from app.events import get_setting, owner_chat_id, owner_code, set_setting
+    from app.models import Event, Task
+    from app.payments.service import create_payment, mark_paid, set_tariff
+
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg(f"/owner {owner_code()}"))
+        set_setting(s, "production_mode", "chatgpt")
+        c = Client(telegram_chat_id="777")
+        s.add(c)
+        s.flush()
+        o = Order(client_id=c.id, status="preview_ready")
+        s.add(o)
+        s.flush()
+        set_tariff(o, "start")
+        mark_paid(s, create_payment(s, o))
+    with session_scope() as s:
+        sales.handle_update(s, _owner_msg("/reset", uid=101))
+        sales.handle_callback(s, _cb("oreset:no"))
+        assert summarize(s, all_time()).paid_orders == 1  # «Отмена» ничего не трогает
+        sales.handle_callback(s, _cb("oreset:yes"))
+    with session_scope() as s:
+        assert summarize(s, all_time()).revenue_kop == 0
+        assert not s.scalars(select(Order)).all() and not s.scalars(select(Client)).all()
+        assert not s.scalars(select(Event)).all() and not s.scalars(select(Task)).all()
+        assert owner_chat_id(s) == "999" and get_setting(s, "production_mode") == "chatgpt"
+    assert list((env / "backups").glob("before-reset-*.db"))
+    assert "удалены" in tg[-1][1]

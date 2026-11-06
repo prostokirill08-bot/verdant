@@ -27,6 +27,7 @@ COMMANDS = {
     "/report": "Прислать ежедневный отчёт сейчас",
     "/jobs": "Задания для ChatGPT: что ждёт картинок",
     "/mode": "Кто делает картинки: /mode chatgpt или /mode auto",
+    "/reset": "Обнулить все данные после тестов (с подтверждением)",
     "/help": "Список команд владельца",
 }
 STATUS = {
@@ -95,6 +96,14 @@ def handle_command(s: Session, chat_id: str, text: str) -> bool:
             _say(chat_id, f"Сейчас: {'ChatGPT (вручную по промптам)' if cur == 'chatgpt' else 'автоматически (шаблоны)'}.\nПереключить: /mode chatgpt или /mode auto")
     elif cmd == "/jobs":
         _jobs(s, chat_id)
+    elif cmd == "/reset":
+        _say(
+            chat_id,
+            "⚠️ Удалить ВСЕ рабочие данные: заказы, клиентов, оплаты, статистику, сообщения, лидов, задания и файлы заказов?\n\n"
+            "Останутся: привязка владельца, режим работы и настройки. Перед удалением сохраню резервную копию базы.\n"
+            "Используйте только после тестов — действие не отменить кнопкой.",
+            kb([[("🗑 Да, удалить всё", "oreset:yes"), ("Отмена", "oreset:no")]]),
+        )
     elif cmd == "/report":
         from ..models import utcnow
 
@@ -273,7 +282,7 @@ def _finish_job(s: Session, chat_id: str, job_id: int) -> None:
 
 # ---------------- кнопки ----------------
 
-OWNER_PREFIXES = ("opay", "opilot", "oext", "orerun", "oredeliver", "oapp", "orej", "osent", "orcpt", "mjob", "mdone", "msend", "mredo", "mresend")
+OWNER_PREFIXES = ("oreset", "opay", "opilot", "oext", "orerun", "oredeliver", "oapp", "orej", "osent", "orcpt", "mjob", "mdone", "msend", "mredo", "mresend")
 
 
 def handle_callback(s: Session, chat_id: str, data: str) -> None:
@@ -339,6 +348,13 @@ def handle_callback(s: Session, chat_id: str, data: str) -> None:
             elif act == "mresend":
                 enqueue(s, "send_manual_job", {"job_id": job.id}, idempotency_key=f"manual_job:{job.id}:{len(job.images)}:{job.updated_at:%H%M%S}")
                 _say(chat_id, "Отправляю промпты ещё раз…")
+        elif act == "oreset":
+            if parts[1] == "yes":
+                backup = ops.reset_business_data(s)
+                _say(chat_id, "🗑 Готово: все тестовые данные удалены, статистика с нуля. Нумерация заказов начнётся заново."
+                     + (f"\nРезервная копия: {backup.split('/')[-1]} (папка data/backups)." if backup else ""))
+            else:
+                _say(chat_id, "Отменено, ничего не удалено.")
         elif act == "orcpt":
             ops.receipt_done(s, s.get(Payment, int(parts[1])))
             _say(chat_id, "🧾 Отмечено: чек пробит.")

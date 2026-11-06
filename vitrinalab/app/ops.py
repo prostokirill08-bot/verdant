@@ -97,3 +97,35 @@ def post_action(s: Session, p: ContentPost, action: str, text: str = "") -> None
 
 def receipt_done(s: Session, p: Payment) -> None:
     p.receipt_registered = True
+
+
+def reset_business_data(s: Session) -> str:
+    """Удалить все рабочие данные (после тестов), сохранив настройки и привязку владельца.
+
+    Перед удалением — резервная копия SQLite в data/backups. Возвращает путь к копии или пустую строку.
+    """
+    import shutil
+    import sqlite3
+
+    from .config import get_settings
+    from .models import AgentRun, Client, Escalation, Event, Expense, ManualJob, OrderItem, Task
+
+    cfg = get_settings()
+    backup = ""
+    if cfg.db_url.startswith("sqlite"):
+        s.commit()  # копия должна включать всё сохранённое
+        bdir = cfg.data_dir / "backups"
+        bdir.mkdir(parents=True, exist_ok=True)
+        dst = bdir / f"before-reset-{utcnow():%Y%m%d-%H%M%S}.db"
+        with sqlite3.connect(cfg.db_url.replace("sqlite:///", "")) as a, sqlite3.connect(dst) as b:
+            a.backup(b)
+        backup = str(dst)
+    # порядок важен: сначала зависимые таблицы
+    for model in (ManualJob, Payment, OrderItem, Order, Message, Lead, Client, Expense, Event, AgentRun, Escalation, ContentPost, Task):
+        s.query(model).delete(synchronize_session=False)
+    for sub in ("orders", "uploads"):
+        shutil.rmtree(cfg.files_dir / sub, ignore_errors=True)
+    from .events import set_setting
+
+    set_setting(s, "owner_pending", "")
+    return backup
