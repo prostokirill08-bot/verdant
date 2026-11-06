@@ -43,6 +43,7 @@ DEFAULTS = {
     "auto_publish_posts": "0",  # посты в канал — только после одобрения
     "agents_paused": "0",
     "accept_orders": "1",
+    "production_mode": "auto",  # auto — шаблоны системы; chatgpt — картинки делает владелец в ChatGPT по промптам
 }
 
 

@@ -228,6 +228,23 @@ class ContentPost(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
+class ManualJob(Base):
+    """Задание владельцу: сделать картинки в ChatGPT по готовому промпту (режим production_mode=chatgpt)."""
+
+    __tablename__ = "manual_jobs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("order_items.id"), index=True)
+    stage: Mapped[str] = mapped_column(String(10))  # preview | final
+    status: Mapped[str] = mapped_column(String(10), default="waiting", index=True)  # waiting | review | done | cancelled
+    prompts: Mapped[list] = mapped_column(JSON, default=list)
+    images: Mapped[list] = mapped_column(JSON, default=list)  # пути к присланным картинкам
+    reminded: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+    item: Mapped["OrderItem"] = relationship()
+
+
 class Escalation(Base):
     """Вопросы, которые агенты передают владельцу."""
 

@@ -59,7 +59,16 @@ def ops_review(s: Session, payload: dict, task: Task) -> None:
                     actions.append(f"напоминание клиенту #{c.id}")
                 except telegram.TelegramError:
                     pass
-        # 5. бюджет AI
+        # 5. задания для ChatGPT ждут владельца
+        from ..models import ManualJob
+
+        for j in s.scalars(select(ManualJob).where(ManualJob.status == "waiting", ManualJob.reminded.is_(False), ManualJob.created_at < now - timedelta(hours=2))):
+            j.reminded = True
+            from .delivery import enqueue_owner_text
+
+            enqueue_owner_text(s, f"⏰ Задание №{j.id} для ChatGPT ждёт больше 2 часов (заказ №{j.item.order_id}, {'превью' if j.stage == 'preview' else 'комплект'}). Команда /jobs")
+            actions.append(f"напоминание о задании {j.id}")
+        # 6. бюджет AI
         spent = ai_spent_today_kop(s)
         if spent >= cfg.daily_ai_budget_rub * 80:
             if not _open_escalation(s, "budget", 0, "Расход AI"):

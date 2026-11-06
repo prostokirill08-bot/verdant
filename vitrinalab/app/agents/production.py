@@ -96,6 +96,15 @@ def make_preview(s: Session, payload: dict, task: Task) -> None:
     if item is None:
         raise PermanentError("нет товара")
     order = item.order
+    from . import manual
+
+    if manual.mode(s) == "chatgpt":
+        with agent_run(s, "production", "preview_prompt", task.id) as run:
+            if not item.content:
+                item.content = write_content(s, run, item.product_name, item.features, item.marketplace, note=design_note(item))
+            manual.create_job(s, item, "preview")
+            run.row.summary = f"задание ChatGPT: превью item {item.id}"
+        return
     with agent_run(s, "production", "preview", task.id) as run:
         if not item.content:
             item.content = write_content(s, run, item.product_name, item.features, item.marketplace, note=design_note(item))
@@ -168,6 +177,16 @@ def _package(item: OrderItem, content: dict, out: Path) -> Path:
 def produce_item(s: Session, payload: dict, task: Task) -> None:
     item = s.get(OrderItem, payload["item_id"])
     order = item.order
+    from . import manual
+
+    if manual.mode(s) == "chatgpt":
+        with agent_run(s, "production", "final_prompts", task.id) as run:
+            if not item.content or item.revision_note:
+                note = "\n".join(x for x in (design_note(item), item.revision_note) if x)
+                item.content = write_content(s, run, item.product_name, item.features, item.marketplace, note=note)
+            manual.create_job(s, item, "final")
+            run.row.summary = f"задание ChatGPT: комплект item {item.id}"
+        return
     t = TARIFFS[order.tariff]
     out = item_dir(item) / f"r{item.revision}"
     if out.exists():
@@ -225,8 +244,8 @@ def produce_item(s: Session, payload: dict, task: Task) -> None:
 def finalize_order(s: Session, payload: dict, task: Task) -> None:
     order = s.get(Order, payload["order_id"])
     items = [i for i in order.items if i.photo_path]
-    if not items or any(i.status in ("new", "preview_ready", "producing") for i in items):
-        return  # ждём остальные товары
+    if not items or any(i.status not in ("done", "needs_human") for i in items):
+        return  # ждём остальные товары (в т.ч. задания ChatGPT)
     if any(i.status == "needs_human" for i in items):
         order.status = "needs_human"
         return

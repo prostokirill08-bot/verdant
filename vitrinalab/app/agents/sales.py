@@ -126,8 +126,14 @@ def handle_update(s: Session, upd: dict) -> None:
             bot.say("Неверный код.", agent="ceo")
         return
 
-    if owner.is_owner(s, client.telegram_chat_id) and owner.handle_command(s, client.telegram_chat_id, text):
-        return
+    if owner.is_owner(s, client.telegram_chat_id):
+        img_id = (msg.get("photo") or [{}])[-1].get("file_id") or (
+            msg["document"]["file_id"] if msg.get("document", {}).get("mime_type", "").startswith("image/") else None
+        )
+        if img_id and owner.receive_job_image(s, client.telegram_chat_id, img_id, msg):
+            return
+        if owner.handle_command(s, client.telegram_chat_id, text):
+            return
 
     if text.startswith("/start"):
         payload = text.split(maxsplit=1)[1] if " " in text else ""
@@ -216,7 +222,10 @@ def _design_input(s: Session, bot: Bot, client: Client, order: Order, msg: dict,
         telegram.download_file(photo_id, ref)
     summary = apply_design(s, item, text, str(ref) if ref else None)
     if request_design_preview(s, item):
-        bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nОбновлённое превью придёт через 1–2 минуты.")
+        from .manual import mode
+
+        when = "в течение 1–3 часов" if mode(s) == "chatgpt" else "через 1–2 минуты"
+        bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nОбновлённое превью придёт {when}.")
     else:
         bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nЛимит бесплатных обновлений превью исчерпан — пожелания применю в полном комплекте. Выберите тариф:", _tariff_markup(order))
 
@@ -293,7 +302,12 @@ def _start_preview(s: Session, bot: Bot, client: Client, state: dict, text: str)
         return
     client.free_preview_used = True
     enqueue(s, "make_preview", {"item_id": item.id}, idempotency_key=f"preview:{item.id}")
-    bot.say("Принято! Готовлю бесплатное превью обложки — это займёт 1–3 минуты ⏳")
+    from .manual import mode
+
+    if mode(s) == "chatgpt":
+        bot.say("Принято! Превью обложки готовит наш дизайнер с помощью нейросети — пришлю сюда, обычно в течение 1–3 часов ⏳")
+    else:
+        bot.say("Принято! Готовлю бесплатное превью обложки — это займёт 1–3 минуты ⏳")
 
 
 def _tariff_markup(order: Order) -> dict:

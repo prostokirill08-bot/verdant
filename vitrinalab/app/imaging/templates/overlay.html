@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 720px; height: 960px; overflow: hidden; font-family: 'Inter', 'DejaVu Sans', sans-serif; }
+  img { position: absolute; inset: 0; width: 720px; height: 960px; object-fit: cover; }
+  .wm { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .wm div { transform: rotate(-28deg); font-size: 46px; font-weight: 900; letter-spacing: .08em; white-space: nowrap;
+            color: rgba(255,255,255,.38); text-shadow: 0 0 2px rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.25); }
+</style></head>
+<body><img src="{{ image }}"><div class="wm"><div>ПРЕВЬЮ · {{ brand }}</div></div>
+<script>window.__overflow = [];</script></body></html>

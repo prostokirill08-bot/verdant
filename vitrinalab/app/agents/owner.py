@@ -25,6 +25,8 @@ COMMANDS = {
     "/approvals": "Сообщения лидам и посты на одобрение",
     "/receipts": "Оплаты, по которым нужен чек в «Мой налог»",
     "/report": "Прислать ежедневный отчёт сейчас",
+    "/jobs": "Задания для ChatGPT: что ждёт картинок",
+    "/mode": "Кто делает картинки: /mode chatgpt или /mode auto",
     "/help": "Список команд владельца",
 }
 STATUS = {
@@ -82,6 +84,17 @@ def handle_command(s: Session, chat_id: str, text: str) -> bool:
         _approvals(s, chat_id)
     elif cmd == "/receipts":
         _receipts(s, chat_id)
+    elif cmd == "/mode":
+        arg = text.split()[1].lower() if len(text.split()) > 1 else ""
+        if arg in ("chatgpt", "auto"):
+            set_setting(s, "production_mode", arg)
+            _say(chat_id, "✅ Режим: картинки делаете вы в ChatGPT — бот будет присылать задания с промптами." if arg == "chatgpt"
+                 else "✅ Режим: картинки делает система автоматически (шаблоны).")
+        else:
+            cur = get_setting(s, "production_mode") or "auto"
+            _say(chat_id, f"Сейчас: {'ChatGPT (вручную по промптам)' if cur == 'chatgpt' else 'автоматически (шаблоны)'}.\nПереключить: /mode chatgpt или /mode auto")
+    elif cmd == "/jobs":
+        _jobs(s, chat_id)
     elif cmd == "/report":
         from ..models import utcnow
 
@@ -176,6 +189,11 @@ def _receipts(s: Session, chat_id: str) -> None:
 
 
 def _pending_input(s: Session, chat_id: str, pending: str, text: str) -> bool:
+    if pending.startswith("job:"):
+        if text.strip().lower() in ("готово", "все", "всё", "done"):
+            return _finish_job(s, chat_id, int(pending.split(":")[1])) or True
+        _say(chat_id, "Жду картинки (файлом или фото). Когда всё — напишите «готово» или нажмите кнопку. Отмена — /cancel")
+        return True
     kind, oid, code = (pending.split(":") + ["", ""])[:3]
     if kind != "ext":
         set_setting(s, "owner_pending", "")
@@ -196,9 +214,66 @@ def _pending_input(s: Session, chat_id: str, pending: str, text: str) -> bool:
     return True
 
 
+# ---------------- задания для ChatGPT ----------------
+
+
+def _jobs(s: Session, chat_id: str) -> None:
+    from . import manual
+
+    jobs = manual.waiting_jobs(s)
+    if not jobs:
+        _say(chat_id, "Заданий для ChatGPT нет 👍")
+        return
+    for j in jobs:
+        what = "превью" if j.stage == "preview" else f"комплект {len(j.prompts)} шт"
+        _say(chat_id, f"🎨 Задание №{j.id}: {what}, заказ №{j.item.order_id} — {j.item.product_name}\nСтатус: {'ждёт картинок' if j.status == 'waiting' else 'ждёт вашей проверки'} · получено {len(j.images)}",
+             kb([[("📥 Прислать картинки", f"mjob:{j.id}"), ("🔁 Промпты ещё раз", f"mresend:{j.id}")]]))
+
+
+def receive_job_image(s: Session, chat_id: str, file_id: str, msg: dict) -> bool:
+    """Картинка от владельца → в текущее задание. False — если владелец сейчас не загружает картинки."""
+    from ..config import get_settings
+    from ..models import ManualJob
+    from . import manual
+
+    pending = get_setting(s, "owner_pending")
+    if not pending.startswith("job:"):
+        return False
+    job = s.get(ManualJob, int(pending.split(":")[1]))
+    if job is None or job.status not in ("waiting", "review"):
+        set_setting(s, "owner_pending", "")
+        return False
+    tmp = get_settings().files_dir / "uploads" / "owner" / f"{msg.get('message_id', 0)}_{file_id[-8:]}"
+    telegram.download_file(file_id, tmp)
+    n = manual.add_image(s, job, tmp)
+    need = len(job.prompts)
+    if n >= need:
+        _say(chat_id, f"Получено {n} из {need} ✅", kb([[("✅ Готово, проверить", f"mdone:{job.id}")]]))
+    else:
+        _say(chat_id, f"Получено {n} из {need}")
+    return True
+
+
+def _finish_job(s: Session, chat_id: str, job_id: int) -> None:
+    from ..models import ManualJob
+    from . import manual
+
+    job = s.get(ManualJob, job_id)
+    set_setting(s, "owner_pending", "")
+    if job is None or not job.images:
+        _say(chat_id, "Картинок пока нет — пришлите хотя бы одну.")
+        if job:
+            set_setting(s, "owner_pending", f"job:{job.id}")
+        return
+    report = manual.finish_upload(s, job)
+    for im in job.images[:10]:
+        telegram.send_photo(chat_id, im["path"])
+    _say(chat_id, report, kb([[("✅ Отправить клиенту", f"msend:{job.id}"), ("🔁 Переделать", f"mredo:{job.id}")]]))
+
+
 # ---------------- кнопки ----------------
 
-OWNER_PREFIXES = ("opay", "opilot", "oext", "orerun", "oredeliver", "oapp", "orej", "osent", "orcpt")
+OWNER_PREFIXES = ("opay", "opilot", "oext", "orerun", "oredeliver", "oapp", "orej", "osent", "orcpt", "mjob", "mdone", "msend", "mredo", "mresend")
 
 
 def handle_callback(s: Session, chat_id: str, data: str) -> None:
@@ -243,6 +318,27 @@ def handle_callback(s: Session, chat_id: str, data: str) -> None:
             elif parts[1] == "p":
                 ops.post_action(s, s.get(ContentPost, int(parts[2])), action)
                 _say(chat_id, "✅ Пост одобрен — опубликуется по расписанию." if action == "approve" else "❌ Пост отклонён.")
+        elif act in ("mjob", "mdone", "msend", "mredo", "mresend"):
+            from ..models import ManualJob
+            from . import manual
+
+            job = s.get(ManualJob, int(parts[1]))
+            if job is None or job.status in ("done", "cancelled"):
+                _say(chat_id, "Это задание уже закрыто.")
+            elif act == "mjob":
+                set_setting(s, "owner_pending", f"job:{job.id}")
+                _say(chat_id, f"Жду картинки для задания №{job.id} ({len(job.prompts)} шт). Отправляйте по порядку — лучше файлом, без сжатия. Когда всё — «готово».")
+            elif act == "mdone":
+                _finish_job(s, chat_id, job.id)
+            elif act == "msend":
+                _say(chat_id, manual.approve(s, job))
+            elif act == "mredo":
+                manual.redo(s, job)
+                set_setting(s, "owner_pending", f"job:{job.id}")
+                _say(chat_id, f"Картинки задания №{job.id} сброшены. Пришлите новые и напишите «готово».")
+            elif act == "mresend":
+                enqueue(s, "send_manual_job", {"job_id": job.id}, idempotency_key=f"manual_job:{job.id}:{len(job.images)}:{job.updated_at:%H%M%S}")
+                _say(chat_id, "Отправляю промпты ещё раз…")
         elif act == "orcpt":
             ops.receipt_done(s, s.get(Payment, int(parts[1])))
             _say(chat_id, "🧾 Отмечено: чек пробит.")
