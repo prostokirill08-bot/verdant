@@ -16,6 +16,7 @@ img { max-width: 100%; display: block; }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
 header.top { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; gap: 12px; }
 .logo { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+.logo img { width: 34px; height: 34px; border-radius: 50%; }
 .logo i { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: inline-grid; place-items: center; color: #fff; font-style: normal; font-size: 16px; }
 nav a { text-decoration: none; color: var(--muted); margin-left: 18px; font-size: 15px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 14px; border: 0; background: var(--accent); color: var(--accent-ink);

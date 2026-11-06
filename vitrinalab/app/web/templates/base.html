@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ cfg().brand_name }} — инфографика для карточек WB и Ozon за 24 часа{% endblock %}</title>
 <meta name="description" content="Продающая инфографика и SEO-тексты для карточек Wildberries и Ozon за 24 часа. Работаем с вашим реальным фото товара. Бесплатное превью обложки.">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/icon-32.png">
+<link rel="apple-touch-icon" href="/static/brand/icon-180.png">
+<meta property="og:image" content="/static/brand/avatar-512.jpg">
 <link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <a class="logo" href="/"><i>В</i>{{ cfg().brand_name }}</a>
+    <a class="logo" href="/"><img src="/static/brand/icon-180.png" alt="" width="34" height="34">{{ cfg().brand_name }}</a>
     <nav><a href="/#how">Как работаем</a><a href="/#prices">Цены</a><a href="/#faq">Вопросы</a><a class="btn small" href="/order">Бесплатное превью</a></nav>
   </header>
   {% block content %}{% endblock %}
