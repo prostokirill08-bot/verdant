@@ -2,7 +2,7 @@
 
 AI-студия инфографики и SEO для карточек Wildberries и Ozon: сайт, Telegram-бот, AI-агенты, оплата, автоматическое производство и доставка, CRM, отчёты.
 
-**Старт без вложений (бот с вашего компьютера) — [START_FREE.md](START_FREE.md).** Переезд на сервер — [DEPLOY.md](DEPLOY.md). Тексты для продаж — [LAUNCH_KIT.md](LAUNCH_KIT.md).
+**Старт без вложений (бот с вашего компьютера) — [START_FREE.md](START_FREE.md).** Переезд на сервер — [DEPLOY.md](DEPLOY.md). Тексты для продаж — [LAUNCH_KIT.md](LAUNCH_KIT.md), чаты и Kwork — [OUTREACH_PACK.md](OUTREACH_PACK.md).
 
 Документы: [PROJECT_STATE](PROJECT_STATE.md) · [TODO](TODO.md) · [ARCHITECTURE](ARCHITECTURE.md) · [BUSINESS_MODEL](BUSINESS_MODEL.md) · [AI_AGENTS](AI_AGENTS.md) · [SALES_STRATEGY](SALES_STRATEGY.md) · [CHANGELOG](CHANGELOG.md)
 
