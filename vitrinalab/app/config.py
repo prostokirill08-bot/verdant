@@ -82,6 +82,11 @@ class Settings(BaseSettings):
         return f"sqlite:///{self.data_dir / 'vitrinalab.db'}"
 
     @property
+    def has_public_site(self) -> bool:
+        """Сайт опубликован по HTTPS. Иначе — режим «только Telegram-бот» (запуск с компьютера, без вложений)."""
+        return self.public_url.startswith("https://")
+
+    @property
     def files_dir(self) -> Path:
         p = self.data_dir / "files"
         p.mkdir(parents=True, exist_ok=True)

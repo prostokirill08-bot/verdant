@@ -54,16 +54,33 @@ def test_telegram_sales_to_delivery(tg):
     cb = markup["inline_keyboard"][0][0]["callback_data"]  # тариф «Старт»
     with session_scope() as s:
         sales.handle_callback(s, {"id": "q", "data": cb, "message": {"chat": {"id": 777}}})
-    assert "Оплатить" in str(tg[-1][2])
+    kind, text, markup = tg[-1]
+    assert "Перевод по СБП" in text or "Оплата:" in text
+    assert markup["inline_keyboard"][0][0]["callback_data"].startswith("paid:")
 
+    # владелец привязывает чат (другой chat id), клиент жмёт «Я оплатил(а)»
+    from app.events import owner_code
+
+    owner = {"update_id": 50, "message": {"message_id": 1, "chat": {"id": 999, "type": "private"}, "from": {"id": 999, "first_name": "Владелец"}, "text": f"/owner {owner_code()}"}}
     with session_scope() as s:
-        c = s.scalar(select(Client))
-        assert c.source == "kwork"
-        order = s.scalar(select(Order))
-        assert order.status == "awaiting_payment" and order.tariff == "start"
-        from app.payments.service import mark_paid
+        sales.handle_update(s, owner)
+    with session_scope() as s:
+        sales.handle_callback(s, {"id": "q2", "data": markup["inline_keyboard"][0][0]["callback_data"], "message": {"chat": {"id": 777}}})
+        sales.handle_callback(s, {"id": "q3", "data": markup["inline_keyboard"][0][0]["callback_data"], "message": {"chat": {"id": 777}}})
+    assert "Уже проверяем" in tg[-1][1]
+    run_pending()  # уведомление владельцу с кнопками
+    owner_msg = next(m for m in reversed(tg) if m[2] and "okpay" in str(m[2]))
+    okpay = owner_msg[2]["inline_keyboard"][0][0]["callback_data"]
 
-        mark_paid(s, order.payments[0])
+    # чужой чат не может подтвердить оплату
+    with session_scope() as s:
+        sales.handle_callback(s, {"id": "x", "data": okpay, "message": {"chat": {"id": 777}}})
+        assert s.scalar(select(Order)).status == "awaiting_payment"
+        c = s.scalar(select(Client).where(Client.telegram_chat_id == "777"))
+        assert c.source == "kwork"
+    with session_scope() as s:
+        sales.handle_callback(s, {"id": "y", "data": okpay, "message": {"chat": {"id": 999}}})
+        assert s.scalar(select(Order)).status == "paid"
     run_pending()
     with session_scope() as s:
         assert s.scalar(select(Order)).status == "delivered"
@@ -156,3 +173,30 @@ def test_check_offline_runs(capsys):
     check.main(offline=True)
     out = capsys.readouterr().out
     assert "База данных" in out and "Рендер слайдов" in out and "1440×1920" in out
+
+
+def test_bot_legal_and_package(tg):
+    from app.agents import sales
+    from app.models import OrderItem
+    from app.payments.service import mark_paid, set_tariff, create_payment
+
+    with session_scope() as s:
+        sales.handle_update(s, _upd("/offer"))
+    assert "Публичная оферта" in tg[-1][1] and "<p>" not in tg[-1][1]
+    with session_scope() as s:
+        sales.handle_update(s, _upd("/start", uid=2))
+        c = s.scalar(select(Client))
+        o = Order(client_id=c.id, status="preview_ready")
+        s.add(o)
+        s.flush()
+        set_tariff(o, "catalog")
+        mark_paid(s, create_payment(s, o))
+    # товары пакета присылают прямо в чат
+    with session_scope() as s:
+        sales.handle_update(s, _upd("Кружка\nОбъём: 300 мл\nКерамика", photo=True, uid=3))
+    assert "Осталось мест в пакете: 9" in tg[-1][1]
+    with session_scope() as s:
+        sales.handle_update(s, _upd(photo=True, uid=4))
+        sales.handle_update(s, _upd("Тарелка\nДиаметр: 20 см\nФарфор", uid=5))
+        assert len(s.scalars(select(OrderItem)).all()) == 2
+    assert "Осталось мест в пакете: 8" in tg[-1][1]

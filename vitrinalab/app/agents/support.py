@@ -39,7 +39,9 @@ def request_revision(s: Session, order: Order, note: str) -> bool:
 
 
 def handle(s: Session, bot, client: Client, order: Order, text: str) -> None:
-    url = f"{get_settings().public_url}/o/{order.token}"
+    from .delivery import order_url
+
+    url = order_url(order)
     if REFUND_RE.search(text):
         escalate(s, "support", f"Возврат/претензия по заказу #{order.id}", text, "critical", "order", order.id)
         bot.say("Понимаю. Вопросы возврата решает руководитель — я передал ему ваше сообщение, он свяжется с вами в ближайшее время.", agent="support")
@@ -52,7 +54,7 @@ def handle(s: Session, bot, client: Client, order: Order, text: str) -> None:
             bot.say("Бесплатный раунд правок уже использован. Я передал запрос руководителю — он предложит вариант.", agent="support")
         return
     if STATUS_RE.search(text) or not text:
-        bot.say(f"Заказ №{order.id}: {STATUS_TEXT.get(order.status, order.status)}. Подробности: {url}", agent="support")
+        bot.say(f"Заказ №{order.id}: {STATUS_TEXT.get(order.status, order.status)}." + (f" Подробности: {url}" if url else ""), agent="support")
         return
     with agent_run(s, "support", "answer") as run:
         ans = ask_llm(

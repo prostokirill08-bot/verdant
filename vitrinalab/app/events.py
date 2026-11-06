@@ -25,6 +25,7 @@ def escalate(
     severity: str = "warn",
     entity: str = "",
     entity_id: int | None = None,
+    notify: bool = True,
 ) -> Escalation:
     """Передать вопрос владельцу. Уведомление уходит в Telegram через очередь."""
     from .queue import enqueue
@@ -33,7 +34,8 @@ def escalate(
     s.add(esc)
     s.flush()
     record(s, "escalation", "escalation", esc.id, title=title, severity=severity)
-    enqueue(s, "notify_owner", {"escalation_id": esc.id}, idempotency_key=f"notify_esc:{esc.id}")
+    if notify:
+        enqueue(s, "notify_owner", {"escalation_id": esc.id}, idempotency_key=f"notify_esc:{esc.id}")
     return esc
 
 

@@ -133,8 +133,12 @@ def check_payments() -> None:
         except Exception as e:  # noqa: BLE001
             add(FAIL, "ЮKassa", str(e)[:200])
     else:
-        bad = "реквизиты пришлёт менеджер" in cfg.manual_payment_details
-        add(FAIL if bad else OK, "Ручная оплата (СБП)", "задайте MANUAL_PAYMENT_DETAILS — реквизиты для перевода" if bad else "подтверждение оплаты — в админке → Заказы")
+        bad = "реквизиты пришлёт менеджер" in cfg.manual_payment_details or "XXXX" in cfg.manual_payment_details
+        add(
+            FAIL if bad else OK,
+            "Ручная оплата (СБП)",
+            "впишите в MANUAL_PAYMENT_DETAILS свои реквизиты для перевода" if bad else "клиент жмёт «Я оплатил(а)», вы подтверждаете кнопкой в Telegram",
+        )
 
 
 def check_email() -> None:
@@ -160,8 +164,10 @@ def check_email() -> None:
 
 def check_public() -> None:
     cfg = get_settings()
-    if not cfg.public_url.startswith("https://"):
-        add(FAIL, "Публичный адрес", f"PUBLIC_URL={cfg.public_url} — нужен https:// для платежей и ссылок")
+    if not cfg.has_public_site:
+        add(WARN, "Сайт", "не опубликован — режим «только Telegram-бот» (нормально для старта без вложений; ЮKassa требует сайт)")
+        if cfg.payment_provider == "yookassa":
+            add(FAIL, "ЮKassa без сайта", "для ЮKassa нужен публичный https-адрес; на старте используйте PAYMENT_PROVIDER=manual")
         return
     try:
         r = httpx.get(cfg.public_url + "/healthz", timeout=20)

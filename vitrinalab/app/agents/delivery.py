@@ -16,7 +16,9 @@ log = logging.getLogger("vitrinalab.delivery")
 
 
 def order_url(order: Order) -> str:
-    return f"{get_settings().public_url}/o/{order.token}"
+    """Ссылка на личный кабинет — только если сайт опубликован."""
+    cfg = get_settings()
+    return f"{cfg.public_url}/o/{order.token}" if cfg.has_public_site else ""
 
 
 def tariff_keyboard(order: Order) -> dict:
@@ -42,7 +44,7 @@ def notify_client(s: Session, payload: dict, task: Task) -> None:
             "Полный комплект: слайды инфографики, SEO-название и описание, варианты обложки для A/B-теста. "
             f"Срок — {TURNAROUND}. Выберите тариф:"
         ),
-        "paid": f"Оплата получена, спасибо! Заказ №{order.id} передан в производство. Срок — {TURNAROUND}. Статус: {url}",
+        "paid": f"Оплата получена, спасибо! Заказ №{order.id} передан в производство. Срок — {TURNAROUND}." + (f" Статус: {url}" if url else ""),
         "revision_started": f"Приняли правки по заказу №{order.id}, обновлённая версия придёт сюда же.",
     }
     text = texts.get(event, payload.get("text", ""))
@@ -59,7 +61,7 @@ def notify_client(s: Session, payload: dict, task: Task) -> None:
             raise RetryLater(str(e)) from e
         _log_out(s, order, text, "telegram", "sales" if event == "preview_ready" else "support")
     elif client.email and mailer.enabled():
-        mailer.send(client.email, f"{get_settings().brand_name}: заказ №{order.id}", f"{text}\n\nСтраница заказа: {url}")
+        mailer.send(client.email, f"{get_settings().brand_name}: заказ №{order.id}", text + (f"\n\nСтраница заказа: {url}" if url else ""))
         _log_out(s, order, text, "email", "support")
 
 
@@ -73,8 +75,8 @@ def deliver_order(s: Session, payload: dict, task: Task) -> None:
     text = (
         f"Заказ №{order.id} готов ✅\n\n"
         f"Внутри архива: слайды 1440×1920 (по порядку загрузки), варианты обложки и файл SEO.txt с названием и описанием.\n"
-        f"Скачать в личном кабинете: {url}\n\n"
-        f"Нужны правки? Напишите, что изменить — один раунд правок входит в стоимость."
+        + (f"Скачать в личном кабинете: {url}\n\n" if url else "Архивы — следующими сообщениями.\n\n")
+        + "Нужны правки? Напишите, что изменить — один раунд правок входит в стоимость."
     )
     if warnings:
         text += "\n\nКомментарий контроля качества: " + "; ".join(dict.fromkeys(warnings))
@@ -116,11 +118,12 @@ def notify_owner(s: Session, payload: dict, task: Task) -> None:
         text = f"{icon} {esc.title}\n\n{esc.details[:1500]}\n\nАдминка: {cfg.public_url}/admin/escalations"
     else:
         text = payload.get("text", "")
+    markup = payload.get("markup")
     chat = owner_chat_id(s)
     if not (chat and telegram.enabled()):
         log.info("owner notification (Telegram не настроен): %s", text[:200])
         return
     try:
-        telegram.send_message(chat, text)
+        telegram.send_message(chat, text, markup)
     except telegram.TelegramError as e:
         raise RetryLater(str(e)) from e

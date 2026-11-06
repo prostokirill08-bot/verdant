@@ -12,10 +12,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..events import escalate, owner_code, record, set_setting
+from ..events import escalate, owner_chat_id, owner_code, record, set_setting
 from ..integrations import telegram
-from ..models import Client, Message, Order, OrderItem, utcnow
-from ..payments.service import PaymentError, create_payment, set_tariff
+from ..legal import chunks, legal_text
+from ..models import Client, Escalation, Message, Order, OrderItem, Payment, utcnow
+from ..payments.service import PaymentError, create_payment, mark_paid, set_tariff
 from ..pricing import TARIFFS, rub
 from ..queue import enqueue
 from . import support
@@ -31,7 +32,7 @@ GREETING = (
     "Делаем продающую инфографику и SEO-тексты для карточек Wildberries и Ozon за 24 часа. "
     "Товар не перерисовываем — работаем с вашим реальным фото.\n\n"
     "Пришлите фото товара — через пару минут покажу бесплатное превью обложки.\n\n"
-    "Продолжая диалог, вы соглашаетесь с политикой обработки данных: {url}/privacy"
+    "Продолжая диалог, вы соглашаетесь с политикой обработки данных ({privacy}) и условиями оферты ({offer})."
 )
 ASK_DETAILS = (
     "Фото получил 👍 Теперь одним сообщением:\n"
@@ -123,7 +124,13 @@ def handle_update(s: Session, upd: dict) -> None:
             client.source = payload[4:40]  # deep-link для учёта эффективности каналов
         state["step"] = "await_photo"
         client.state = state
-        bot.say(GREETING.format(brand=cfg.brand_name, url=cfg.public_url))
+        site = cfg.public_url if cfg.has_public_site else ""
+        bot.say(GREETING.format(brand=cfg.brand_name, privacy=f"{site}/privacy" if site else "/privacy", offer=f"{site}/offer" if site else "/offer"))
+        return
+
+    if text in ("/offer", "/privacy"):
+        for part in chunks(legal_text(text[1:])):
+            bot.say(part, agent="support")
         return
 
     if HUMAN_RE.search(text):
@@ -131,16 +138,19 @@ def handle_update(s: Session, upd: dict) -> None:
         bot.say("Передал ваш вопрос руководителю — он ответит здесь в ближайшее время.")
         return
 
-    order = active_order(s, client)
-    if order and order.status in ("paid", "in_production", "ready", "delivered", "revision", "needs_human"):
-        if not (msg.get("photo") or msg.get("document")):
-            return support.handle(s, bot, client, order, text)
-
     photo_id = None
     if msg.get("photo"):
         photo_id = msg["photo"][-1]["file_id"]
     elif msg.get("document", {}).get("mime_type", "").startswith("image/"):
         photo_id = msg["document"]["file_id"]
+
+    order = active_order(s, client)
+    if order and order.status in ("paid", "in_production", "ready", "delivered", "revision", "needs_human"):
+        # оплаченный пакет (Каталог / на месяц): товары присылают по одному прямо в чат
+        if _package_slots(order) > 0 and (photo_id or state.get("step") == "pkg_details"):
+            return _package_item(s, bot, client, order, state, msg, photo_id, text)
+        if not photo_id:
+            return support.handle(s, bot, client, order, text)
 
     if photo_id:
         dest = cfg.files_dir / "uploads" / str(client.id) / f"{msg['message_id']}.jpg"
@@ -158,6 +168,35 @@ def handle_update(s: Session, upd: dict) -> None:
 
     # свободный вопрос: FAQ → LLM с проверкой ответа → предложение следующего шага
     _answer_question(s, bot, text, state)
+
+
+def _package_slots(order: Order) -> int:
+    t = TARIFFS.get(order.tariff)
+    return (t.items - len([i for i in order.items if i.photo_path])) if (t and order.paid_at) else 0
+
+
+def _package_item(s: Session, bot: Bot, client: Client, order: Order, state: dict, msg: dict, photo_id: str | None, text: str) -> None:
+    if photo_id:
+        dest = get_settings().files_dir / "uploads" / str(client.id) / f"{msg['message_id']}.jpg"
+        telegram.download_file(photo_id, dest)
+        state.update(step="pkg_details", photo=str(dest))
+        client.state = state
+        if not (text and len(split_facts(text)) >= 2):
+            bot.say(ASK_DETAILS, agent="support")
+            return
+    name, features, mp = parse_details(text)
+    if not name or len(split_facts(features)) < 2:
+        bot.say("Нужно название первой строкой и 2–3 факта о товаре, каждый с новой строки.", agent="support")
+        return
+    item = OrderItem(product_name=name, features=features, marketplace=mp, photo_path=state["photo"])
+    order.items.append(item)  # через коллекцию, чтобы счётчик мест сразу видел новый товар
+    s.flush()
+    order.status = "in_production"
+    state.update(step="pkg_wait", photo="")
+    client.state = state
+    enqueue(s, "produce_item", {"item_id": item.id}, idempotency_key=f"produce:{item.id}:r0")
+    left = _package_slots(order)
+    bot.say(f"Принял «{name}» в работу ✅ Осталось мест в пакете: {left}." + (" Присылайте следующий товар: фото и факты." if left else ""), agent="support")
 
 
 def _answer_question(s: Session, bot: Bot, text: str, state: dict) -> None:
@@ -207,15 +246,40 @@ def _tariff_markup(order: Order) -> dict:
     return tariff_keyboard(order)
 
 
+def _owner_payment_action(s: Session, chat_id: str, action: str, pid: int) -> None:
+    p = s.get(Payment, pid)
+    if p is None:
+        return
+    order = p.order
+    for esc in s.scalars(select(Escalation).where(Escalation.entity == "order", Escalation.entity_id == order.id, Escalation.resolved.is_(False))):
+        if "оплат" in esc.title:
+            esc.resolved = True
+    if action == "okpay":
+        if mark_paid(s, p):
+            telegram.send_message(chat_id, f"✅ Оплата заказа №{order.id} ({rub(p.amount_kop)}) подтверждена — запускаю производство. Не забудьте чек в «Мой налог».")
+        else:
+            telegram.send_message(chat_id, f"Заказ №{order.id} уже был отмечен оплаченным.")
+    elif action == "nopay" and p.status == "pending":
+        client = order.client
+        bot = Bot(s, client)
+        bot.say("Пока не видим поступления оплаты. Проверьте, пожалуйста, сумму и реквизиты — и нажмите «Я оплатил(а)» ещё раз. Если что-то не так — напишите «оператор».")
+        order.client.state = {**(client.state or {}), f"claimed_{order.id}": False}
+        telegram.send_message(chat_id, f"Клиенту по заказу №{order.id} отправлено: оплата не найдена.")
+
+
 def handle_callback(s: Session, cq: dict) -> None:
     data = cq.get("data", "")
     chat_id = str(cq["message"]["chat"]["id"])
-    client = s.scalar(select(Client).where(Client.telegram_chat_id == chat_id))
     telegram.answer_callback(cq["id"])
+    parts = data.split(":")
+    if parts[0] in ("okpay", "nopay"):
+        if chat_id == owner_chat_id(s) and len(parts) == 2 and parts[1].isdigit():
+            _owner_payment_action(s, chat_id, parts[0], int(parts[1]))
+        return
+    client = s.scalar(select(Client).where(Client.telegram_chat_id == chat_id))
     if client is None:
         return
     bot = Bot(s, client)
-    parts = data.split(":")
     order = s.get(Order, int(parts[1])) if len(parts) > 1 and parts[1].isdigit() else None
     if order is None or order.client_id != client.id:
         return
@@ -228,15 +292,41 @@ def handle_callback(s: Session, cq: dict) -> None:
             escalate(s, "sales", f"Ошибка оплаты по заказу #{order.id}", str(e), "critical", "order", order.id)
             return
         t = TARIFFS[order.tariff]
-        extra = ""
-        if t.items > 1:
-            extra = f"\nТовары для пакета можно будет добавить в личном кабинете: {get_settings().public_url}/o/{order.token}"
-        bot.say(
-            f"Тариф «{t.name}» — {rub(t.price_kop)}.\n{t.description}.{extra}\n\nОплатить можно по кнопке ниже. После оплаты заказ сразу уходит в работу.",
-            telegram.keyboard([[("Оплатить " + rub(t.price_kop), p.confirmation_url)]]),
-            kind="offer",
-        )
+        extra = "\nПосле оплаты присылайте товары для пакета прямо сюда — по одному: фото и факты." if t.items > 1 else ""
+        if p.provider == "manual":
+            bot.say(
+                f"Тариф «{t.name}» — {rub(t.price_kop)}.\n{t.description}.{extra}\n\n"
+                f"Оплата: {get_settings().manual_payment_details}\nСумма: {rub(t.price_kop)}. В комментарии к переводу: «Заказ {order.id}».\n\n"
+                "После перевода нажмите кнопку ниже — проверим поступление и сразу запустим заказ. Чек самозанятого (НПД) пришлём сюда.",
+                telegram.keyboard([[("✅ Я оплатил(а)", f"paid:{order.id}")]]),
+                kind="offer",
+            )
+        else:
+            bot.say(
+                f"Тариф «{t.name}» — {rub(t.price_kop)}.\n{t.description}.{extra}\n\nОплатить можно по кнопке ниже. После оплаты заказ сразу уходит в работу.",
+                telegram.keyboard([[("Оплатить " + rub(t.price_kop), p.confirmation_url)]]),
+                kind="offer",
+            )
         client.state = {**(client.state or {}), "step": "awaiting_payment"}
+    elif parts[0] == "paid":
+        p = next((p for p in order.payments if p.status == "pending"), None)
+        if p is None or order.status != "awaiting_payment":
+            return
+        if (client.state or {}).get(f"claimed_{order.id}"):
+            bot.say("Уже проверяем поступление — напишу, как только подтвердим.")
+            return
+        client.state = {**(client.state or {}), f"claimed_{order.id}": True}
+        record(s, "payment_claimed", "order", order.id)
+        title = f"Клиент сообщил об оплате заказа №{order.id}: {rub(p.amount_kop)}"
+        esc = escalate(s, "sales", title, f"Клиент: {client.name} @{client.telegram_username}. Проверьте поступление.", "critical", "order", order.id, notify=False)
+        enqueue(
+            s,
+            "notify_owner",
+            {"text": f"💰 {title}\nКлиент: {client.name} @{client.telegram_username}\nПроверьте поступление в банке.",
+             "markup": telegram.keyboard([[("✅ Деньги пришли", f"okpay:{p.id}"), ("❌ Не вижу", f"nopay:{p.id}")]])},
+            idempotency_key=f"notify_esc:{esc.id}",
+        )
+        bot.say("Спасибо! Проверяем поступление — обычно это занимает до часа в рабочее время. Как только подтвердим, заказ уйдёт в работу.")
     elif parts[0] == "more":
         rows = [[(f"{t.name} — {rub(t.price_kop)}", f"tariff:{order.id}:{t.code}")] for t in TARIFFS.values() if t.items > 1]
         text = "\n".join(f"• {t.name} — {rub(t.price_kop)}: {t.description}" for t in TARIFFS.values() if t.items > 1)
