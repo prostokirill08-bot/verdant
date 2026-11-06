@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Сводка за сегодня (МСК)</h1>
+<div class="kpis">
+  <div class="kpi"><b>{{ rub(d.fin.revenue_kop) }}</b><span>выручка сегодня</span></div>
+  <div class="kpi"><b>{{ rub(d.fin.net_kop) }}</b><span>чистая прибыль сегодня</span></div>
+  <div class="kpi"><b>{{ rub(d.total.net_kop) }}</b><span>чистая прибыль за всё время</span></div>
+  <div class="kpi"><b>{{ d.paid_orders }}</b><span>оплаченных заказов сегодня</span></div>
+  <div class="kpi"><b>{{ d.new_leads }}</b><span>новых лидов</span></div>
+  <div class="kpi"><b>{{ d.replies }}</b><span>входящих сообщений</span></div>
+  <div class="kpi"><b>{{ d.active_negotiations }}</b><span>активных переговоров</span></div>
+  <div class="kpi"><b>{{ d.pending_approvals }}</b><span>ждут одобрения</span></div>
+</div>
+<h2>Воронка (всё время)</h2>
+{% set mx = funnel.values()|max or 1 %}
+<table class="tbl">{% for k, v in funnel.items() %}<tr><td style="width:220px">{{ k }}</td><td class="num" style="width:70px">{{ v }}</td><td><div class="bar" style="width:{{ (v / mx * 100)|round(1) if mx else 0 }}%"></div></td></tr>{% endfor %}</table>
+<h2>Состояние системы</h2>
+<table class="tbl">
+  <tr><td>Воркер (последний сигнал)</td><td>{{ hb or 'нет сигнала — воркер не запущен' }}</td></tr>
+  <tr><td>Задач не выполнено после повторов (сегодня)</td><td>{{ d.dead_tasks }}</td></tr>
+  <tr><td>Не прошли QC (сегодня)</td><td>{{ d.qc_failed }}</td></tr>
+  <tr><td>Чеков к регистрации в «Мой налог»</td><td>{{ d.receipts_todo }}</td></tr>
+  <tr><td>Лимит НПД использован (с начала года)</td><td>{{ (ue.npd_limit_used * 100)|round(1) }}%</td></tr>
+</table>
+{% if d.open_escalations %}<h2>Открытые эскалации</h2><table class="tbl">{% for e in d.open_escalations %}<tr><td><span class="pill {{ 'bad' if e.severity == 'critical' }}">{{ e.severity }}</span></td><td>{{ e.title }}</td></tr>{% endfor %}</table>{% endif %}
+{% endblock %}

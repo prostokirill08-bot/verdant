@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+  <div>
+    <h1>Инфографика и SEO для карточек Wildberries и Ozon — за 24 часа</h1>
+    <p class="lead">Присылаете фото товара и факты о нём — получаете готовые слайды 1440×1920, SEO-название, описание и варианты обложки для A/B-теста. Товар не перерисовываем: работаем с вашим реальным снимком.</p>
+    <div class="cta">
+      <a class="btn" href="/order">Получить бесплатное превью</a>
+      <a class="btn ghost" href="#prices">Цены — от {{ rub(TARIFFS['start'].price_kop) }}</a>
+    </div>
+    <div class="note">Превью обложки — бесплатно и без регистрации, обычно за 1–3 минуты.</div>
+  </div>
+  <div class="stack" aria-hidden="true">
+    <img src="/static/examples/1.jpg" alt=""><img src="/static/examples/0.jpg" alt=""><img src="/static/examples/2.jpg" alt="">
+  </div>
+</div>
+
+<section id="how">
+  <h2 class="sec">Как это работает</h2>
+  <p class="sec">Без брифов на десять страниц и созвонов.</p>
+  <div class="grid4">
+    <div class="card"><div class="step">ШАГ 1</div><h3>Фото и факты</h3><p>Загружаете фото товара и пишете 3–8 фактов: характеристики, материалы, комплектацию.</p></div>
+    <div class="card"><div class="step">ШАГ 2</div><h3>Бесплатное превью</h3><p>Через пару минут показываем обложку — оцениваете стиль до оплаты.</p></div>
+    <div class="card"><div class="step">ШАГ 3</div><h3>Оплата тарифа</h3><p>Онлайн картой или по СБП. После оплаты пришлём чек самозанятого (НПД).</p></div>
+    <div class="card"><div class="step">ШАГ 4</div><h3>Готовый комплект</h3><p>Слайды, SEO-тексты и варианты обложки — в личном кабинете, в Telegram или на почте.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">Почему с нами спокойно</h2>
+  <div class="grid3">
+    <div class="card"><h3>Ваш реальный товар</h3><p>Нейросеть не «додумывает» детали: мы отделяем товар с вашего фото и оформляем вокруг него.</p></div>
+    <div class="card"><h3>Только ваши факты</h3><p>Не пишем «лучший» и «№1», не придумываем цифр. Каждый слайд проходит автоматическую проверку на запрещённые формулировки.</p></div>
+    <div class="card"><h3>Под требования площадок</h3><p>Формат 3:4, 1440×1920. Без цен, контактов и ссылок на изображениях.</p></div>
+  </div>
+</section>
+
+<section id="prices">
+  <h2 class="sec">Цены</h2>
+  <p class="sec">Фиксированные, без скидок «по секрету». Один раунд правок включён.</p>
+  <div class="grid4">
+    {% for t in TARIFFS.values() %}
+    <div class="card tariff {{ 'featured' if t.code == 'standard' else '' }}">
+      <h3>{{ t.name }}</h3>
+      <div class="price">{{ rub(t.price_kop) }}</div>
+      <ul>
+        <li>{{ t.items }} {{ 'товар' if t.items == 1 else 'товаров' }}</li>
+        <li>{{ t.slides }} слайдов на товар</li>
+        <li>SEO-название и описание</li>
+        {% if t.cover_variants > 1 %}<li>{{ t.cover_variants }} варианта обложки</li>{% endif %}
+        <li>{{ t.revisions }} раунд правок</li>
+      </ul>
+      <a class="btn small" href="/order">Начать с превью</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="faq" class="faq">
+  <h2 class="sec">Вопросы</h2>
+  <details><summary>Кто делает карточки?</summary><p>Макеты и тексты готовит наша AI-система, каждый результат проходит автоматический контроль качества. Если что-то не проходит проверку, заказ смотрит человек — вы не получите брак.</p></details>
+  <details><summary>Какое фото нужно?</summary><p>Товар целиком, лучше на светлом однотонном фоне, без посторонних предметов. Подойдёт снимок на телефон при дневном свете.</p></details>
+  <details><summary>Сколько ждать?</summary><p>Превью — обычно 1–3 минуты. Полный комплект — {{ TURNAROUND }}.</p></details>
+  <details><summary>А если не понравится?</summary><p>Один раунд правок бесплатно: напишите, что изменить. Условия возврата — в <a href="/offer">оферте</a>.</p></details>
+  <details><summary>Вы гарантируете рост продаж?</summary><p>Нет — продажи зависят от цены, отзывов, остатков и многого другого. Мы отвечаем за качество визуала и текстов и за срок.</p></details>
+</section>
+{% endblock %}

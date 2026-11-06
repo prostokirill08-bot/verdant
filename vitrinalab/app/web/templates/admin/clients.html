@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Клиенты</h1>
+<div class="scroll"><table class="tbl"><tr><th>#</th><th>Имя</th><th>Контакты</th><th>Источник</th><th>Заказов</th><th>Создан</th></tr>
+{% for c in clients %}<tr><td><a href="/admin/clients/{{ c.id }}">{{ c.id }}</a></td><td><a href="/admin/clients/{{ c.id }}">{{ c.name or '—' }}</a></td>
+<td>{{ c.email }} {% if c.telegram_username %}@{{ c.telegram_username }}{% elif c.telegram_chat_id %}tg:{{ c.telegram_chat_id }}{% endif %}</td>
+<td>{{ c.source }}</td><td class="num">{{ c.orders|length }}</td><td>{{ c.created_at.strftime('%d.%m %H:%M') }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

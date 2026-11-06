@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Бесплатное превью — {{ cfg().brand_name }}{% endblock %}
+{% block content %}
+<section style="padding-top:20px">
+<div class="row2">
+  <div>
+    <h2 class="sec">Бесплатное превью обложки</h2>
+    <p class="sec">Заполните форму — через 1–3 минуты на странице заказа появится обложка вашей карточки. Платить пока не нужно.</p>
+    <div class="honest">Мы используем только факты, которые вы укажете. Чем конкретнее факты (размеры, материалы, объём, комплектация), тем сильнее инфографика.</div>
+  </div>
+  <form class="panel" method="post" action="/order" enctype="multipart/form-data">
+    <input type="hidden" name="src" value="{{ src }}">
+    <div style="position:absolute;left:-5000px" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+    <div class="field"><label for="photo">Фото товара</label><input id="photo" type="file" name="photo" accept="image/*" required><div class="hint">JPG/PNG до 15 МБ. Лучше на светлом однотонном фоне.</div></div>
+    <div class="field"><label for="pn">Название товара</label><input id="pn" type="text" name="product_name" maxlength="200" required placeholder="Термокружка с крышкой для кофе"></div>
+    <div class="field"><label for="ft">Факты о товаре — каждый с новой строки</label>
+      <textarea id="ft" name="features" required placeholder="Объём: 450 мл&#10;Держит тепло до 8 часов&#10;Не протекает — крышка с замком&#10;Материал: нержавеющая сталь"></textarea></div>
+    <div class="field"><label for="mp">Маркетплейс</label><select id="mp" name="marketplace"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+    <div class="field"><label for="em">E-mail — пришлём ссылку на заказ</label><input id="em" type="email" name="email" required></div>
+    <div class="field"><label for="nm">Имя (необязательно)</label><input id="nm" type="text" name="contact_name" maxlength="100"></div>
+    <div class="field"><label for="lg">Вы покупаете как</label><select id="lg" name="is_legal"><option value="1">ИП или юрлицо</option><option value="0">физлицо</option></select></div>
+    <div class="field"><label class="check"><input type="checkbox" name="consent" value="1" required> Согласен(на) на обработку персональных данных по <a href="/privacy" target="_blank">политике</a> и с <a href="/offer" target="_blank">офертой</a></label></div>
+    <div class="field"><label class="check"><input type="checkbox" name="marketing" value="1"> Хочу получать полезные материалы и предложения на e-mail (необязательно)</label></div>
+    <button class="btn" type="submit">Получить превью</button>
+  </form>
+</div>
+</section>
+{% endblock %}

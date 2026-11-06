@@ -1,0 +1,31 @@
+# Запуск: cp .env.example .env && docker compose up -d --build
+services:
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://vitrina:${POSTGRES_PASSWORD:-vitrina}@db:5432/vitrina
+    volumes: [data:/app/data]
+    ports: ["127.0.0.1:8000:8000"]   # наружу — через nginx/Caddy с HTTPS
+    depends_on: [db]
+    restart: unless-stopped
+  worker:
+    build: .
+    command: ["python", "-m", "app.worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://vitrina:${POSTGRES_PASSWORD:-vitrina}@db:5432/vitrina
+    volumes: [data:/app/data]
+    depends_on: [db]
+    restart: unless-stopped
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vitrina
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vitrina}
+      POSTGRES_DB: vitrina
+    volumes: [pg:/var/lib/postgresql/data]
+    restart: unless-stopped
+volumes:
+  data:
+  pg:

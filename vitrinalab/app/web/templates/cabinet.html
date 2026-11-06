@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Заказ №{{ order.id }} — {{ cfg().brand_name }}{% endblock %}
+{% set labels = {
+  'draft': 'черновик', 'preview_queued': 'готовим превью…', 'preview_ready': 'превью готово', 'awaiting_payment': 'ожидает оплаты',
+  'paid': 'оплачен', 'in_production': 'в производстве', 'revision': 'вносим правки', 'ready': 'готов, отправляем',
+  'delivered': 'готов', 'needs_human': 'на проверке у руководителя', 'cancelled': 'отменён'} %}
+{% block content %}
+<section style="padding-top:16px">
+  <h2 class="sec">Заказ №{{ order.id }}</h2>
+  <p><span class="status" id="st">{{ labels.get(order.status, order.status) }}</span>
+    {% if tariff %}&nbsp; Тариф «{{ tariff.name }}» — {{ rub(tariff.price_kop) }}{% endif %}</p>
+  {% if request.query_params.get('claimed') %}<div class="honest">Спасибо! Проверим поступление и запустим заказ — обычно в течение часа в рабочее время.</div>{% endif %}
+  {% if request.query_params.get('revision') %}<div class="honest">Правки приняты. Обновлённая версия появится здесь.</div>{% endif %}
+
+  {% for it in items %}
+  <div class="panel" style="margin-top:20px">
+    <div class="row2">
+      <div>
+        {% if it.preview_path and not (it.result_dir and order.paid_at) %}
+          <img class="preview" src="/o/{{ order.token }}/file/{{ it.id }}/preview.jpg?v={{ it.updated_at.timestamp()|int }}" alt="Превью обложки">
+        {% elif it.result_dir and order.paid_at %}
+          <img class="preview" src="/o/{{ order.token }}/file/{{ it.id }}/01_cover.jpg" alt="Обложка">
+        {% else %}
+          <div class="honest">Готовим превью обложки… Страница обновится сама.</div>
+        {% endif %}
+      </div>
+      <div>
+        <h3 style="margin-top:0">{{ it.product_name }}</h3>
+        <p class="hint">{{ it.marketplace|upper }}</p>
+        {% if it.status == 'done' and order.paid_at %}
+          <p><a class="btn" href="/o/{{ order.token }}/file/{{ it.id }}/result.zip">Скачать архив</a></p>
+          <div class="thumbs">
+            {% for f in it.result_files %}<a href="/o/{{ order.token }}/file/{{ it.id }}/{{ f }}" target="_blank"><img src="/o/{{ order.token }}/file/{{ it.id }}/{{ f }}" alt="{{ f }}" loading="lazy"></a>{% endfor %}
+          </div>
+          {% if it.content %}<details style="margin-top:14px"><summary><b>SEO-название и описание</b></summary><p><b>{{ it.content.title_seo }}</b></p><p style="white-space:pre-line">{{ it.content.description }}</p></details>{% endif %}
+        {% elif it.status in ('producing', 'qc') or (order.paid_at and it.status != 'done') %}
+          <div class="honest">В работе. Срок — {{ TURNAROUND }}.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if order.status in ('preview_ready', 'awaiting_payment', 'preview_queued') %}
+  <div class="panel" style="margin-top:20px">
+    <h3 style="margin-top:0">Выберите тариф</h3>
+    <div class="grid4">
+      {% for t in TARIFFS.values() %}
+      <form method="post" action="/o/{{ order.token }}/pay" class="card tariff {{ 'featured' if t.code == 'standard' else '' }}">
+        <h3>{{ t.name }}</h3><div class="price">{{ rub(t.price_kop) }}</div><p>{{ t.description }}</p>
+        <input type="hidden" name="tariff_code" value="{{ t.code }}">
+        <button class="btn small" style="margin-top:14px" type="submit">Оплатить</button>
+      </form>
+      {% endfor %}
+    </div>
+    <p class="hint" style="margin-top:12px">Оплачивая, вы принимаете условия <a href="/offer">оферты</a>. Срок — {{ TURNAROUND }}.</p>
+  </div>
+  {% endif %}
+
+  {% if tariff and tariff.items > 1 and order.paid_at and items|length < tariff.items %}
+  <form class="panel" style="margin-top:20px" method="post" action="/o/{{ order.token }}/items" enctype="multipart/form-data">
+    <h3 style="margin-top:0">Добавить товар ({{ items|length }} из {{ tariff.items }})</h3>
+    <div class="field"><label>Фото</label><input type="file" name="photo" accept="image/*" required></div>
+    <div class="field"><label>Название</label><input type="text" name="product_name" required></div>
+    <div class="field"><label>Факты — каждый с новой строки</label><textarea name="features" required></textarea></div>
+    <div class="field"><label>Маркетплейс</label><select name="marketplace"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+    <button class="btn" type="submit">Добавить и запустить</button>
+  </form>
+  {% endif %}
+
+  {% if order.status == 'delivered' and tariff and order.revisions_used < tariff.revisions %}
+  <form class="panel" style="margin-top:20px" method="post" action="/o/{{ order.token }}/revision">
+    <h3 style="margin-top:0">Нужны правки?</h3>
+    <div class="field"><textarea name="note" required placeholder="Что изменить: формулировки, акценты, порядок фактов…"></textarea></div>
+    <button class="btn" type="submit">Отправить правки</button>
+  </form>
+  {% endif %}
+</section>
+{% if order.status in ('preview_queued', 'paid', 'in_production', 'revision', 'ready') %}
+<script>
+  setInterval(function () {
+    fetch('/o/{{ order.token }}/status.json').then(r => r.json()).then(function (d) {
+      if (d.status !== '{{ order.status }}' || d.items.some(i => i.preview) !== {{ 'true' if items|selectattr('preview_path')|list else 'false' }}) location.reload();
+    });
+  }, 5000);
+</script>
+{% endif %}
+{% endblock %}

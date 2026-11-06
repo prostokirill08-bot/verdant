@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ cfg().brand_name }} — инфографика для карточек WB и Ozon за 24 часа{% endblock %}</title>
+<meta name="description" content="Продающая инфографика и SEO-тексты для карточек Wildberries и Ozon за 24 часа. Работаем с вашим реальным фото товара. Бесплатное превью обложки.">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="logo" href="/"><i>В</i>{{ cfg().brand_name }}</a>
+    <nav><a href="/#how">Как работаем</a><a href="/#prices">Цены</a><a href="/#faq">Вопросы</a><a class="btn small" href="/order">Бесплатное превью</a></nav>
+  </header>
+  {% block content %}{% endblock %}
+  <footer>
+    <div>© {{ cfg().brand_name }}. {% if cfg().owner_full_name %}Самозанятый {{ cfg().owner_full_name }}{% if cfg().owner_inn %}, ИНН {{ cfg().owner_inn }}{% endif %}.{% endif %}
+    {% if cfg().owner_email %}Почта: <a href="mailto:{{ cfg().owner_email }}">{{ cfg().owner_email }}</a>{% endif %}</div>
+    <div style="margin-top:8px"><a href="/offer">Публичная оферта</a><a href="/privacy">Политика обработки персональных данных</a></div>
+  </footer>
+</div>
+</body>
+</html>

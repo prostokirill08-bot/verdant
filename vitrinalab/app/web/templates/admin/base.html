@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Админка{% endblock %} — {{ cfg().brand_name }}</title>
+<link rel="stylesheet" href="/static/site.css">
+<style>
+  body { font-size: 15px; }
+  .adm { display: grid; grid-template-columns: 210px 1fr; min-height: 100vh; }
+  .side { background: var(--surface); border-right: 1px solid var(--line); padding: 18px 14px; }
+  .side a { display: block; padding: 9px 12px; border-radius: 10px; text-decoration: none; color: var(--ink); margin-bottom: 2px; }
+  .side a:hover { background: var(--soft); }
+  main { padding: 22px 26px; min-width: 0; }
+  h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 16px; }
+  h2 { font-size: 19px; margin: 26px 0 10px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .kpi b { display: block; font-size: 24px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .kpi span { color: var(--muted); font-size: 13px; }
+  .tbl { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .tbl th, .tbl td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+  .tbl th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  .tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--soft); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .pill.bad { background: #fde2e1; color: #9b1c1c; } .pill.ok { background: #dcf3e6; color: #135c3c; }
+  form.inline { display: inline; }
+  .formgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; align-items: end; }
+  pre { white-space: pre-wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 13px; }
+  .bar { height: 10px; background: var(--accent); border-radius: 6px; }
+  @media (max-width: 800px) { .adm { grid-template-columns: 1fr; } .side { display: flex; flex-wrap: wrap; gap: 4px; } }
+</style></head>
+<body><div class="adm">
+<nav class="side">
+  <a class="logo" href="/admin" style="margin-bottom:14px"><i>В</i>Админка</a>
+  <a href="/admin">Сводка</a><a href="/admin/approvals">Одобрения</a><a href="/admin/leads">Лиды</a><a href="/admin/clients">Клиенты</a>
+  <a href="/admin/orders">Заказы</a><a href="/admin/agents">AI-агенты</a><a href="/admin/finance">Финансы</a><a href="/admin/escalations">Эскалации</a>
+  <a href="/admin/settings">Настройки</a><a href="/" target="_blank">Сайт ↗</a>
+</nav>
+<main>{% block content %}{% endblock %}</main>
+</div></body></html>

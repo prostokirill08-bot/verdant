@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>AI-агенты</h1>
+<h2>За 7 дней</h2>
+<table class="tbl"><tr><th>Агент</th><th>Запусков</th><th>Ошибок</th><th>Ср. время</th><th>Затраты API</th><th>Последний запуск</th></tr>
+{% for a, n, cost, avg, last in stats %}<tr><td>{{ a }}</td><td class="num">{{ n }}</td><td class="num">{{ errors.get(a, 0) }}</td><td class="num">{{ ((avg or 0) / 1000)|round(1) }} с</td><td class="num">{{ rub(cost or 0) }}</td><td>{{ last.strftime('%d.%m %H:%M') if last }}</td></tr>{% else %}<tr><td colspan="6">Запусков не было</td></tr>{% endfor %}</table>
+<h2>Очередь задач (активные и проблемные)</h2>
+<div class="scroll"><table class="tbl"><tr><th>#</th><th>Тип</th><th>Статус</th><th>Попытки</th><th>Следующий запуск</th><th>Ошибка</th><th></th></tr>
+{% for t in tasks %}<tr><td>{{ t.id }}</td><td>{{ t.kind }}</td><td><span class="pill {{ 'bad' if t.status == 'dead' }}">{{ t.status }}</span></td><td class="num">{{ t.attempts }}/{{ t.max_attempts }}</td><td>{{ t.run_after.strftime('%d.%m %H:%M:%S') }}</td><td class="hint">{{ t.last_error[:200] }}</td>
+<td>{% if t.status in ('dead', 'failed') %}<form method="post" action="/admin/tasks/{{ t.id }}/retry"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn small ghost">Повторить</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="7">Очередь пуста</td></tr>{% endfor %}</table></div>
+<h2>Последние запуски</h2>
+<div class="scroll"><table class="tbl"><tr><th>Время (UTC)</th><th>Агент</th><th>Действие</th><th>Статус</th><th>Время</th><th>Токены</th><th>Стоимость</th><th>Итог</th></tr>
+{% for r in runs %}<tr><td>{{ r.started_at.strftime('%d.%m %H:%M:%S') }}</td><td>{{ r.agent }}</td><td>{{ r.action }}</td><td><span class="pill {{ 'bad' if r.status == 'error' else 'ok' }}">{{ r.status }}</span></td>
+<td class="num">{{ (r.duration_ms / 1000)|round(1) }} с</td><td class="num">{{ r.tokens_in }}/{{ r.tokens_out }}</td><td class="num">{{ rub(r.cost_kop) }}</td><td class="hint">{{ (r.error or r.summary)[:160] }}</td></tr>{% endfor %}</table></div>
+{% endblock %}

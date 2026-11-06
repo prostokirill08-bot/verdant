@@ -1,0 +1,29 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Заказ #{{ o.id }} <span class="pill">{{ o.status }}</span></h1>
+<p>Клиент: <a href="/admin/clients/{{ client.id }}">{{ client.name or client.email or client.id }}</a> · тариф {{ o.tariff or '—' }} · {{ rub(o.price_kop) if o.price_kop else '' }} · <a href="/o/{{ o.token }}" target="_blank">кабинет клиента ↗</a></p>
+<form method="post" action="/admin/orders/{{ o.id }}/action"><input type="hidden" name="csrf" value="{{ csrf }}">
+{% if payments|selectattr('status', 'equalto', 'pending')|selectattr('provider', 'equalto', 'manual')|list %}<button class="btn small" name="action" value="confirm_manual_payment" onclick="return confirm('Деньги поступили на счёт? Подтвердить оплату?')">Подтвердить ручную оплату</button>{% endif %}
+<button class="btn small ghost" name="action" value="rerun">Перезапустить производство</button>
+<button class="btn small ghost" name="action" value="redeliver">Отправить результат повторно</button>
+<button class="btn small ghost" name="action" value="cancel" onclick="return confirm('Отменить заказ?')">Отменить</button></form>
+<h2>Платежи</h2>
+<table class="tbl"><tr><th>#</th><th>Провайдер</th><th>ID</th><th>Сумма</th><th>Комиссия</th><th>Статус</th><th>Чек НПД</th></tr>
+{% for p in payments %}<tr><td>{{ p.id }}</td><td>{{ p.provider }}</td><td class="hint">{{ p.provider_payment_id }}</td><td class="num">{{ rub(p.amount_kop) }}</td><td class="num">{{ rub(p.fee_kop) }}</td><td>{{ p.status }}</td><td>{{ 'да' if p.receipt_registered else 'нет' }}</td></tr>{% else %}<tr><td>нет</td></tr>{% endfor %}</table>
+{% for it in items %}
+<h2>{{ it.product_name }} <span class="pill">{{ it.status }}</span> <span class="hint">ревизия {{ it.revision }}, попыток {{ it.attempts }}</span></h2>
+<div class="row2" style="grid-template-columns: 220px 1fr">
+  <div>{% if it.preview_path %}<img src="/o/{{ o.token }}/file/{{ it.id }}/preview.jpg" style="border-radius:10px">{% endif %}</div>
+  <div>
+    <pre>{{ it.features }}</pre>
+    {% if it.revision_note %}<p><b>Правки клиента:</b> {{ it.revision_note }}</p>{% endif %}
+    {% if it.qc_report %}<p><b>QC:</b> {{ 'пройден' if it.qc_report.passed else 'НЕ пройден' }}{% if it.qc_report.reworked %} (после доработки){% endif %}</p>
+      {% for e in it.qc_report.errors %}<div class="pill bad">{{ e }}</div> {% endfor %}{% for w in it.qc_report.warnings %}<div class="pill">{{ w }}</div> {% endfor %}{% endif %}
+    {% if it.result_files %}<div class="thumbs" style="margin-top:10px">{% for f in it.result_files %}<a href="/o/{{ o.token }}/file/{{ it.id }}/{{ f }}" target="_blank"><img src="/o/{{ o.token }}/file/{{ it.id }}/{{ f }}" loading="lazy"></a>{% endfor %}</div>{% endif %}
+    {% if it.content %}<details><summary>Тексты</summary><pre>{{ it.content.title_seo }}
+
+{{ it.content.description }}</pre></details>{% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

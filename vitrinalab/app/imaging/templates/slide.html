@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 720px; height: 960px; overflow: hidden; }
+  body {
+    font-family: 'Inter', 'Inter Display', 'DejaVu Sans', sans-serif;
+    color: {{ p.ink }}; background: {{ p.bg }};
+    -webkit-font-smoothing: antialiased; position: relative;
+  }
+  .canvas { position: absolute; inset: 0; overflow: hidden; }
+  .bgimg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .bgimg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, {{ p.bg }}ee 0%, {{ p.bg }}55 45%, {{ p.bg }}00 70%); }
+  .blob { position: absolute; border-radius: 50%; }
+  .blob.a { width: 640px; height: 640px; right: -170px; bottom: -60px; background: radial-gradient(circle at 40% 40%, {{ p.soft }} 0%, {{ p.soft }} 55%, transparent 56%); }
+  .blob.b { width: 220px; height: 220px; left: -70px; top: 380px; background: {{ p.soft2 }}; opacity: .55; }
+  .ring { position: absolute; width: 520px; height: 520px; right: -60px; bottom: 40px; border: 2px dashed {{ p.accent }}44; border-radius: 50%; }
+
+  .pad { position: absolute; inset: 48px; display: flex; flex-direction: column; }
+  .eyebrow { font-size: 17px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: {{ p.accent }}; margin-bottom: 14px; }
+  h1 { font-size: 66px; line-height: 1.02; font-weight: 800; letter-spacing: -0.03em; max-height: 280px; overflow: hidden; }
+  h2 { font-size: 48px; line-height: 1.06; font-weight: 800; letter-spacing: -0.025em; max-height: 160px; overflow: hidden; }
+  .sub { font-size: 25px; line-height: 1.3; font-weight: 500; margin-top: 16px; max-width: 470px; max-height: 100px; overflow: hidden; opacity: .82; }
+
+  .product { position: absolute; display: flex; align-items: flex-end; justify-content: center; }
+  .product img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 28px 34px rgba(0,0,0,.22)); }
+  .product.frame img { border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,.18); border: 8px solid #fff; filter: none; }
+
+  .badge { display: inline-flex; align-items: center; gap: 12px; background: {{ p.card }}; color: {{ p.ink }}; border-radius: 22px;
+           padding: 14px 20px 14px 14px; font-size: 21px; font-weight: 700; box-shadow: 0 10px 24px rgba(0,0,0,.08); max-width: 300px; }
+  .badge .ic { flex: 0 0 44px; height: 44px; border-radius: 14px; background: {{ p.accent }}; display: grid; place-items: center; }
+  .badge .ic svg { width: 24px; height: 24px; stroke: {{ p.on_accent }}; }
+  .badge span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.15; }
+  .badges { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: {{ p.card }}; border-radius: 26px; padding: 22px; box-shadow: 0 12px 28px rgba(0,0,0,.07); overflow: hidden; }
+  .card .ic { width: 52px; height: 52px; border-radius: 16px; background: {{ p.accent }}; display: grid; place-items: center; margin-bottom: 14px; }
+  .card .ic svg { width: 28px; height: 28px; stroke: {{ p.on_accent }}; }
+  .card h3 { font-size: 24px; line-height: 1.12; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 8px; max-height: 82px; overflow: hidden; }
+  .card p { font-size: 18px; line-height: 1.32; opacity: .78; max-height: 72px; overflow: hidden; }
+
+  .specs { background: {{ p.card }}; border-radius: 28px; padding: 10px 28px; box-shadow: 0 12px 28px rgba(0,0,0,.07); }
+  .row { display: flex; justify-content: space-between; gap: 20px; padding: 17px 0; border-bottom: 1.5px solid {{ p.ink }}14; font-size: 22px; }
+  .row:last-child { border-bottom: 0; }
+  .row .k { opacity: .65; font-weight: 500; flex: 1 1 50%; }
+  .row .v { font-weight: 800; text-align: right; flex: 1 1 50%; }
+
+  .list { display: flex; flex-direction: column; gap: 14px; }
+  .li { display: flex; gap: 16px; align-items: center; background: {{ p.card }}; border-radius: 22px; padding: 16px 20px; font-size: 23px; font-weight: 650; box-shadow: 0 10px 24px rgba(0,0,0,.06); max-width: 430px; }
+  .li .ic { flex: 0 0 40px; height: 40px; border-radius: 50%; background: {{ p.accent }}; display: grid; place-items: center; }
+  .li .ic svg { width: 22px; height: 22px; stroke: {{ p.on_accent }}; }
+  .li span { line-height: 1.2; }
+
+  .bignum { font-size: 150px; line-height: 1.05; font-weight: 900; letter-spacing: -0.05em; color: {{ p.accent }}; }
+  .panel { background: {{ p.accent }}; color: {{ p.on_accent }}; border-radius: 30px; padding: 30px 32px; }
+  .panel h2 { color: {{ p.on_accent }}; font-size: 42px; }
+  .panel p { font-size: 22px; line-height: 1.35; margin-top: 12px; opacity: .92; max-height: 120px; overflow: hidden; }
+
+  .wm { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .wm div { transform: rotate(-28deg); font-size: 64px; font-weight: 900; letter-spacing: .1em; color: rgba(0,0,0,.13); white-space: nowrap; text-shadow: 0 0 1px rgba(255,255,255,.4); }
+  .wm div + div { margin-top: 260px; }
+</style></head>
+<body><div class="canvas">
+{% if bg %}<div class="bgimg" style="background-image:url('{{ bg }}')"></div>{% else %}<div class="blob a"></div><div class="blob b"></div>{% endif %}
+
+{% if s.type == 'cover' and s.layout == 'b' %}
+  <div class="ring"></div>
+  <div class="product {{ 'frame' if frame else '' }}" style="left:70px; right:70px; top:140px; height:520px;"><img src="{{ product }}"></div>
+  <div class="pad" style="justify-content:flex-end">
+    <div class="card" style="padding:30px 32px; border-radius:32px">
+      {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+      <h1 class="fit" style="font-size:56px; max-height:180px">{{ s.headline }}</h1>
+      {% if s.badges %}<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px">
+        {% for b in s.badges[:3] %}<div class="badge" style="box-shadow:none; background:{{ p.soft }}; padding:10px 16px 10px 10px; font-size:19px"><div class="ic" style="flex-basis:36px;height:36px;border-radius:12px">{{ icon(b) }}</div><span>{{ b }}</span></div>{% endfor %}
+      </div>{% endif %}
+    </div>
+  </div>
+  <div style="position:absolute; top:48px; left:48px; right:48px; display:flex; justify-content:space-between; align-items:center">
+    <div class="badge" style="background:{{ p.accent }}; color:{{ p.on_accent }}; padding:12px 20px">{{ s.subline }}</div>
+  </div>
+
+{% elif s.type == 'cover' and s.layout == 'c' %}
+  <div style="position:absolute; left:0; right:0; bottom:0; height:420px; background:{{ p.accent }};"></div>
+  <div class="product {{ 'frame' if frame else '' }}" style="left:150px; right:30px; top:250px; bottom:90px;"><img src="{{ product }}"></div>
+  <div class="pad">
+    {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+    <h1 class="fit" style="max-width:600px">{{ s.headline }}</h1>
+    <div class="sub fit">{{ s.subline }}</div>
+    <div class="badges" style="margin-top:auto; margin-bottom:30px">
+      {% for b in s.badges[:3] %}<div class="badge"><div class="ic">{{ icon(b) }}</div><span>{{ b }}</span></div>{% endfor %}
+    </div>
+  </div>
+
+{% elif s.type == 'cover' %}
+  <div class="ring"></div>
+  <div class="product {{ 'frame' if frame else '' }}" style="left:300px; right:10px; top:300px; bottom:40px;"><img src="{{ product }}"></div>
+  <div class="pad">
+    {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+    <h1 class="fit">{{ s.headline }}</h1>
+    <div class="sub fit">{{ s.subline }}</div>
+    <div class="badges" style="margin-top:auto">
+      {% for b in s.badges[:3] %}<div class="badge"><div class="ic">{{ icon(b) }}</div><span>{{ b }}</span></div>{% endfor %}
+    </div>
+  </div>
+
+{% elif s.type == 'benefits' %}
+  <div class="product {{ 'frame' if frame else '' }}" style="left:200px; right:200px; top:205px; height:270px;"><img src="{{ product }}"></div>
+  <div class="pad">
+    {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+    <h2 class="fit">{{ s.title }}</h2>
+    <div class="grid" style="margin-top:auto">
+      {% for c in s.cards[:4] %}<div class="card"><div class="ic">{{ icon(c.title ~ ' ' ~ c.text) }}</div><h3 class="fit">{{ c.title }}</h3>{% if c.text %}<p class="fit">{{ c.text }}</p>{% endif %}</div>{% endfor %}
+    </div>
+  </div>
+
+{% elif s.type == 'feature' %}
+  {% if s.number %}
+  <div class="product {{ 'frame' if frame else '' }}" style="left:250px; right:10px; top:120px; bottom:300px;"><img src="{{ product }}"></div>
+  {% else %}
+  <div class="product {{ 'frame' if frame else '' }}" style="left:70px; right:70px; top:110px; bottom:300px;"><img src="{{ product }}"></div>
+  {% endif %}
+  <div class="pad">
+    {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+    {% if s.number %}<div class="bignum fit">{{ s.number }}</div>{% endif %}
+    <div class="panel" style="margin-top:auto">
+      <h2 class="fit">{{ s.title }}</h2>
+      {% if s.text and s.text != s.title %}<p class="fit">{{ s.text }}</p>{% endif %}
+    </div>
+  </div>
+
+{% elif s.type == 'specs' %}
+  {% if s.rows|length <= 4 %}
+  <div class="product {{ 'frame' if frame else '' }}" style="left:110px; right:110px; top:210px; bottom:{{ 120 + 64 * s.rows|length }}px;"><img src="{{ product }}"></div>
+  {% else %}
+  <div class="product {{ 'frame' if frame else '' }}" style="left:400px; right:30px; top:40px; height:250px;"><img src="{{ product }}"></div>
+  {% endif %}
+  <div class="pad">
+    {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+    <h2 class="fit" style="max-width:330px">{{ s.title }}</h2>
+    <div class="specs" style="margin-top:auto">
+      {% for k, v in s.rows[:8] %}<div class="row"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>{% endfor %}
+    </div>
+  </div>
+
+{% elif s.type == 'list' %}
+  <div class="product {{ 'frame' if frame else '' }}" style="left:380px; right:10px; top:300px; bottom:50px;"><img src="{{ product }}"></div>
+  <div class="pad">
+    {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+    <h2 class="fit">{{ s.title }}</h2>
+    <div class="list" style="margin-top:44px">
+      {% for it in s.points[:6] %}<div class="li"><div class="ic">{{ icon(s.icon or 'check') }}</div><span>{{ it }}</span></div>{% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% if watermark %}<div class="wm"><div>ПРЕВЬЮ · {{ brand }}</div></div>{% endif %}
+</div>
+<script>
+  // авто-подгонка текста: уменьшаем шрифт, пока текст не влезет
+  window.__overflow = [];
+  document.querySelectorAll('.fit').forEach(function (el) {
+    var fs = parseFloat(getComputedStyle(el).fontSize), min = fs * 0.6, guard = 0;
+    while ((el.scrollHeight > el.clientHeight + 6 || el.scrollWidth > el.clientWidth + 2) && fs > min && guard++ < 60) {
+      fs = fs * 0.96; el.style.fontSize = fs + 'px';
+    }
+    if (el.scrollHeight > el.clientHeight + 6 || el.scrollWidth > el.clientWidth + 2) window.__overflow.push(el.textContent.trim().slice(0, 60));
+  });
+</script>
+</body></html>

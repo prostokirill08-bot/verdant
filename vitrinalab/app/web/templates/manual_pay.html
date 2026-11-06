@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Оплата заказа №{{ order.id }}{% endblock %}
+{% block content %}
+<section style="padding-top:16px">
+  <div class="panel" style="max-width:640px">
+    <h2 class="sec">Оплата заказа №{{ order.id }}</h2>
+    {% if tariff %}<p>Тариф «{{ tariff.name }}» — <b>{{ rub(tariff.price_kop) }}</b></p>{% endif %}
+    <div class="honest" style="white-space:pre-line">{{ cfg().manual_payment_details }}</div>
+    <p class="hint">В комментарии к переводу укажите: «Заказ {{ order.id }}». После поступления оплаты заказ сразу уйдёт в работу, чек НПД пришлём на почту.</p>
+    <form method="post" action="/o/{{ order.token }}/claim-paid"><button class="btn" type="submit">Я оплатил(а)</button></form>
+  </div>
+</section>
+{% endblock %}

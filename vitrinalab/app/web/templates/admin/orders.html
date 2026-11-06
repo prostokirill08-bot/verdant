@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Заказы</h1>
+<p>{% for st in ['', 'preview_ready', 'awaiting_payment', 'paid', 'in_production', 'needs_human', 'revision', 'delivered'] %}<a class="pill" style="text-decoration:none; margin-right:4px" href="/admin/orders?status={{ st }}">{{ st or 'все' }}</a>{% endfor %}</p>
+<div class="scroll"><table class="tbl"><tr><th>#</th><th>Клиент</th><th>Товары</th><th>Тариф</th><th>Сумма</th><th>Статус</th><th>Канал</th><th>Создан</th></tr>
+{% for o in orders %}<tr><td><a href="/admin/orders/{{ o.id }}">{{ o.id }}</a></td><td><a href="/admin/clients/{{ o.client_id }}">{{ o.client.name or o.client.email or o.client_id }}</a></td>
+<td>{{ o.items|map(attribute='product_name')|join(', ')|truncate(60) }}</td><td>{{ o.tariff or '—' }}</td><td class="num">{{ rub(o.price_kop) if o.price_kop else '—' }}</td>
+<td><span class="pill {{ 'bad' if o.status == 'needs_human' else 'ok' if o.status == 'delivered' }}">{{ o.status }}</span></td><td>{{ o.channel }}</td><td>{{ o.created_at.strftime('%d.%m %H:%M') }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

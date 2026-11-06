@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Одобрения</h1>
+<p class="hint">Агенты не отправляют первые сообщения и не публикуют посты без вашего решения.</p>
+<h2>Сообщения лидам</h2>
+{% for m in msgs %}
+<form class="panel" style="margin-bottom:12px" method="post" action="/admin/messages/{{ m.id }}"><input type="hidden" name="csrf" value="{{ csrf }}">
+  <div><b>{{ leads[m.lead_id].name if m.lead_id and leads[m.lead_id] else 'Клиент' }}</b> · канал {{ m.channel }} {% if m.lead_id and leads[m.lead_id] %}· {{ leads[m.lead_id].contact }}{% endif %} · <span class="pill">{{ m.status }}</span></div>
+  <textarea name="text" style="margin-top:8px">{{ m.text }}</textarea>
+  {% if m.status == 'pending_approval' %}
+  <button class="btn small" name="action" value="approve">Одобрить</button> <button class="btn small ghost" name="action" value="reject">Отклонить</button>
+  {% else %}
+  <p class="hint">Одобрено. Отправьте вручную в канал лида (боты не могут писать первыми), затем отметьте:</p>
+  <button class="btn small" name="action" value="sent">Отправлено</button> <button class="btn small ghost" name="action" value="reject">Не отправлять</button>
+  {% endif %}
+</form>
+{% else %}<p>Нет сообщений на одобрение.</p>{% endfor %}
+<h2>Посты в канал</h2>
+{% for p in posts %}
+<form class="panel" style="margin-bottom:12px" method="post" action="/admin/posts/{{ p.id }}"><input type="hidden" name="csrf" value="{{ csrf }}">
+  <div><b>{{ p.topic }}</b> · публикация {{ p.scheduled_at }} (UTC)</div>
+  <textarea name="text" style="margin-top:8px">{{ p.text }}</textarea>
+  <button class="btn small" name="action" value="approve">Одобрить</button> <button class="btn small ghost" name="action" value="reject">Отклонить</button>
+</form>
+{% else %}<p>Нет постов на одобрение.</p>{% endfor %}
+{% endblock %}

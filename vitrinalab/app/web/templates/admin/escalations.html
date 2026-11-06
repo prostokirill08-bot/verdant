@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Эскалации</h1>
+<div class="scroll"><table class="tbl"><tr><th>Время (UTC)</th><th>Важность</th><th>Источник</th><th>Вопрос</th><th>Объект</th><th></th></tr>
+{% for e in rows %}<tr style="{{ 'opacity:.5' if e.resolved }}"><td>{{ e.ts.strftime('%d.%m %H:%M') }}</td><td><span class="pill {{ 'bad' if e.severity == 'critical' }}">{{ e.severity }}</span></td><td>{{ e.source }}</td>
+<td><b>{{ e.title }}</b><div class="hint" style="white-space:pre-line">{{ e.details[:600] }}</div></td>
+<td>{% if e.entity == 'order' %}<a href="/admin/orders/{{ e.entity_id }}">заказ #{{ e.entity_id }}</a>{% elif e.entity == 'client' %}<a href="/admin/clients/{{ e.entity_id }}">клиент #{{ e.entity_id }}</a>{% else %}{{ e.entity }} {{ e.entity_id or '' }}{% endif %}</td>
+<td>{% if not e.resolved %}<form method="post" action="/admin/escalations/{{ e.id }}/resolve"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn small ghost">Решено</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="6">Эскалаций нет</td></tr>{% endfor %}</table></div>
+{% endblock %}

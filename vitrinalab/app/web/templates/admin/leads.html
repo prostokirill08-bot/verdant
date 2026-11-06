@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Лиды</h1>
+<p class="hint">Только законные источники: входящие заявки, открытые каталоги, публичные деловые контакты. Первое сообщение отправляется после вашего одобрения (ст. 18 закона «О рекламе»).</p>
+<details class="panel" style="margin-bottom:14px"><summary><b>Добавить лида</b></summary>
+<form method="post" action="/admin/leads" style="margin-top:12px"><input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="formgrid">
+  <div><label>Магазин</label><input type="text" name="name" required></div>
+  <div><label>Площадка</label><select name="marketplace"><option>wb</option><option>ozon</option><option>ym</option></select></div>
+  <div><label>Ссылка на магазин</label><input type="text" name="shop_url"></div>
+  <div><label>Публичный контакт</label><input type="text" name="contact"></div>
+  <div><label>Канал</label><select name="contact_channel"><option>manual</option><option>telegram</option><option>email</option><option>kwork</option></select></div>
+  <div><label>SKU</label><input type="number" name="sku"></div>
+  <div><label>Фото в карточке</label><input type="number" name="photos"></div>
+  <div><label>Есть инфографика?</label><select name="has_infographics"><option value="">не знаю</option><option value="нет">нет</option><option value="да">да</option></select></div>
+  <div><label>Отзывов</label><input type="number" name="reviews"></div>
+  <div><label>Рейтинг</label><input type="text" name="rating"></div>
+  <div style="grid-column:1/-1"><label>Заметки</label><input type="text" name="notes"></div>
+</div><button class="btn small" style="margin-top:10px">Добавить и проанализировать</button></form>
+<form method="post" action="/admin/leads/import" enctype="multipart/form-data" style="margin-top:14px"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Импорт CSV (name, marketplace, shop_url, contact, contact_channel, sku, photos, has_infographics, reviews, rating, notes)</label>
+<input type="file" name="file" accept=".csv" required> <button class="btn small">Импорт</button></form>
+</details>
+<div class="scroll"><table class="tbl"><tr><th>#</th><th>Магазин</th><th>Площадка</th><th>Скор</th><th>Сегмент</th><th>Статус</th><th>Почему</th><th>Действия</th></tr>
+{% for l in leads %}<tr><td>{{ l.id }}</td><td>{% if l.shop_url %}<a href="{{ l.shop_url }}" target="_blank" rel="noopener">{{ l.name }}</a>{% else %}{{ l.name }}{% endif %}<div class="hint">{{ l.contact }}</div></td>
+<td>{{ l.marketplace }}</td><td class="num">{{ l.score }}</td><td>{{ l.segment }}</td><td><span class="pill">{{ l.status }}</span></td>
+<td class="hint">{{ (l.analysis.why or [])|join(', ') }}</td>
+<td><form class="inline" method="post" action="/admin/leads/{{ l.id }}/status"><input type="hidden" name="csrf" value="{{ csrf }}">
+<select name="status">{% for st in ['new','contacted','replied','negotiating','won','lost','rejected'] %}<option {{ 'selected' if st == l.status }}>{{ st }}</option>{% endfor %}</select><button class="btn small ghost">OK</button></form>
+<details><summary class="hint">ответ лида</summary><form method="post" action="/admin/leads/{{ l.id }}/reply"><input type="hidden" name="csrf" value="{{ csrf }}"><textarea name="text" style="min-height:60px"></textarea><button class="btn small ghost">Сохранить</button></form></details></td></tr>{% endfor %}
+</table></div>
+{% endblock %}

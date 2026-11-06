@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Клиент #{{ c.id }} {{ c.name }}</h1>
+<table class="tbl"><tr><td>E-mail</td><td>{{ c.email or '—' }}</td></tr><tr><td>Telegram</td><td>{{ '@' ~ c.telegram_username if c.telegram_username else c.telegram_chat_id or '—' }}</td></tr>
+<tr><td>Источник</td><td>{{ c.source }}</td></tr><tr><td>Тип</td><td>{{ 'ИП/юрлицо (НПД 6%)' if c.is_legal else 'физлицо (НПД 4%)' }}</td></tr>
+<tr><td>Согласие на ПД</td><td>{{ c.consent_at or 'нет' }}</td></tr><tr><td>Согласие на рассылки</td><td>{{ 'да' if c.marketing_consent else 'нет' }}</td></tr>
+<tr><td>Оплачено всего</td><td>{{ rub(paid) }}</td></tr><tr><td>Повторных заказов</td><td>{{ [orders|selectattr('paid_at')|list|length - 1, 0]|max }}</td></tr></table>
+<h2>Заказы</h2>
+<table class="tbl">{% for o in orders %}<tr><td><a href="/admin/orders/{{ o.id }}">#{{ o.id }}</a></td><td>{{ o.tariff or '—' }}</td><td><span class="pill">{{ o.status }}</span></td><td>{{ o.created_at.strftime('%d.%m %H:%M') }}</td></tr>{% else %}<tr><td>нет</td></tr>{% endfor %}</table>
+<h2>Переписка</h2>
+{% for m in msgs %}<div class="panel" style="margin-bottom:8px; padding:12px 16px; {{ 'margin-left:60px' if m.direction == 'out' }}">
+<div class="hint">{{ m.created_at.strftime('%d.%m %H:%M') }} · {{ 'исходящее' if m.direction == 'out' else 'входящее' }} · {{ m.agent }} · {{ m.channel }}</div><div style="white-space:pre-line">{{ m.text }}</div></div>{% else %}<p>Сообщений нет.</p>{% endfor %}
+{% endblock %}
