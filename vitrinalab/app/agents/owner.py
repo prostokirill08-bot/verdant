@@ -120,7 +120,10 @@ def _stats(s: Session, chat_id: str) -> None:
     _say(
         chat_id,
         "📊 Сегодня (МСК)\n"
-        f"Новых клиентов/лидов: {d['new_leads']} · входящих сообщений: {d['replies']}\n"
+        f"Новых клиентов: {sum(d['new_clients_by_source'].values())}"
+        + (" (" + ", ".join(f"{k or '—'}: {v}" for k, v in d["new_clients_by_source"].items()) + ")" if d["new_clients_by_source"] else "")
+        + f" · лидов в базе: {d['new_leads']} · входящих сообщений: {d['replies']}\n"
+        f"Разборов карточек: {d['audits']}\n"
         f"Превью и ссылок на оплату: {d['offers']} · оплат: {d['paid_orders']}\n"
         f"Создано комплектов: {d['products_created']} · доставлено: {d['results_sent']}\n"
         f"Выручка: {rub(f.revenue_kop)} · расходы: {rub(f.expenses_kop)} · прибыль: {rub(f.net_kop)}\n\n"

@@ -5,7 +5,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from .agents.finance import all_time, day_bounds, summarize, unit_economics, unregistered_receipts
-from .models import AgentRun, ContentPost, Escalation, Event, Lead, Message, Order, Task
+from .models import AgentRun, Client, ContentPost, Escalation, Event, Lead, Message, Order, Task
 from .pricing import rub
 
 
@@ -40,6 +40,10 @@ def collect(s: Session, day=None) -> dict:
         "active_negotiations": (s.scalar(select(func.count(Lead.id)).where(Lead.status.in_(["replied", "negotiating"]))) or 0)
         + (s.scalar(select(func.count(Order.id)).where(Order.status.in_(["preview_ready", "awaiting_payment"]))) or 0),
         "offers": _events(s, "preview_ready", p) + _events(s, "payment_link_sent", p),
+        "audits": _events(s, "audit_done", p),
+        "new_clients_by_source": dict(
+            s.execute(select(Client.source, func.count(Client.id)).where(Client.created_at >= p.start, Client.created_at < p.end).group_by(Client.source)).all()
+        ),
         "deals": _events(s, "payment_succeeded", p),
         "paid_orders": fin.paid_orders,
         "products_created": _events(s, "product_created", p),
@@ -66,12 +70,13 @@ def render_text(d: dict, plan: list[str]) -> str:
         f"📊 Отчёт за {date} (МСК)",
         "",
         "ПРОДАЖИ",
-        f"1. Новых лидов найдено: {d['new_leads']}",
+        f"1. Новых лидов найдено: {d['new_leads']}; новых клиентов в боте/на сайте: {sum(d['new_clients_by_source'].values())}"
+        + (" (" + ", ".join(f"{k or '—'}: {v}" for k, v in d["new_clients_by_source"].items()) + ")" if d["new_clients_by_source"] else ""),
         f"2. Лидов проанализировано: {d['analyzed_leads']}",
         f"3. Сообщений отправлено: {d['messages_sent']}",
         f"4. Ответов получено: {d['replies']}",
         f"5. Активных переговоров: {d['active_negotiations']}",
-        f"6. Коммерческих предложений (превью + ссылки на оплату): {d['offers']}",
+        f"6. Коммерческих предложений (превью + ссылки на оплату): {d['offers']}; бесплатных разборов карточек: {d['audits']}",
         f"7. Сделок заключено: {d['deals']}",
         f"8. Оплаченных заказов: {d['paid_orders']}",
         "",

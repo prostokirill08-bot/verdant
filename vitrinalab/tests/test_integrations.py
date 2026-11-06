@@ -362,3 +362,34 @@ def test_same_chat_message_in_two_updates_processed_once(monkeypatch):
     worker.process_updates([{"update_id": 20, "message": m}, {"update_id": 21, "message": m}])
     worker.process_updates([{"update_id": 22, "message": {**m, "message_id": 56}}])
     assert seen == [20, 22]
+
+
+def test_card_audit_lead_magnet(tg, tmp_path):
+    from PIL import Image
+
+    from app.agents import sales
+    from app.models import Event
+
+    with session_scope() as s:  # приглашение по ссылке ?start=audit_chats
+        sales.handle_update(s, _upd("/start audit_chats", uid=1))
+    assert "Бесплатный разбор" in tg[-1][1]
+    with session_scope() as s:
+        sales.handle_update(
+            s,
+            {"update_id": 2, "message": {"message_id": 2, "chat": {"id": 777, "type": "private"}, "from": {"id": 777, "username": "anna"},
+             "photo": [{"file_id": "x"}], "caption": "https://www.wildberries.ru/catalog/123456789/detail.aspx ЛУЧШАЯ КРУЖКА КРУЖКА"}},
+        )
+    report = next(m[1] for m in reversed(tg) if "Экспресс-разбор" in m[1])
+    assert "wildberries.ru/catalog/123456789" in report and "Повторы слов" in report and "закон о рекламе" in report
+    assert "бесплатное превью" in report
+    with session_scope() as s:
+        c = s.scalar(select(Client))
+        assert c.source == "chats" and c.state["step"] == "await_photo"
+        assert s.scalar(select(Event).where(Event.kind == "audit_done"))
+    # кнопка в приветствии
+    with session_scope() as s:
+        sales.handle_update(s, _upd("/start", uid=3))
+    assert tg[-1][2]["inline_keyboard"][0][0]["callback_data"] == "audit:start"
+    with session_scope() as s:
+        sales.handle_callback(s, {"id": "a", "data": "audit:start", "message": {"chat": {"id": 777}}})
+    assert "Бесплатный разбор" in tg[-1][1]

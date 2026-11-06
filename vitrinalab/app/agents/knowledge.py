@@ -20,7 +20,7 @@ FAQ = [
      + (f"{get_settings().public_url}/privacy" if get_settings().has_public_site else "команда /privacy")),
 ]
 
-HUMAN_RE = re.compile(r"оператор|живой человек|менеджер|руководител|позови человека|/human", re.I)
+HUMAN_RE = re.compile(r"оператор|живой человек|менеджер|руководител|позови человека|/human|разбор от дизайнера", re.I)
 REFUND_RE = re.compile(r"возврат|верните|вернуть деньги|претензи|жалоб|обман|суд", re.I)
 REVISION_RE = re.compile(r"правк|исправ|измен|замен|поменя|не нрав|переделай|переделать|другой цвет|убери|добавь", re.I)
 STATUS_RE = re.compile(r"статус|где мой|готов ли|когда будет|сколько ждать", re.I)

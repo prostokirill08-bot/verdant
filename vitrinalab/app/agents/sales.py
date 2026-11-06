@@ -31,7 +31,8 @@ GREETING = (
     "Здравствуйте! Я — AI-ассистент студии {brand} 🤖\n\n"
     "Делаем продающую инфографику и SEO-тексты для карточек Wildberries и Ozon за 24 часа. "
     "Товар не перерисовываем — работаем с вашим реальным фото.\n\n"
-    "Пришлите фото товара — через пару минут покажу бесплатное превью обложки.\n\n"
+    "Пришлите фото товара — покажу бесплатное превью обложки.\n"
+    "Или нажмите «🔎 Разбор моей карточки» — бесплатно проверю вашу текущую карточку.\n\n"
     "Продолжая диалог, вы соглашаетесь с политикой обработки данных ({privacy}) и условиями оферты ({offer})."
 )
 ASK_DETAILS = (
@@ -137,13 +138,25 @@ def handle_update(s: Session, upd: dict) -> None:
 
     if text.startswith("/start"):
         payload = text.split(maxsplit=1)[1] if " " in text else ""
+        audit_link = payload.startswith("audit")
+        if audit_link:
+            payload = payload[len("audit"):].lstrip("_")
+            payload = f"src_{payload}" if payload and not payload.startswith("src_") else payload
         if payload.startswith("src_") and client.source == "telegram":
             client.source = payload[4:40]  # deep-link для учёта эффективности каналов
+        if audit_link:
+            return _start_audit(s, bot, client, state)
         state["step"] = "await_photo"
         client.state = state
         site = cfg.public_url if cfg.has_public_site else ""
-        bot.say(GREETING.format(brand=cfg.brand_name, privacy=f"{site}/privacy" if site else "/privacy", offer=f"{site}/offer" if site else "/offer"))
+        bot.say(
+            GREETING.format(brand=cfg.brand_name, privacy=f"{site}/privacy" if site else "/privacy", offer=f"{site}/offer" if site else "/offer"),
+            telegram.keyboard([[("🔎 Разбор моей карточки", "audit:start")]]),
+        )
         return
+
+    if text.startswith("/audit"):
+        return _start_audit(s, bot, client, state)
 
     if text in ("/offer", "/privacy"):
         for part in chunks(legal_text(text[1:])):
@@ -173,6 +186,15 @@ def handle_update(s: Session, upd: dict) -> None:
             return _package_item(s, bot, client, order, state, msg, photo_id, text)
         if not photo_id:
             return support.handle(s, bot, client, order, text)
+
+    if state.get("step") == "await_audit":
+        if photo_id:
+            return _do_audit(s, bot, client, state, msg, photo_id, text)
+        if text and "?" not in text:
+            state["audit_caption"] = (state.get("audit_caption", "") + "\n" + text).strip()[:1000]
+            client.state = state
+            bot.say("Записал. Теперь пришлите картинку главного фото карточки (скриншот или сам файл).")
+            return
 
     if photo_id:
         dest = cfg.files_dir / "uploads" / str(client.id) / f"{msg['message_id']}.jpg"
@@ -229,6 +251,44 @@ def _design_input(s: Session, bot: Bot, client: Client, order: Order, msg: dict,
         bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nОбновлённое превью придёт {when}.")
     else:
         bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nЛимит бесплатных обновлений превью исчерпан — пожелания применю в полном комплекте. Выберите тариф:", _tariff_markup(order))
+
+
+AUDIT_HELP = (
+    "🔎 Бесплатный разбор карточки.\n\n"
+    "Пришлите картинку главного фото вашей карточки (скриншот или сам файл). В подписи можно добавить ссылку на товар "
+    "и его название — проверю и их.\n\n"
+    "Это автоматическая проверка формата, читаемости и названия; рост продаж не обещаем."
+)
+
+
+def _start_audit(s: Session, bot: Bot, client: Client, state: dict) -> None:
+    state.update(step="await_audit", audit_caption="")
+    client.state = state
+    record(s, "audit_started", "client", client.id, source=client.source)
+    bot.say(AUDIT_HELP)
+
+
+def _do_audit(s: Session, bot: Bot, client: Client, state: dict, msg: dict, photo_id: str, text: str) -> None:
+    from .audit import build_report
+    from .delivery import enqueue_owner_text
+
+    dest = get_settings().files_dir / "uploads" / str(client.id) / f"audit_{msg['message_id']}.jpg"
+    telegram.download_file(photo_id, dest)
+    caption = "\n".join(x for x in (state.get("audit_caption", ""), text) if x)
+    with agent_run(s, "sales", "audit") as run:
+        report, info = build_report(str(dest), caption)
+        run.row.summary = f"audit client {client.id}: {info['warnings']} замечаний"
+    bot.say(report)
+    state.update(step="await_photo", audit_caption="")
+    client.state = state
+    client.notes = (client.notes + f"\nРазбор: {info.get('link') or 'без ссылки'}").strip()[:2000]
+    record(s, "audit_done", "client", client.id, source=client.source, link=info.get("link", ""), warnings=info["warnings"])
+    who = f"@{client.telegram_username}" if client.telegram_username else (client.name or f"клиент #{client.id}")
+    enqueue_owner_text(
+        s,
+        f"🔎 Новый разбор карточки: {who} (источник: {client.source or '—'})\n{info.get('link') or 'ссылку не прислал'}\n"
+        f"Автоматика нашла замечаний: {info['warnings']}. Можно лично дописать ему совет — это повышает шанс заказа.",
+    )
 
 
 def _package_slots(order: Order) -> int:
@@ -355,6 +415,8 @@ def handle_callback(s: Session, cq: dict) -> None:
     if client is None:
         return
     bot = Bot(s, client)
+    if parts[0] == "audit":
+        return _start_audit(s, bot, client, dict(client.state or {}))
     order = s.get(Order, int(parts[1])) if len(parts) > 1 and parts[1].isdigit() else None
     if order is None or order.client_id != client.id:
         return
