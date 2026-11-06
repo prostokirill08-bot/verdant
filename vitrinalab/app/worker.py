@@ -71,8 +71,72 @@ def backup(s, payload, task) -> None:
         old.unlink()
 
 
-def telegram_poller() -> None:
+POLLER_LEASE = timedelta(seconds=90)
+
+
+def acquire_poller_lease(worker_id: str) -> bool:
+    """Слушать Telegram может только один процесс: аренда в БД, продлевается каждый цикл."""
+    with session_scope() as s:
+        cur = get_setting(s, "tg_poller")
+        if cur and "|" in cur:
+            owner, ts = cur.split("|", 1)
+            try:
+                fresh = utcnow() - datetime.fromisoformat(ts) < POLLER_LEASE
+            except ValueError:
+                fresh = False
+            if owner != worker_id and fresh:
+                return False
+        set_setting(s, "tg_poller", f"{worker_id}|{utcnow().isoformat()}")
+    return True
+
+
+def claim_update(update_id: int) -> bool:
+    """Атомарно «забронировать» сообщение: обработать его может только один процесс и только один раз."""
+    from sqlalchemy import update as sql_update
+
+    from .models import Setting
+
+    with session_scope() as s:
+        cur = s.get(Setting, "tg_offset")
+        if cur is None:
+            s.add(Setting(key="tg_offset", value="0"))
+            s.flush()
+            cur_val = "0"
+        else:
+            cur_val = cur.value or "0"
+        if update_id < int(cur_val):
+            return False  # уже обработано
+        res = s.execute(
+            sql_update(Setting).where(Setting.key == "tg_offset", Setting.value == cur_val).values(value=str(update_id + 1))
+        )
+        return res.rowcount == 1
+
+
+def process_updates(updates: list[dict]) -> int:
+    """Обработать пачку сообщений. Возвращает, сколько обработано этим процессом."""
     from .agents import sales
+
+    done = 0
+    for upd in updates:
+        if not claim_update(upd["update_id"]):
+            continue
+        done += 1
+        try:
+            with session_scope() as s:
+                sales.handle_update(s, upd)
+        except Exception:  # noqa: BLE001 — сообщение не повторяем (иначе клиент получит дубли), сообщаем владельцу
+            log.exception("update %s failed", upd.get("update_id"))
+            try:
+                with session_scope() as s:
+                    from .events import escalate
+
+                    escalate(s, "sales", "Ошибка обработки сообщения в Telegram", f"update_id={upd.get('update_id')}", "warn")
+            except Exception:  # noqa: BLE001
+                log.exception("escalation failed")
+    return done
+
+
+def telegram_poller(worker_id: str = "poller") -> None:
     from .integrations import telegram
 
     cfg = get_settings()
@@ -90,28 +154,19 @@ def telegram_poller() -> None:
             telegram.set_owner_commands(chat, COMMANDS)
     except Exception as e:  # noqa: BLE001 — не критично
         log.warning("setup_bot: %s", e)
-    with session_scope() as s:
-        offset = int(get_setting(s, "tg_offset") or 0)
     while not STOP.is_set():
         try:
+            if not acquire_poller_lease(worker_id):
+                log.info("Telegram слушает другой процесс — жду")
+                STOP.wait(30)
+                continue
+            with session_scope() as s:
+                offset = int(get_setting(s, "tg_offset") or 0)
             updates = telegram.get_updates(offset)
-        except Exception as e:  # noqa: BLE001
-            log.warning("getUpdates: %s", e)
+            process_updates(updates)
+        except Exception as e:  # noqa: BLE001 — сеть, «database is locked», 409 Conflict
+            log.warning("telegram poller: %s", e)
             STOP.wait(5)
-            continue
-        for upd in updates:
-            offset = upd["update_id"] + 1
-            try:
-                with session_scope() as s:
-                    sales.handle_update(s, upd)
-                    set_setting(s, "tg_offset", str(offset))
-            except Exception:  # noqa: BLE001
-                log.exception("update %s failed", upd.get("update_id"))
-                with session_scope() as s:
-                    set_setting(s, "tg_offset", str(offset))
-                    from .events import escalate
-
-                    escalate(s, "sales", "Ошибка обработки сообщения в Telegram", f"update_id={upd.get('update_id')}", "warn")
 
 
 def main() -> None:
@@ -120,7 +175,7 @@ def main() -> None:
     worker_id = f"{socket.gethostname()}:{os.getpid()}"
     signal.signal(signal.SIGTERM, lambda *_: STOP.set())
     signal.signal(signal.SIGINT, lambda *_: STOP.set())
-    threading.Thread(target=telegram_poller, daemon=True, name="tg").start()
+    threading.Thread(target=telegram_poller, args=(worker_id,), daemon=True, name="tg").start()
     last_tick = ""
     log.info("worker %s started", worker_id)
     while not STOP.is_set():
@@ -140,6 +195,12 @@ def main() -> None:
         except Exception:  # noqa: BLE001 — например, «database is locked»: подождать и продолжить
             log.exception("worker loop error, retrying in 3s")
             STOP.wait(3.0)
+    try:  # при остановке сразу освобождаем бота для нового процесса
+        with session_scope() as s:
+            if get_setting(s, "tg_poller").startswith(f"{worker_id}|"):
+                set_setting(s, "tg_poller", "")
+    except Exception:  # noqa: BLE001
+        pass
     from .imaging.render import Renderer
 
     Renderer.shutdown()

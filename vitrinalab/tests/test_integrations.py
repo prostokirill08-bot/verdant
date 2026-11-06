@@ -327,3 +327,25 @@ def test_owner_reset_clears_business_data_keeps_settings(tg, env):
         assert owner_chat_id(s) == "999" and get_setting(s, "production_mode") == "chatgpt"
     assert list((env / "backups").glob("before-reset-*.db"))
     assert "удалены" in tg[-1][1]
+
+
+def test_each_telegram_update_processed_once(monkeypatch):
+    """Два «слушателя» получили одни и те же сообщения — каждое обработано ровно один раз."""
+    from app import worker
+    from app.agents import sales
+
+    seen = []
+    monkeypatch.setattr(sales, "handle_update", lambda s, upd: seen.append(upd["update_id"]))
+    batch = [{"update_id": 10}, {"update_id": 11}, {"update_id": 12}]
+    assert worker.process_updates(batch) == 3
+    assert worker.process_updates(batch) == 0  # второй процесс / повторная доставка
+    assert worker.process_updates([{"update_id": 12}, {"update_id": 13}]) == 1
+    assert seen == [10, 11, 12, 13]
+
+
+def test_only_one_poller_holds_lease():
+    from app import worker
+
+    assert worker.acquire_poller_lease("A") is True
+    assert worker.acquire_poller_lease("B") is False  # A ещё держит аренду
+    assert worker.acquire_poller_lease("A") is True   # продление своей аренды
