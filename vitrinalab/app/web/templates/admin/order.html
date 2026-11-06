@@ -31,6 +31,8 @@
   <div>
     <pre>{{ it.features }}</pre>
     {% if it.revision_note %}<p><b>Правки клиента:</b> {{ it.revision_note }}</p>{% endif %}
+    {% if it.design and (it.design.wishes or it.design.ref_path) %}<p><b>🎨 Пожелания:</b> {{ it.design.wishes or '—' }}{% if it.design.source %} <span class="pill">палитра: {{ 'референс' if it.design.source == 'image' else 'по словам' }}</span>{% endif %}</p>
+      {% if it.design.ref_path %}<a href="/o/{{ o.token }}/file/{{ it.id }}/reference.jpg" target="_blank"><img src="/o/{{ o.token }}/file/{{ it.id }}/reference.jpg" style="max-width:160px;border-radius:10px"></a>{% endif %}{% endif %}
     {% if it.qc_report %}<p><b>QC:</b> {{ 'пройден' if it.qc_report.passed else 'НЕ пройден' }}{% if it.qc_report.reworked %} (после доработки){% endif %}</p>
       {% for e in it.qc_report.errors %}<div class="pill bad">{{ e }}</div> {% endfor %}{% for w in it.qc_report.warnings %}<div class="pill">{{ w }}</div> {% endfor %}{% endif %}
     {% if it.result_files %}<div class="thumbs" style="margin-top:10px">{% for f in it.result_files %}<a href="/o/{{ o.token }}/file/{{ it.id }}/{{ f }}" target="_blank"><img src="/o/{{ o.token }}/file/{{ it.id }}/{{ f }}" loading="lazy"></a>{% endfor %}</div>{% endif %}

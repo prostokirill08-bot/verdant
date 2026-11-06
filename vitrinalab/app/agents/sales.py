@@ -156,6 +156,10 @@ def handle_update(s: Session, upd: dict) -> None:
         photo_id = msg["document"]["file_id"]
 
     order = active_order(s, client)
+    if state.get("step") == "await_design" and order and order.id == state.get("order_id") and order.status in UNPAID_STATUSES:
+        if photo_id or (text and "?" not in text):  # вопрос — ответим, а не примем за пожелание
+            return _design_input(s, bot, client, order, msg, photo_id, text)
+
     if order and order.status in ("paid", "in_production", "ready", "delivered", "revision", "needs_human"):
         # оплаченный пакет (Каталог / на месяц): товары присылают по одному прямо в чат
         if _package_slots(order) > 0 and (photo_id or state.get("step") == "pkg_details"):
@@ -179,6 +183,42 @@ def handle_update(s: Session, upd: dict) -> None:
 
     # свободный вопрос: FAQ → LLM с проверкой ответа → предложение следующего шага
     _answer_question(s, bot, text, state)
+
+
+UNPAID_STATUSES = ("preview_queued", "preview_ready", "awaiting_payment")
+DESIGN_HELP = (
+    "🎨 Пришлите референс — картинку или скрин карточки, стиль которой нравится, — и/или напишите пожелания: "
+    "цвета, настроение (строгий, яркий, нежный, премиальный), что подчеркнуть.\n\n"
+    "Важно: из референса берём цвета и настроение, чужой макет не копируем. "
+    "Текст на слайдах — только из фактов о вашем товаре."
+)
+WISH_LINE = re.compile(r"^\s*(пожелани\w*|дизайн|стиль|цвета?)\s*[:—-]\s*(.+)$", re.I)
+
+
+def split_wishes(text: str) -> tuple[str, str]:
+    """Строки «Пожелания: …» — в пожелания к дизайну, остальное — факты о товаре."""
+    facts, wishes = [], []
+    for line in (text or "").splitlines():
+        m = WISH_LINE.match(line)
+        (wishes.append(m.group(2).strip()) if m else facts.append(line))
+    return "\n".join(facts), "; ".join(wishes)
+
+
+def _design_input(s: Session, bot: Bot, client: Client, order: Order, msg: dict, photo_id: str | None, text: str) -> None:
+    from .production import apply_design, request_design_preview
+
+    item = next((i for i in order.items if i.photo_path), None)
+    if item is None:
+        return
+    ref = None
+    if photo_id:
+        ref = get_settings().files_dir / "uploads" / str(client.id) / f"ref_{msg['message_id']}.jpg"
+        telegram.download_file(photo_id, ref)
+    summary = apply_design(s, item, text, str(ref) if ref else None)
+    if request_design_preview(s, item):
+        bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nОбновлённое превью придёт через 1–2 минуты.")
+    else:
+        bot.say(f"Учёл ✍️ {summary[0].upper() + summary[1:]}.\nЛимит бесплатных обновлений превью исчерпан — пожелания применю в полном комплекте. Выберите тариф:", _tariff_markup(order))
 
 
 def _package_slots(order: Order) -> int:
@@ -225,6 +265,7 @@ def _answer_question(s: Session, bot: Bot, text: str, state: dict) -> None:
 
 
 def _start_preview(s: Session, bot: Bot, client: Client, state: dict, text: str) -> None:
+    text, wishes = split_wishes(text)
     name, features, mp = parse_details(text)
     if not name or len(split_facts(features)) < 2:
         if not state.get("asked_more"):
@@ -239,6 +280,10 @@ def _start_preview(s: Session, bot: Bot, client: Client, state: dict, text: str)
     item = OrderItem(order_id=order.id, product_name=name or "Товар", features=features, marketplace=mp, photo_path=state["photo"])
     s.add(item)
     s.flush()
+    if wishes:
+        from .production import apply_design
+
+        apply_design(s, item, wishes)
     state.update(step="preview_pending", order_id=order.id, previews=previews + 1, asked_more=False)
     client.state = state
     record(s, "order_created", "order", order.id, channel="telegram")
@@ -348,3 +393,9 @@ def handle_callback(s: Session, cq: dict) -> None:
         bot.say(text, telegram.keyboard(rows))
     elif parts[0] == "ask":
         bot.say("Напишите ваш вопрос — отвечу здесь.")
+    elif parts[0] == "design":
+        if order.status not in UNPAID_STATUSES:
+            bot.say("Заказ уже в работе. Пожелания можно передать правками после получения результата.")
+            return
+        client.state = {**(client.state or {}), "step": "await_design", "order_id": order.id}
+        bot.say(DESIGN_HELP)

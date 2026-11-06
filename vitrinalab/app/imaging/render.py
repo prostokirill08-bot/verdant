@@ -135,7 +135,7 @@ class Renderer:
     def render(
         self,
         slide: dict,
-        palette: str,
+        palette: str | dict,
         product_uri: str,
         out_path: Path,
         *,
@@ -145,7 +145,7 @@ class Renderer:
     ) -> RenderResult:
         html = _env.get_template("slide.html").render(
             s=slide,
-            p=PALETTES.get(palette, PALETTES["warm"]),
+            p=palette if isinstance(palette, dict) else PALETTES.get(palette, PALETTES["warm"]),
             product=product_uri,
             frame=frame,
             bg=bg_uri,

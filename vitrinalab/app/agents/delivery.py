@@ -23,6 +23,7 @@ def order_url(order: Order) -> str:
 
 def tariff_keyboard(order: Order) -> dict:
     rows = [[(f"{t.name} — {t.price_rub:,} ₽".replace(",", " "), f"tariff:{order.id}:{t.code}")] for t in TARIFFS.values() if t.items == 1]
+    rows.append([("🎨 Пожелания к дизайну / референс", f"design:{order.id}")])
     rows.append([("Каталог / пакет на месяц", f"more:{order.id}")])
     rows.append([("Задать вопрос", f"ask:{order.id}")])
     return telegram.keyboard(rows)
@@ -42,7 +43,9 @@ def notify_client(s: Session, payload: dict, task: Task) -> None:
         "preview_ready": (
             "Готово бесплатное превью обложки для вашего товара 👆\n\n"
             "Полный комплект: слайды инфографики, SEO-название и описание, варианты обложки для A/B-теста. "
-            f"Срок — {TURNAROUND}. Выберите тариф:"
+            f"Срок — {TURNAROUND}.\n\n"
+            "Хотите другой стиль или цвета? Нажмите «🎨 Пожелания» — пришлите референс или опишите словами, превью обновлю бесплатно. "
+            "Или сразу выберите тариф:"
         ),
         "paid": f"Оплата получена, спасибо! Заказ №{order.id} передан в производство. Срок — {TURNAROUND}." + (f" Статус: {url}" if url else ""),
         "revision_started": f"Приняли правки по заказу №{order.id}, обновлённая версия придёт сюда же.",

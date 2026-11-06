@@ -122,6 +122,8 @@ class OrderItem(Base):
     result_dir: Mapped[str] = mapped_column(String(500), default="")
     zip_path: Mapped[str] = mapped_column(String(500), default="")
     revision_note: Mapped[str] = mapped_column(Text, default="")
+    # пожелания клиента: {"wishes": текст, "ref_path": референс, "palette": {...}, "source": "image|words"}
+    design: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=dict)
     revision: Mapped[int] = mapped_column(Integer, default=0)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

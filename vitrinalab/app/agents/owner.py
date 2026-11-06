@@ -111,6 +111,8 @@ def _stats(s: Session, chat_id: str) -> None:
 def _order_line(o: Order) -> str:
     who = o.client.name or (f"@{o.client.telegram_username}" if o.client.telegram_username else o.client.email) or f"клиент {o.client_id}"
     items = ", ".join(i.product_name for i in o.items)[:60] or "—"
+    if any((i.design or {}).get("wishes") or (i.design or {}).get("ref_path") for i in o.items):
+        items += " 🎨"
     price = f" · {TARIFFS[o.tariff].name} {rub(o.price_kop)}" if o.tariff in TARIFFS else ""
     return f"№{o.id} {STATUS.get(o.status, o.status)}{price}\n   {who}: {items}"
 

@@ -108,6 +108,8 @@ async def order_create(
     consent: str = Form(""),
     marketing: str = Form(""),
     src: str = Form(""),
+    wishes: str = Form(""),
+    reference: UploadFile | None = File(None),
     website: str = Form(""),  # ловушка для ботов
 ):
     if website:
@@ -142,6 +144,13 @@ async def order_create(
         )
         s.add(item)
         s.flush()
+        ref_path = None
+        if reference is not None and reference.filename:
+            ref_path = await save_image(reference, get_settings().files_dir / "uploads" / str(client.id) / "refs")
+        if wishes.strip() or ref_path:
+            from ..agents.production import apply_design
+
+            apply_design(s, item, wishes.strip()[:1500], str(ref_path) if ref_path else None)
         previews = sum(1 for o in client.orders if any(i.preview_path for i in o.items))
         record(s, "order_created", "order", order.id, channel="web")
         if previews < 3:
@@ -268,6 +277,8 @@ def order_file(token: str, item_id: int, name: str):
             raise HTTPException(404)
         if name == "preview.jpg" and item.preview_path:
             path = Path(item.preview_path)
+        elif name == "reference.jpg" and (item.design or {}).get("ref_path"):
+            path = Path(item.design["ref_path"])
         elif name == "result.zip" and item.zip_path and order.paid_at:
             path = Path(item.zip_path)
         elif item.result_dir and order.paid_at and "/" not in name and ".." not in name:

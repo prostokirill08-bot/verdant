@@ -48,6 +48,19 @@ def item_dir(item: OrderItem) -> Path:
     return d
 
 
+def item_palette(item: OrderItem, content: dict) -> str | dict:
+    """Пожелания клиента важнее автоматического выбора по категории."""
+    d = item.design or {}
+    if d.get("palette"):
+        return d["palette"]
+    return palette_for(content.get("category", ""), item.product_name, item.features)
+
+
+def design_note(item: OrderItem) -> str:
+    w = (item.design or {}).get("wishes", "")
+    return f"Пожелания клиента к стилю и акцентам (учитывай в тоне и порядке фактов, но не добавляй новых фактов): {w}" if w else ""
+
+
 def _source_text(item: OrderItem) -> str:
     return f"{item.product_name}\n{item.features}\n{item.revision_note}"
 
@@ -85,9 +98,9 @@ def make_preview(s: Session, payload: dict, task: Task) -> None:
     order = item.order
     with agent_run(s, "production", "preview", task.id) as run:
         if not item.content:
-            item.content = write_content(s, run, item.product_name, item.features, item.marketplace)
+            item.content = write_content(s, run, item.product_name, item.features, item.marketplace, note=design_note(item))
         method, product_uri = _product_assets(item)
-        palette = palette_for(item.content.get("category", ""), item.product_name, item.features)
+        palette = item_palette(item, item.content)
         slide = plan_slides(item.content, 1)[0]
         out = item_dir(item) / "preview.jpg"
         res = renderer.render(slide, palette, product_uri, out, frame=(method == "frame"), watermark=True)
@@ -101,7 +114,8 @@ def make_preview(s: Session, payload: dict, task: Task) -> None:
     if order.status in ("draft", "preview_queued"):
         order.status = "preview_ready"
     record(s, "preview_ready", "order", order.id, item_id=item.id, cutout=method)
-    enqueue(s, "notify_client", {"order_id": order.id, "event": "preview_ready"}, idempotency_key=f"notify:preview:{item.id}")
+    n = int((item.design or {}).get("previews", 0))
+    enqueue(s, "notify_client", {"order_id": order.id, "event": "preview_ready"}, idempotency_key=f"notify:preview:{item.id}:d{n}")
 
 
 # ---------------- полное производство ----------------
@@ -121,11 +135,11 @@ def produce_order(s: Session, payload: dict, task: Task) -> None:
 
 
 def _render_all(item: OrderItem, content: dict, slides_n: int, covers_n: int, product_uri: str, frame: bool, bg: str | None, out: Path):
-    palette = palette_for(content.get("category", ""), item.product_name, item.features)
+    palette = item_palette(item, content)
     renders = []
     for i, slide in enumerate(plan_slides(content, slides_n), start=1):
         renders.append(renderer.render(slide, palette, product_uri, out / f"{i:02d}_{slide['type']}.jpg", frame=frame, bg_uri=bg if slide["type"] == "cover" else None))
-    alt = [palette] + [p for p in ALT_PALETTES if p != palette]
+    alt = [palette] + [p for p in ALT_PALETTES if p != palette]  # варианты обложки: ваша палитра + альтернативы для A/B
     for j, slide in enumerate(cover_variants(content, covers_n)[1:], start=2):
         renders.append(renderer.render(slide, alt[j - 1], product_uri, out / f"cover_variant_{j}.jpg", frame=frame))
     return renders
@@ -165,7 +179,8 @@ def produce_item(s: Session, payload: dict, task: Task) -> None:
     with agent_run(s, "production", "produce_item", task.id) as run:
         content = item.content if (item.content and not item.revision_note) else None
         if content is None or item.revision_note:
-            content = write_content(s, run, item.product_name, item.features, item.marketplace, note=item.revision_note)
+            note = "\n".join(x for x in (design_note(item), item.revision_note) if x)
+            content = write_content(s, run, item.product_name, item.features, item.marketplace, note=note)
         method, product_uri = _product_assets(item)
         bg = _background(s, run, content.get("category", "warm"), seed=item.id * 10 + item.revision)
         renders = _render_all(item, content, t.slides, t.cover_variants, product_uri, method == "frame", bg, out)
@@ -219,3 +234,48 @@ def finalize_order(s: Session, payload: dict, task: Task) -> None:
     order.updated_at = utcnow()
     version = "-".join(f"{i.id}r{i.revision}" for i in items)  # новая версия → новая доставка
     enqueue(s, "deliver_order", {"order_id": order.id}, idempotency_key=f"deliver:{order.id}:{version}")
+
+
+# ---------------- пожелания клиента к дизайну ----------------
+
+MAX_DESIGN_PREVIEWS = 3
+
+
+def apply_design(s: Session, item: OrderItem, wishes: str = "", ref_path: str | None = None) -> str:
+    """Сохранить пожелания и референс, пересчитать палитру. Возвращает понятное клиенту описание, что учтено."""
+    from ..imaging import palette as pal
+
+    d = dict(item.design or {})
+    if wishes.strip():
+        d["wishes"] = (d.get("wishes", "") + "\n" + wishes.strip()).strip()[:1500]
+    if ref_path:
+        d["ref_path"] = ref_path
+    applied = []
+    if ref_path:
+        d["palette"], d["source"] = pal.from_image(ref_path), "image"
+        applied.append("цвета и настроение — по вашему референсу")
+    elif wishes.strip():
+        by_words = pal.from_wishes(d.get("wishes", ""))
+        if by_words:
+            d["palette"], d["source"] = by_words, "words"
+            applied.append("цветовая гамма — по вашему описанию")
+        elif not d.get("palette"):
+            applied.append("цвет не распознал — гамму подберу по категории товара")
+    if d.get("wishes"):
+        applied.append("акценты и тон текста — с учётом пожеланий")
+    item.design = d
+    item.content = {}  # тексты пересоберутся с учётом пожеланий
+    record(s, "design_wishes", "order_item", item.id, has_ref=bool(ref_path), source=d.get("source", ""))
+    return "; ".join(applied) or "пожелания сохранены"
+
+
+def request_design_preview(s: Session, item: OrderItem) -> bool:
+    """Перерисовать бесплатное превью с учётом пожеланий (не больше MAX_DESIGN_PREVIEWS раз)."""
+    d = dict(item.design or {})
+    n = int(d.get("previews", 0))
+    if n >= MAX_DESIGN_PREVIEWS:
+        return False
+    d["previews"] = n + 1
+    item.design = d
+    enqueue(s, "make_preview", {"item_id": item.id}, idempotency_key=f"preview:{item.id}:d{n + 1}")
+    return True

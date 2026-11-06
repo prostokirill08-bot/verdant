@@ -60,6 +60,7 @@ def init_db(retries: int = 30, delay: float = 2.0) -> None:
     for attempt in range(1, retries + 1):
         try:
             Base.metadata.create_all(get_engine())
+            _add_missing_columns()
             return
         except (OperationalError, IntegrityError, ProgrammingError) as e:
             # OperationalError — БД ещё стартует; Integrity/Programming — веб и воркер
@@ -83,3 +84,20 @@ def session_scope() -> Iterator[Session]:
         raise
     finally:
         s.close()
+
+
+def _add_missing_columns() -> None:
+    """Простая миграция: новые nullable-колонки моделей добавляются в уже существующие таблицы."""
+    from sqlalchemy import inspect, text
+
+    eng = get_engine()
+    insp = inspect(eng)
+    with eng.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            if not insp.has_table(table.name):
+                continue
+            have = {c["name"] for c in insp.get_columns(table.name)}
+            for col in table.columns:
+                if col.name not in have and col.nullable:
+                    ddl = col.type.compile(dialect=eng.dialect)
+                    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl}'))

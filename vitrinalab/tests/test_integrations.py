@@ -10,24 +10,6 @@ from app.queue import run_pending
 from tests.conftest import FEATURES
 
 
-@pytest.fixture
-def tg(monkeypatch, product_photo):
-    """Подменяем Telegram Bot API, складываем исходящие сообщения в список."""
-    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:test")
-    from app import config
-    from app.integrations import telegram
-
-    config.reset_settings_cache()
-    sent = []
-    monkeypatch.setattr(telegram, "send_message", lambda chat, text, markup=None: sent.append(("msg", text, markup)) or {})
-    monkeypatch.setattr(telegram, "send_photo", lambda chat, path, caption="", markup=None: sent.append(("photo", caption, markup)) or {})
-    monkeypatch.setattr(telegram, "send_document", lambda chat, path, caption="": sent.append(("doc", str(path), None)) or {})
-    monkeypatch.setattr(telegram, "answer_callback", lambda *a, **k: None)
-    monkeypatch.setattr(telegram, "set_owner_commands", lambda *a, **k: None)
-    monkeypatch.setattr(telegram, "download_file", lambda fid, dest: (dest.parent.mkdir(parents=True, exist_ok=True), shutil.copy(product_photo, dest))[1])
-    return sent
-
-
 def _upd(text=None, photo=False, uid=1):
     m = {"message_id": 10, "chat": {"id": 777, "type": "private"}, "from": {"id": 777, "first_name": "Анна", "username": "anna"}}
     if text is not None:

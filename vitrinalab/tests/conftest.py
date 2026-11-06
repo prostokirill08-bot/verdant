@@ -48,6 +48,26 @@ def product_photo(tmp_path):
     return make_product_photo(tmp_path / "product.jpg")
 
 
+@pytest.fixture
+def tg(monkeypatch, product_photo):
+    """Подменяем Telegram Bot API, складываем исходящие сообщения в список."""
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:test")
+    import shutil
+
+    from app import config
+    from app.integrations import telegram
+
+    config.reset_settings_cache()
+    sent = []
+    monkeypatch.setattr(telegram, "send_message", lambda chat, text, markup=None: sent.append(("msg", text, markup)) or {})
+    monkeypatch.setattr(telegram, "send_photo", lambda chat, path, caption="", markup=None: sent.append(("photo", caption, markup)) or {})
+    monkeypatch.setattr(telegram, "send_document", lambda chat, path, caption="": sent.append(("doc", str(path), None)) or {})
+    monkeypatch.setattr(telegram, "answer_callback", lambda *a, **k: None)
+    monkeypatch.setattr(telegram, "set_owner_commands", lambda *a, **k: None)
+    monkeypatch.setattr(telegram, "download_file", lambda fid, dest: (dest.parent.mkdir(parents=True, exist_ok=True), shutil.copy(product_photo, dest))[1])
+    return sent
+
+
 FEATURES = """Объём: 450 мл
 Держит тепло до 8 часов
 Не протекает — герметичная крышка с замком
