@@ -94,9 +94,10 @@ def analyze_lead(s: Session, payload: dict, task: Task) -> None:
     s.add(msg)
     s.flush()
     lead.status = "draft_ready"
-    from .owner import notify_pending_message
+    if lead.source == "manual":  # пачки из CSV-импорта не шлём по одной — они ждут в /approvals
+        from .owner import notify_pending_message
 
-    notify_pending_message(s, msg)
+        notify_pending_message(s, msg)
     record(s, "lead_analyzed", "lead", lead.id, score=score, segment=segment)
 
 
