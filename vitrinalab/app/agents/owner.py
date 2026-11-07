@@ -256,6 +256,9 @@ def receive_job_image(s: Session, chat_id: str, file_id: str, msg: dict) -> bool
         set_setting(s, "owner_pending", "")
         return False
     tmp = get_settings().files_dir / "uploads" / "owner" / f"{msg.get('message_id', 0)}_{file_id[-8:]}"
+    from ..db import release
+
+    release(s)  # не держим базу, пока качаем файл
     telegram.download_file(file_id, tmp)
     n = manual.add_image(s, job, tmp)
     need = len(job.prompts)
@@ -268,7 +271,6 @@ def receive_job_image(s: Session, chat_id: str, file_id: str, msg: dict) -> bool
 
 def _finish_job(s: Session, chat_id: str, job_id: int) -> None:
     from ..models import ManualJob
-    from . import manual
 
     job = s.get(ManualJob, job_id)
     set_setting(s, "owner_pending", "")
@@ -277,10 +279,9 @@ def _finish_job(s: Session, chat_id: str, job_id: int) -> None:
         if job:
             set_setting(s, "owner_pending", f"job:{job.id}")
         return
-    report = manual.finish_upload(s, job)
-    for im in job.images[:10]:
-        telegram.send_photo(chat_id, im["path"])
-    _say(chat_id, report, kb([[("✅ Отправить клиенту", f"msend:{job.id}"), ("🔁 Переделать", f"mredo:{job.id}")]]))
+    # тяжёлая часть (отправка превью картинок) — в фоне, чтобы бот не «зависал»
+    enqueue(s, "manual_review", {"job_id": job.id}, idempotency_key=f"manual_review:{job.id}:{len(job.images)}")
+    _say(chat_id, f"⏳ Проверяю {len(job.images)} картинок — пришлю через несколько секунд.")
 
 
 # ---------------- кнопки ----------------
@@ -343,7 +344,10 @@ def handle_callback(s: Session, chat_id: str, data: str) -> None:
             elif act == "mdone":
                 _finish_job(s, chat_id, job.id)
             elif act == "msend":
-                _say(chat_id, manual.approve(s, job))
+                if enqueue(s, "manual_approve", {"job_id": job.id}, idempotency_key=f"manual_approve:{job.id}"):
+                    _say(chat_id, "⏳ Готовлю и отправляю клиенту…")
+                else:
+                    _say(chat_id, "Уже отправляю — повторно нажимать не нужно.")
             elif act == "mredo":
                 manual.redo(s, job)
                 set_setting(s, "owner_pending", f"job:{job.id}")

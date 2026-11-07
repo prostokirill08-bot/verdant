@@ -15,6 +15,7 @@ from PIL import Image
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
+from ..db import release
 from ..events import escalate, record
 from ..imaging.cutout import cut_product
 from ..imaging.render import palette_for, renderer, to_data_uri
@@ -108,6 +109,7 @@ def make_preview(s: Session, payload: dict, task: Task) -> None:
     with agent_run(s, "production", "preview", task.id) as run:
         if not item.content:
             item.content = write_content(s, run, item.product_name, item.features, item.marketplace, note=design_note(item))
+        release(s)
         method, product_uri = _product_assets(item)
         palette = item_palette(item, item.content)
         slide = plan_slides(item.content, 1)[0]
@@ -200,6 +202,7 @@ def produce_item(s: Session, payload: dict, task: Task) -> None:
         if content is None or item.revision_note:
             note = "\n".join(x for x in (design_note(item), item.revision_note) if x)
             content = write_content(s, run, item.product_name, item.features, item.marketplace, note=note)
+        release(s)
         method, product_uri = _product_assets(item)
         bg = _background(s, run, content.get("category", "warm"), seed=item.id * 10 + item.revision)
         renders = _render_all(item, content, t.slides, t.cover_variants, product_uri, method == "frame", bg, out)

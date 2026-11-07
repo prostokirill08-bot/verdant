@@ -229,6 +229,9 @@ def approve(s: Session, job: ManualJob) -> str:
     job.status = "done"
     if job.stage == "preview":
         out = item_dir(item) / "preview.jpg"
+        from ..db import release
+
+        release(s)
         _watermark(Path(job.images[0]["path"]), out)
         item.preview_path = str(out)
         item.status = "preview_ready"
@@ -281,3 +284,30 @@ def send_manual_job(s: Session, payload: dict, task) -> None:
         send_job_to_owner(s, job)
     except telegram.TelegramError as e:
         raise RetryLater(str(e)) from e
+
+
+@handler("manual_review")
+def manual_review(s: Session, payload: dict, task) -> None:
+    """Показать владельцу присланные картинки и кнопки «Отправить клиенту / Переделать»."""
+    job = s.get(ManualJob, payload["job_id"])
+    chat = owner_chat_id(s)
+    if job is None or not chat:
+        return
+    report = finish_upload(s, job)
+    try:
+        for im in job.images[:10]:
+            telegram.send_photo(chat, im["path"])
+        telegram.send_message(chat, report, telegram.keyboard([[("✅ Отправить клиенту", f"msend:{job.id}"), ("🔁 Переделать", f"mredo:{job.id}")]]))
+    except telegram.TelegramError as e:
+        raise RetryLater(str(e)) from e
+
+
+@handler("manual_approve")
+def manual_approve(s: Session, payload: dict, task) -> None:
+    job = s.get(ManualJob, payload["job_id"])
+    chat = owner_chat_id(s)
+    if job is None or job.status == "done":
+        return
+    result = approve(s, job)
+    if chat:
+        telegram.send_message(chat, result)

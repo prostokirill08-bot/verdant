@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import signal
 import socket
 import sqlite3
@@ -154,13 +155,14 @@ def process_updates(updates: list[dict]) -> int:
         try:
             with session_scope() as s:
                 sales.handle_update(s, upd)
-        except Exception:  # noqa: BLE001 — сообщение не повторяем (иначе клиент получит дубли), сообщаем владельцу
+        except Exception as e:  # noqa: BLE001 — сообщение не повторяем (иначе клиент получит дубли), сообщаем владельцу
             log.exception("update %s failed", upd.get("update_id"))
+            reason = re.sub(r"bot\d+:[\w-]+", "bot***", f"{type(e).__name__}: {e}")[:300]  # токен бота не светим
             try:
                 with session_scope() as s:
                     from .events import escalate
 
-                    escalate(s, "sales", "Ошибка обработки сообщения в Telegram", f"update_id={upd.get('update_id')}", "warn")
+                    escalate(s, "sales", "Ошибка обработки сообщения в Telegram", f"update_id={upd.get('update_id')}\nПричина: {reason}", "warn")
             except Exception:  # noqa: BLE001
                 log.exception("escalation failed")
     return done

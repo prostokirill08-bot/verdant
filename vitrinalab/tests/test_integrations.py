@@ -393,3 +393,38 @@ def test_card_audit_lead_magnet(tg, tmp_path):
     with session_scope() as s:
         sales.handle_callback(s, {"id": "a", "data": "audit:start", "message": {"chat": {"id": 777}}})
     assert "Бесплатный разбор" in tg[-1][1]
+
+
+def test_bot_stays_writable_while_agent_waits_for_llm(monkeypatch):
+    """Регрессия «database is locked»: пока агент ждёт нейросеть, бот должен успеть записать входящее сообщение."""
+    import threading
+    import time
+
+    from app.agents import base
+    from app.db import session_scope as scope
+    from app.llm import providers
+    from app.models import Message
+
+    class SlowLLM(providers.BaseLLM):
+        name = "slow"
+
+        def complete(self, system, user, temperature=0.4, max_tokens=2000):
+            time.sleep(1.5)
+            return providers.LLMResult(text="ок", tokens_in=1, tokens_out=1)
+
+    monkeypatch.setattr(base, "get_llm", lambda cfg=None: SlowLLM())
+
+    def agent():
+        with scope() as s:
+            s.add(Message(direction="out", text="черновик агента"))
+            with base.agent_run(s, "sales", "answer") as run:
+                base.ask_llm(s, run, "sys", "user", fallback=lambda: "x")
+
+    th = threading.Thread(target=agent)
+    th.start()
+    time.sleep(0.4)  # агент сейчас ждёт «нейросеть»
+    t0 = time.time()
+    with scope() as s:
+        s.add(Message(direction="in", text="сообщение клиента"))
+    assert time.time() - t0 < 1.0  # запись прошла сразу, не дожидаясь агента
+    th.join()

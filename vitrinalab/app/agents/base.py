@@ -86,6 +86,9 @@ def ask_llm(
         log.warning("AI budget exceeded, using fallback")
         return fallback()
     llm = get_llm(cfg)
+    from ..db import release
+
+    release(s)
     try:
         res = llm.complete(system, user, temperature=temperature)
     except LLMUnavailable:

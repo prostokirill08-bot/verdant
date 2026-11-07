@@ -52,12 +52,16 @@ def test_chatgpt_mode_end_to_end(tg, monkeypatch, product_photo, tmp_path):
         sales.handle_callback(s, _cb("mjob:1"))
         sales.handle_update(s, _owner_photo(200))
         sales.handle_update(s, _owner_msg("готово", uid=201))
+    assert "Проверяю" in tg[-1][1]  # бот отвечает сразу, проверка — в фоне
+    run_pending()
     assert "Отправить клиенту" in str(tg[-1][2])
     with session_scope() as s:
         job = s.get(ManualJob, 1)
         assert job.status == "review"
         assert Image.open(job.images[0]["path"]).size == (1440, 1920)
         sales.handle_callback(s, _cb("msend:1"))
+        sales.handle_callback(s, _cb("msend:1"))  # нетерпеливое повторное нажатие
+    assert "повторно нажимать не нужно" in tg[-1][1]
     run_pending()
     with session_scope() as s:
         item = s.scalar(select(OrderItem))
@@ -83,6 +87,8 @@ def test_chatgpt_mode_end_to_end(tg, monkeypatch, product_photo, tmp_path):
         for i in range(5):
             sales.handle_update(s, _owner_photo(300 + i, f"gpt{i}"))
         sales.handle_callback(s, _cb(f"mdone:{jid}"))
+    run_pending()
+    with session_scope() as s:
         sales.handle_callback(s, _cb(f"msend:{jid}"))
     run_pending()
     with session_scope() as s:

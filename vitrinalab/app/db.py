@@ -21,7 +21,7 @@ _SessionLocal: sessionmaker | None = None
 def _sqlite_pragmas(dbapi_conn, _record):  # pragma: no cover - простая настройка
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA journal_mode=WAL")
-    cur.execute("PRAGMA busy_timeout=10000")
+    cur.execute("PRAGMA busy_timeout=30000")
     cur.execute("PRAGMA foreign_keys=ON")
     cur.close()
 
@@ -101,3 +101,13 @@ def _add_missing_columns() -> None:
                 if col.name not in have and col.nullable:
                     ddl = col.type.compile(dialect=eng.dialect)
                     conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl}'))
+
+
+def release(s: Session) -> None:
+    """Перед долгой работой (нейросеть, рендер, загрузка файла) — зафиксировать изменения.
+
+    SQLite допускает одного писателя: незавершённая транзакция держит базу занятой, и бот в это время
+    не может записать входящее сообщение («database is locked»). Короткие транзакции снимают конфликт.
+    """
+    if s.bind is not None and s.bind.dialect.name == "sqlite":
+        s.commit()
