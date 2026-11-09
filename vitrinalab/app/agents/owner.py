@@ -286,7 +286,7 @@ def _finish_job(s: Session, chat_id: str, job_id: int) -> None:
 
 # ---------------- кнопки ----------------
 
-OWNER_PREFIXES = ("oreset", "opay", "opilot", "oext", "orerun", "oredeliver", "oapp", "orej", "osent", "orcpt", "mjob", "mdone", "msend", "mredo", "mresend")
+OWNER_PREFIXES = ("oreset", "opay", "opilot", "oext", "orerun", "oredeliver", "oapp", "orej", "osent", "orcpt", "mjob", "mdone", "msend", "mredo", "mresend", "oscout")
 
 
 def handle_callback(s: Session, chat_id: str, data: str) -> None:
@@ -362,6 +362,10 @@ def handle_callback(s: Session, chat_id: str, data: str) -> None:
                      + (f"\nРезервная копия: {backup.split('/')[-1]} (папка data/backups)." if backup else ""))
             else:
                 _say(chat_id, "Отменено, ничего не удалено.")
+        elif act == "oscout":
+            from . import scout
+
+            _say(chat_id, scout.mark(s, int(parts[2]), parts[1]))
         elif act == "orcpt":
             ops.receipt_done(s, s.get(Payment, int(parts[1])))
             _say(chat_id, "🧾 Отмечено: чек пробит.")

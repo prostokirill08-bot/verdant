@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     telegram_owner_chat_id: str = ""  # куда слать отчёты и эскалации
     telegram_channel_id: str = ""  # канал для публикаций (@name или -100…)
     telegram_polling: bool = True
+    # публичные Telegram-ленты заказов (через запятую); пусто — поиск заказов выключен
+    scout_channels: str = "infografikamptop"
 
     # --- Email (необязательно) ---
     smtp_host: str = ""

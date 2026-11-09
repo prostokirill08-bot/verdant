@@ -21,7 +21,7 @@ from .models import utcnow
 from .queue import claim_next, enqueue, run_task
 
 # регистрация обработчиков задач
-from .agents import ceo, delivery, marketing, production, research  # noqa: F401
+from .agents import ceo, delivery, marketing, production, research, scout  # noqa: F401
 
 log = logging.getLogger("vitrinalab.worker")
 STOP = threading.Event()
@@ -38,6 +38,7 @@ SCHEDULE = [
     ("daily_report", lambda t: t.hour == get_settings().daily_report_hour and t.minute == 0, "daily_report"),
     ("content_plan", lambda t: t.weekday() == 0 and t.hour == 9 and t.minute == 0, "content_plan"),
     ("funnel_digest", lambda t: t.weekday() == 0 and t.hour == 9 and t.minute == 5, "funnel_digest"),
+    ("scout_orders", lambda t: t.minute % 30 == 7, "scout_orders"),
     ("backup", lambda t: t.hour == 4 and t.minute == 0, "backup"),
 ]
 
