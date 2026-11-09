@@ -30,6 +30,17 @@ FIRST_RUN_HOURS = 72
 ABOUT = re.compile(r"инфограф|карточ|слайд|маркетплейс|wildberries|вайлдбер|\bвб\b|\bwb\b|ozon|озон|яндекс\s*маркет", re.I)
 ASK = re.compile(r"нужн|ищу|ищем|требуе|необходим|создать|сделать|оформ|редизайн|разработ", re.I)
 SKIP = re.compile(r"анкет|сводк|подборк|переклич|\bкурс|аналитик|вакансии|публикуем|стать доном", re.I)
+# то, что ВитринаЛаб не делает: такие заказы владельцу не присылаем
+CANT = [
+    (r"видео|монтаж|reels|shorts|ugc|анимац|моушн", "видео/анимация"),
+    (r"\b3d\b|3д", "3D"),
+    (r"логотип|брендбук|разработ\w* фирменн", "логотип/фирстиль"),
+    (r"\bui\b|\bux\b|дизайн сайта|сайт под ключ|лендинг|вёрстк|верстк|figma", "сайты/UI"),
+    (r"упаковк|этикетк", "упаковка"),
+    (r"[сc]трого с опытом|с опытом в нише|опыт в нише", "нужен опыт в узкой нише"),
+    (r"в штат|на постоянную работу|полный день|оформление по тк", "работа в штат"),
+    (r"для стать|статьи|презентаций|презентацию|powerpoint", "не карточки товаров"),
+]
 
 NICHES = [
     (r"юбк|юбок|плать|брюк|одежд|футболк|куртк|костюм", "Для одежды покажу посадку, детали, ткань и состав, размерную сетку."),
@@ -74,6 +85,15 @@ def clean(text: str) -> str:
 def is_order(text: str) -> bool:
     body = clean(text)
     return bool(ABOUT.search(body) and ASK.search(body) and not SKIP.search(body))
+
+
+def fit(text: str) -> tuple[bool, str]:
+    """Можем ли выполнить заказ своими силами (инфографика, обложки, SEO-тексты для карточек)."""
+    low = clean(text).lower()
+    for rx, why in CANT:
+        if re.search(rx, low):
+            return False, why
+    return True, ""
 
 
 def marketplace(text: str) -> str:
@@ -152,6 +172,10 @@ def scan(s: Session, channel: str, posts: list[dict]) -> list[Lead]:
             continue
         if not is_order(p["text"]):
             continue
+        ok, why = fit(p["text"])
+        if not ok:
+            log.info("scout skip %s: %s", p["url"], why)
+            continue
         title = _title(p["text"])
         # тот же заказ иногда публикуют дважды подряд
         if s.scalar(select(Lead.id).where(Lead.shop_url == p["url"])) or s.scalar(
@@ -179,16 +203,24 @@ def scan(s: Session, channel: str, posts: list[dict]) -> list[Lead]:
 
 
 def notify(chat_id: str, lead: Lead) -> None:
-    text = (
-        f"🆕 Заказ: {lead.name}\n{lead.shop_url}\n\n"
-        f"{lead.data.get('post_text', '')[:900]}\n\n"
-        f"✍️ Отклик (скопируйте):\n{lead.analysis.get('draft', '')}\n\n"
-        "Где откликнуться: найдите заказ по названию на Kwork → Биржа или на FL.ru (в ленте указано «источник: фриланс»). "
-        "Ссылки на бота и Telegram в отклике на бирже не давайте."
-    )
+    from urllib.parse import quote
+
+    reply = lead.analysis.get("draft", "")
     telegram.send_message(
-        chat_id, text,
-        telegram.keyboard([[("📤 Откликнулся", f"oscout:sent:{lead.id}"), ("🚫 Не подходит", f"oscout:skip:{lead.id}")]]),
+        chat_id,
+        f"🆕 Заказ: {lead.name}\n{lead.shop_url}\n\n{lead.data.get('post_text', '')[:900]}\n\n"
+        "✅ Подходит: инфографика для карточек — это мы делаем.\n"
+        "👇 Ниже отклик: нажмите на текст — он скопируется. Затем «Найти на Kwork», вставьте и отправьте.\n"
+        "Ссылки на бота и Telegram в отклике на бирже не давайте.",
+    )
+    n = len(reply.encode("utf-16-le")) // 2
+    telegram.send_message(
+        chat_id, reply,
+        telegram.keyboard([
+            [("🔎 Найти на Kwork", "https://kwork.ru/projects?keyword=" + quote(lead.name[:60]))],
+            [("📤 Откликнулся", f"oscout:sent:{lead.id}"), ("🚫 Не подходит", f"oscout:skip:{lead.id}")],
+        ]),
+        entities=[{"type": "code", "offset": 0, "length": n}],
     )
 
 

@@ -45,8 +45,8 @@ def keyboard(rows: list[list[tuple[str, str]]]) -> dict:
     }
 
 
-def send_message(chat_id: str | int, text: str, markup: dict | None = None) -> dict:
-    return _call("sendMessage", {"chat_id": chat_id, "text": text[:4096], "reply_markup": markup, "disable_web_page_preview": True})
+def send_message(chat_id: str | int, text: str, markup: dict | None = None, entities: list | None = None) -> dict:
+    return _call("sendMessage", {"chat_id": chat_id, "text": text[:4096], "reply_markup": markup, "entities": entities, "disable_web_page_preview": True})
 
 
 def send_photo(chat_id: str | int, path: str | Path, caption: str = "", markup: dict | None = None) -> dict:

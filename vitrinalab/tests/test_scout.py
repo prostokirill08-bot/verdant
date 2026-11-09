@@ -24,6 +24,8 @@ def _page(now):
         _post(12, "Добрый день! Порекомендуйте курсы по продвижению ВБ", now),
         _post(13, "Нужна инфографика для юбок, фотографии готовы.", now),
         _post(14, "Нужна инфографика для юбок, фотографии готовы.", now),  # дубль в ленте
+        _post(15, "Нужен монтаж видео Reels для карточки WB", now),
+        _post(16, "Ищу дизайнера карточек для бытовой химии, строго с опытом в нише", now),
         _post(9, "Нужна инфографика для WB, старый заказ", now - timedelta(days=10)),
     ])
 
@@ -57,8 +59,12 @@ def test_scout_finds_orders_and_notifies_owner(tg, monkeypatch):
         lead_id = ai.id
 
     cards = [m for m in tg if m[0] == "msg" and m[1].startswith("🆕 Заказ")]
-    assert len(cards) == 2
-    assert cards[0][2]["inline_keyboard"][0][0]["callback_data"] == f"oscout:sent:{lead_id}"
+    assert len(cards) == 2  # видео и «строго с опытом в нише» отсеяны
+    reply = tg[tg.index(cards[0]) + 1]
+    assert reply[1].startswith("Здравствуйте!")
+    kb = reply[2]["inline_keyboard"]
+    assert kb[0][0]["url"].startswith("https://kwork.ru/projects?keyword=")
+    assert kb[1][0]["callback_data"] == f"oscout:sent:{lead_id}"
 
     # повторный запуск — без дублей
     with session_scope() as s:

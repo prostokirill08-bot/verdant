@@ -59,7 +59,7 @@ def tg(monkeypatch, product_photo):
 
     config.reset_settings_cache()
     sent = []
-    monkeypatch.setattr(telegram, "send_message", lambda chat, text, markup=None: sent.append(("msg", text, markup)) or {})
+    monkeypatch.setattr(telegram, "send_message", lambda chat, text, markup=None, entities=None: sent.append(("msg", text, markup)) or {})
     monkeypatch.setattr(telegram, "send_photo", lambda chat, path, caption="", markup=None: sent.append(("photo", caption, markup)) or {})
     monkeypatch.setattr(telegram, "send_document", lambda chat, path, caption="": sent.append(("doc", str(path), None)) or {})
     monkeypatch.setattr(telegram, "answer_callback", lambda *a, **k: None)
